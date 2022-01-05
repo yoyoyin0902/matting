@@ -32,8 +32,11 @@ from torchvision.transforms.functional import to_tensor, to_pil_image
 from PIL import Image
 import gdown
 
-# url = 'https://drive.google.com/u/0/uc?id=13mFNHX_vCcMrNHJgbWiyDD1XadceuBOw&export=download' 
-# output = 'model.pth'
+# url = 'https://drive.google.com/u/0/uc?id=/1fMl7qepWqWvROlWvwLyr9TFGaAUBIYtW=download'
+# https://drive.google.com/file/d/13mFNHX_vCcMrNHJgbWiyDD1XadceuBOw/view?usp=sharing 
+# https://drive.google.com/file/d/1pqZKBvkh1a-wO-RMPN8krp03OvqIMjAT/view?usp=sharing
+
+# output = 'model1.pth'
 # gdown.download(url, output)
 # print("1111")
 
@@ -46,7 +49,8 @@ import gdown
 
 
 
-model = torch.jit.load('model.pth').cuda().eval() 
+model = torch.load('torchscript_mobilenetv2_fp32.pth').cuda().eval() 
+
 
 src = Image.open('/home/user/all.png')
 bgr = Image.open('/home/user/back.png')
