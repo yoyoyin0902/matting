@@ -927,15 +927,30 @@ parser.add_argument('--output-dir', type=str, required=False, default='/home/use
 parser.add_argument('--output-types', type=str, required=False, nargs='+',
                     choices=['com', 'pha', 'fgr', 'err', 'ref', 'new'])
 parser.add_argument('-y', action='store_true')
+args = parser.parse_args()
   
   
-def handle(image_path: str, bgr_path: str):
-
+def handle(image_path, bgr_path):
+   
+    imglist = sorted(os.listdir(image_path))
+    bgrlist = sorted(os.listdir(bgr_path))
+    #print(bgr_path)
     
-
-    parser.add_argument('--images-src', type=str, required=False, default=image_path)
-    parser.add_argument('--images-bgr', type=str, required=False, default=bgr_path)
-    args = parser.parse_args()
+    count = len(imglist)
+    for i in range(count):
+        filester = imglist[i].split(".")[0]
+        bground_path = bgr_path +"/"+ filester +".jpg"
+        img_path = image_path +"/"+ filester +".jpg"
+        
+        print(img_path)
+        print(bground_path)
+    
+        # parser.add_argument('--images-bgr', type=str, required=False, default=img_path)
+        # parser.add_argument('--images-bgr', type=str, required=False, default=bgr_path)
+    # parser.add_argument('--images-bgr', type=str, required=False, default=bgr_path)
+    
+    # args = parser.parse_args()
+        # print(args.img_src)
 
   
     assert 'err' not in args.output_types or args.model_type in ['mattingbase', 'mattingrefine'], \
@@ -963,12 +978,13 @@ def handle(image_path: str, bgr_path: str):
   
     # Load images
     dataset = ZipDataset([
-        NewImagesDataset(args.images_src),
-        NewImagesDataset(args.images_bgr),
+        NewImagesDataset(img_path),
+        NewImagesDataset(bground_path),
     ], assert_equal_length=True, transforms=PairCompose([
         HomographicAlignment() if args.preprocess_alignment else PairApply(nn.Identity()),
         PairApply(T.ToTensor())
     ]))
+    
     dataloader = DataLoader(dataset, batch_size=1, num_workers=args.num_workers, pin_memory=True)
   
     # # Create output directory
@@ -989,23 +1005,23 @@ def handle(image_path: str, bgr_path: str):
         img.save(path)
         
   
-    # Worker function
-    # def writer_hy(img, new_bg, path):
-    #     img = to_pil_image(img[0].cpu())
-    #     img_size = img.size
-    #     new_bg_img = Image.open(new_bg).convert('RGBA')
-    #     new_bg_img.resize(img_size, Image.ANTIALIAS)
-    #     out = Image.alpha_composite(new_bg_img, img)
-    #     out.save(path)
+#     # Worker function
+#     # def writer_hy(img, new_bg, path):
+#     #     img = to_pil_image(img[0].cpu())
+#     #     img_size = img.size
+#     #     new_bg_img = Image.open(new_bg).convert('RGBA')
+#     #     new_bg_img.resize(img_size, Image.ANTIALIAS)
+#     #     out = Image.alpha_composite(new_bg_img, img)
+#     #     out.save(path)
   
-    # result_file_name = str(uuid.uuid4())
+#     # result_file_name = str(uuid.uuid4())
   
     # Conversion loop
     with torch.no_grad():
         for i, (src, bgr) in enumerate(tqdm(dataloader)):
             src = src.to(device, non_blocking=True)
             bgr = bgr.to(device, non_blocking=True)
-            #print("555")
+
             if args.model_type == 'mattingbase':
                 pha, fgr, err, _ = model(src, bgr)
             elif args.model_type == 'mattingrefine':
@@ -1015,7 +1031,7 @@ def handle(image_path: str, bgr_path: str):
             pathname = dataset.datasets[0].filenames[i]
             print(pathname)
 
-            pathname1 = os.path.relpath(pathname, args.images_src)
+            pathname1 = os.path.relpath(pathname, img_path)
             print(pathname1)
  
             pathname2 = os.path.splitext(pathname)[0]
@@ -1027,27 +1043,28 @@ def handle(image_path: str, bgr_path: str):
 
             if 'com' in args.output_types:
                 com = torch.cat([fgr * pha.ne(0), pha], dim=1)
-                Thread(target=writer, args=(com, os.path.join(args.output_dir, 'com', 'com' + '.png'))).start()
+                Thread(target=writer, args=(com, os.path.join(args.output_dir, 'com', 'com'+ filester + '.png'))).start()
 
             if 'pha' in args.output_types:
-                Thread(target=writer, args=(pha, os.path.join(args.output_dir, 'pha', 'pha' + '.jpg'))).start()
+                Thread(target=writer, args=(pha, os.path.join(args.output_dir, 'pha', 'pha' +filester + '.jpg'))).start()
 
             if 'fgr' in args.output_types:
-                Thread(target=writer, args=(fgr, os.path.join(args.output_dir, 'fgr', 'fgr' + '.jpg'))).start()
+                Thread(target=writer, args=(fgr, os.path.join(args.output_dir, 'fgr', 'fgr' +filester + '.jpg'))).start()
 
             if 'err' in args.output_types:
                 err = F.interpolate(err, src.shape[2:], mode='bilinear', align_corners=False)
-                Thread(target=writer, args=(err, os.path.join(args.output_dir, 'err', pathname + '.jpg'))).start()
+                Thread(target=writer, args=(err, os.path.join(args.output_dir, 'err', pathname +filester + '.jpg'))).start()
 
             if 'ref' in args.output_types:
                 ref = F.interpolate(ref, src.shape[2:], mode='nearest')
-                Thread(target=writer, args=(ref, os.path.join(args.output_dir, 'ref', pathname + '.jpg'))).start()
+                Thread(target=writer, args=(ref, os.path.join(args.output_dir, 'ref', pathname +filester + '.jpg'))).start()
   
-   #return os.path.join(args.output_dir, 'com', result_file_name + '.png')
+#    #return os.path.join(args.output_dir, 'com', result_file_name + '.png')
   
   
 if __name__ == '__main__':
-    filePath = "/home/user/matting/imagedata/img"
-    Filelist = os.listdir(filePath)
-    print(Filelist)
-    handle("/home/user/matting/imagedata/img/3.jpg", "/home/user/matting/imagedata/bgr/3.jpg" )
+    dataset_root_path = r"/home/user/matting/imagedata"
+    img_floder = os.path.join(dataset_root_path,"img")
+    bgr_floder = os.path.join(dataset_root_path,"bgr")
+    
+    handle(img_floder,bgr_floder)
