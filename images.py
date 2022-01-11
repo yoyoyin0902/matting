@@ -942,8 +942,8 @@ def handle(image_path, bgr_path):
         bground_path = bgr_path +"/"+ filester +".jpg"
         img_path = image_path +"/"+ filester +".jpg"
         
-        print(img_path)
-        print(bground_path)
+        # print(img_path)
+        # print(bground_path)
     
         # parser.add_argument('--images-bgr', type=str, required=False, default=img_path)
         # parser.add_argument('--images-bgr', type=str, required=False, default=bgr_path)
@@ -1029,13 +1029,13 @@ def handle(image_path, bgr_path):
             
             
             pathname = dataset.datasets[0].filenames[i]
-            print(pathname)
+            # print(pathname)
 
             pathname1 = os.path.relpath(pathname, img_path)
-            print(pathname1)
+            # print(pathname1)
  
             pathname2 = os.path.splitext(pathname)[0]
-            print(pathname2)
+            # print(pathname2)
             
             # if 'new' in args.output_types:
             #     new = torch.cat([fgr * pha.ne(0), pha], dim=1)
@@ -1053,18 +1053,43 @@ def handle(image_path, bgr_path):
 
             if 'err' in args.output_types:
                 err = F.interpolate(err, src.shape[2:], mode='bilinear', align_corners=False)
-                Thread(target=writer, args=(err, os.path.join(args.output_dir, 'err', pathname +filester + '.jpg'))).start()
+                Thread(target=writer, args=(err, os.path.join(args.output_dir, 'err',  'err'+filester + '.jpg'))).start()
 
             if 'ref' in args.output_types:
                 ref = F.interpolate(ref, src.shape[2:], mode='nearest')
                 Thread(target=writer, args=(ref, os.path.join(args.output_dir, 'ref', pathname +filester + '.jpg'))).start()
   
 #    #return os.path.join(args.output_dir, 'com', result_file_name + '.png')
-  
+
+
+def takePhoto():
+    img_savefile = "/home/user/matting/imagedata/img/"
+
+    cam = cv2.VideoCapture(0)
+    cam.set(3,1920)
+    cam.set(4,1080)
+    if not cam.isOpened() | cam.isOpened():
+        print("Cannot open camera")
+        exit()
+    fps = 60
+
+    i = 0
+    while(True):
+        ret,frame = cam.read()
+        k = cv2.waitKey(1)
+        if k == 27:
+            break
+        elif k==ord('s'):
+            cv2.imwrite(img_savefile+str(i)+'.jpg',frame)
+            i+=1
+        cv2.imshow("capture",frame)
+    cam.release()
+    cam.destroyAllWindows()
+
   
 if __name__ == '__main__':
     dataset_root_path = r"/home/user/matting/imagedata"
     img_floder = os.path.join(dataset_root_path,"img")
     bgr_floder = os.path.join(dataset_root_path,"bgr")
-    
-    handle(img_floder,bgr_floder)
+    takePhoto()
+    #handle(img_floder,bgr_floder)python 

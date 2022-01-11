@@ -1,2 +1,0 @@
-1.image
-python inference_images.py --model-type mattingrefine --model-backbone mobilenetv2 --model-backbone-scale 0.25 --model-refine-mode sampling --model-refine-sample-pixels 80000 --model-checkpoint "/home/user/matting/model_pth/pytorch_mobilenetv2.pth" --images-src "/home/user/matting/all.png" --images-bgr "/home/user/matting/back.png" --output-dir "/home/user/matting/img_output" --output-type com fgr pha
