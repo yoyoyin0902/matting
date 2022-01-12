@@ -913,8 +913,8 @@ parser.add_argument('--model-backbone', type=str, required=False, choices=['resn
                     default='resnet101')
 parser.add_argument('--model-backbone-scale', type=float, default=0.25)
 parser.add_argument('--model-checkpoint', type=str, required=False, default='/home/user/matting/model_pth/pytorch_resnet101.pth')
-parser.add_argument('--model-refine-mode', type=str, default='sampling', choices=['full', 'sampling', 'thresholding'])
-parser.add_argument('--model-refine-sample-pixels', type=int, default=80000)
+parser.add_argument('--model-refine-mode', type=str, default='full', choices=['full', 'sampling', 'thresholding'])
+parser.add_argument('--model-refine-sample-pixels', type=int, default=320_000)
 parser.add_argument('--model-refine-threshold', type=float, default=0.7)
 parser.add_argument('--model-refine-kernel-size', type=int, default=3)
   
@@ -931,36 +931,9 @@ args = parser.parse_args()
   
   
 def handle(image_path, bgr_path):
-   
-    imglist = sorted(os.listdir(image_path))
-    bgrlist = sorted(os.listdir(bgr_path))
-    #print(bgr_path)
-    
-    count = len(imglist)
-    for i in range(count):
-        filester = imglist[i].split(".")[0]
-        bground_path = bgr_path +"/"+ filester +".jpg"
-        img_path = image_path +"/"+ filester +".jpg"
-        
-        # print(img_path)
-        # print(bground_path)
-    
-        # parser.add_argument('--images-bgr', type=str, required=False, default=img_path)
-        # parser.add_argument('--images-bgr', type=str, required=False, default=bgr_path)
-    # parser.add_argument('--images-bgr', type=str, required=False, default=bgr_path)
-    
-    # args = parser.parse_args()
-        # print(args.img_src)
 
-  
-    assert 'err' not in args.output_types or args.model_type in ['mattingbase', 'mattingrefine'], \
-        'Only mattingbase and mattingrefine support err output'
-    assert 'ref' not in args.output_types or args.model_type in ['mattingrefine'], \
-        'Only mattingrefine support ref output'
-    # --------------- Main ---------------
-  
+    # set device
     device = torch.device(args.device)
-  
     # Load model
     if args.model_type == 'mattingbase':
         model = MattingBase(args.model_backbone)
@@ -972,21 +945,103 @@ def handle(image_path, bgr_path):
             args.model_refine_sample_pixels,
             args.model_refine_threshold,
             args.model_refine_kernel_size)
-  
+
     model = model.to(device).eval()
     model.load_state_dict(torch.load(args.model_checkpoint, map_location=device), strict=False)
-  
-    # Load images
-    dataset = ZipDataset([
-        NewImagesDataset(img_path),
-        NewImagesDataset(bground_path),
-    ], assert_equal_length=True, transforms=PairCompose([
-        HomographicAlignment() if args.preprocess_alignment else PairApply(nn.Identity()),
-        PairApply(T.ToTensor())
-    ]))
+
+    #set outputfile
+    for output_type in args.output_types:
+        if os.path.exists(os.path.join(args.output_dir, output_type)) is False:
+            os.makedirs(os.path.join(args.output_dir, output_type))
+   
+    #load image
+    imglist = sorted(os.listdir(image_path))
+    bgrlist = sorted(os.listdir(bgr_path))
     
-    dataloader = DataLoader(dataset, batch_size=1, num_workers=args.num_workers, pin_memory=True)
+    count = len(imglist)
+    for i in range(count):
+        filester = imglist[i].split(".")[0]
+        bground_path = bgr_path +"/"+ filester +".jpg"
+        img_path = image_path +"/"+ filester +".jpg"
+        
+        # print(img_path)
+        # print(bground_path)
+
+        assert 'err' not in args.output_types or args.model_type in ['mattingbase', 'mattingrefine'], \
+            'Only mattingbase and mattingrefine support err output'
+        assert 'ref' not in args.output_types or args.model_type in ['mattingrefine'], \
+            'Only mattingrefine support ref output'
+
+        # parser.add_argument('--images-bgr', type=str, required=False, default=img_path)
+        # parser.add_argument('--images-bgr', type=str, required=False, default=bground_path)
+    
+        # args = parser.parse_args()
+        # print(args.img_src)
+
+        # --------------- Main ---------------  
+        # set imgfile
+        dataset = ZipDataset([
+            NewImagesDataset(img_path),
+            NewImagesDataset(bground_path),
+        ], assert_equal_length=True, transforms=PairCompose([
+            HomographicAlignment() if args.preprocess_alignment else PairApply(nn.Identity()),
+            PairApply(T.ToTensor())
+        ]))
+
+        dataloader = DataLoader(dataset, batch_size=3, num_workers=args.num_workers, pin_memory=True)
+
+        # Worker function
+        def writer(img, path):
+            img = to_pil_image(img[0].cpu())
+            #print(path)
+            img.save(path)
+
+        
+        with torch.no_grad():
+            for i, (src, bgr) in enumerate(tqdm(dataloader)):
+                src = src.to(device, non_blocking=True)
+                bgr = bgr.to(device, non_blocking=True)
+
+                if args.model_type == 'mattingbase':
+                    pha, fgr, err, _ = model(src, bgr)
+                elif args.model_type == 'mattingrefine':
+                    pha, fgr, _, _, err, ref = model(src, bgr)
+            
+            
+                pathname = dataset.datasets[0].filenames[i]
+                # print(pathname)
+
+                pathname1 = os.path.relpath(pathname, img_path)
+                # print(pathname1)
+ 
+                pathname2 = os.path.splitext(pathname)[0]
+                # print(pathname2)
+            
+                # if 'new' in args.output_types:
+                #     new = torch.cat([fgr * pha.ne(0), pha], dim=1)
+                #     Thread(target=writer,args=(new, new_bg, os.path.join(args.output_dir, 'new', result_file_name + '.png'))).start()
+
+                if 'com' in args.output_types:
+                    com = torch.cat([fgr * pha.ne(0), pha], dim=1)
+                    Thread(target=writer, args=(com, os.path.join(args.output_dir, 'com', 'com'+ filester + '.png'))).start()
+
+                if 'pha' in args.output_types:
+                    Thread(target=writer, args=(pha, os.path.join(args.output_dir, 'pha', 'pha' +filester + '.jpg'))).start()
+
+                if 'fgr' in args.output_types:
+                    Thread(target=writer, args=(fgr, os.path.join(args.output_dir, 'fgr', 'fgr' +filester + '.jpg'))).start()
+
+                if 'err' in args.output_types:
+                    err = F.interpolate(err, src.shape[2:], mode='bilinear', align_corners=False)
+                    Thread(target=writer, args=(err, os.path.join(args.output_dir, 'err',  'err'+filester + '.jpg'))).start()
+
+                if 'ref' in args.output_types:
+                    ref = F.interpolate(ref, src.shape[2:], mode='nearest')
+                    Thread(target=writer, args=(ref, os.path.join(args.output_dir, 'ref', pathname +filester + '.jpg'))).start()
   
+#    #return os.path.join(args.output_dir, 'com', result_file_name + '.png')
+
+ 
     # # Create output directory
     # if os.path.exists(args.output_dir):
     #     if args.y or input(f'Directory {args.output_dir} already exists. Override? [Y/N]: ').lower() == 'y':
@@ -994,102 +1049,25 @@ def handle(image_path, bgr_path):
     #     else:
     #         exit()
   
-    for output_type in args.output_types:
-        if os.path.exists(os.path.join(args.output_dir, output_type)) is False:
-            os.makedirs(os.path.join(args.output_dir, output_type))
   
     # Worker function
-    def writer(img, path):
-        img = to_pil_image(img[0].cpu())
-        #print(path)
-        img.save(path)
-        
+    # def writer_hy(img, new_bg, path):
+    #     img = to_pil_image(img[0].cpu())
+    #     img_size = img.size
+    #     new_bg_img = Image.open(new_bg).convert('RGBA')
+    #     new_bg_img.resize(img_size, Image.ANTIALIAS)
+    #     out = Image.alpha_composite(new_bg_img, img)
+    #     out.save(path)
   
-#     # Worker function
-#     # def writer_hy(img, new_bg, path):
-#     #     img = to_pil_image(img[0].cpu())
-#     #     img_size = img.size
-#     #     new_bg_img = Image.open(new_bg).convert('RGBA')
-#     #     new_bg_img.resize(img_size, Image.ANTIALIAS)
-#     #     out = Image.alpha_composite(new_bg_img, img)
-#     #     out.save(path)
-  
-#     # result_file_name = str(uuid.uuid4())
+    # result_file_name = str(uuid.uuid4())
   
     # Conversion loop
-    with torch.no_grad():
-        for i, (src, bgr) in enumerate(tqdm(dataloader)):
-            src = src.to(device, non_blocking=True)
-            bgr = bgr.to(device, non_blocking=True)
+    
 
-            if args.model_type == 'mattingbase':
-                pha, fgr, err, _ = model(src, bgr)
-            elif args.model_type == 'mattingrefine':
-                pha, fgr, _, _, err, ref = model(src, bgr)
-            
-            
-            pathname = dataset.datasets[0].filenames[i]
-            # print(pathname)
-
-            pathname1 = os.path.relpath(pathname, img_path)
-            # print(pathname1)
  
-            pathname2 = os.path.splitext(pathname)[0]
-            # print(pathname2)
-            
-            # if 'new' in args.output_types:
-            #     new = torch.cat([fgr * pha.ne(0), pha], dim=1)
-            #     Thread(target=writer,args=(new, new_bg, os.path.join(args.output_dir, 'new', result_file_name + '.png'))).start()
-
-            if 'com' in args.output_types:
-                com = torch.cat([fgr * pha.ne(0), pha], dim=1)
-                Thread(target=writer, args=(com, os.path.join(args.output_dir, 'com', 'com'+ filester + '.png'))).start()
-
-            if 'pha' in args.output_types:
-                Thread(target=writer, args=(pha, os.path.join(args.output_dir, 'pha', 'pha' +filester + '.jpg'))).start()
-
-            if 'fgr' in args.output_types:
-                Thread(target=writer, args=(fgr, os.path.join(args.output_dir, 'fgr', 'fgr' +filester + '.jpg'))).start()
-
-            if 'err' in args.output_types:
-                err = F.interpolate(err, src.shape[2:], mode='bilinear', align_corners=False)
-                Thread(target=writer, args=(err, os.path.join(args.output_dir, 'err',  'err'+filester + '.jpg'))).start()
-
-            if 'ref' in args.output_types:
-                ref = F.interpolate(ref, src.shape[2:], mode='nearest')
-                Thread(target=writer, args=(ref, os.path.join(args.output_dir, 'ref', pathname +filester + '.jpg'))).start()
-  
-#    #return os.path.join(args.output_dir, 'com', result_file_name + '.png')
-
-
-def takePhoto():
-    img_savefile = "/home/user/matting/imagedata/img/"
-
-    cam = cv2.VideoCapture(0)
-    cam.set(3,1920)
-    cam.set(4,1080)
-    if not cam.isOpened() | cam.isOpened():
-        print("Cannot open camera")
-        exit()
-    fps = 60
-
-    i = 0
-    while(True):
-        ret,frame = cam.read()
-        k = cv2.waitKey(1)
-        if k == 27:
-            break
-        elif k==ord('s'):
-            cv2.imwrite(img_savefile+str(i)+'.jpg',frame)
-            i+=1
-        cv2.imshow("capture",frame)
-    cam.release()
-    cam.destroyAllWindows()
-
-  
 if __name__ == '__main__':
     dataset_root_path = r"/home/user/matting/imagedata"
     img_floder = os.path.join(dataset_root_path,"img")
     bgr_floder = os.path.join(dataset_root_path,"bgr")
-    takePhoto()
-    #handle(img_floder,bgr_floder)python 
+    
+    handle(img_floder,bgr_floder)
