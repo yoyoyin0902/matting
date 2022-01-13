@@ -57,26 +57,33 @@ def show_histphoto(photo_path):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
+def drawplot():
+    plt.plot(range(256), grayHist, 'r', linewidth=1.5, c='red')
+    y_maxValue = np.max(grayHist)
+    plt.axis([0, 255, 0, y_maxValue]) # x和y的範圍
+    plt.xlabel("gray Level")
+    plt.ylabel("Number Of Pixels")
+    plt.show()
+
+
 def Line_chart(photo_path):
     
     image = cv2.imread(photo_path)
-    h = np.zeros((256, 256, 3))
-    bins = np.arange(256).reshape(256, 1)
-    color = [(255, 0, 0), (0, 255, 0), (0, 0, 255)]
-    for ch, col in enumerate(color):
-        originHist = cv2.calcHist([image], [ch], None, [256], [0, 256])
-        cv2.normalize(originHist, originHist, 0, 255*0.9, cv2.NORM_MINMAX)
-        hist = np.int32(np.around(originHist))
-        pts = np.column_stack((bins, hist))
-        cv2.polylines(h, [pts], False, col)
 
-    h = np.flipud(h)
-    cv2.imshow('colorhist', h)
+    colors = ("b","g","r")
+
+    plt.figure()
+    plt.title("Flattened Color Histogram")
+    plt.xlabel("Bins")
+    plt.ylabel("# of Pixels")
+
+    for i,col in enumerate(colors):
+        hist = cv2.calcHist([image],[i],None,[256],[0,256])
+        plt.plot(hist,color = col)
+        plt.xlim([0,256])
+    plt.show()
+    cv2.imwrite(savefile_path+"histogram.jpg",clahe_img)
     
-
-    cv2.imwrite(savefile_path+"colorhist.png",h)
-    cv2.waitKey(0)
-    #cv2.destroyAllWindows()
 
 def equalization(img_path):
     img = cv2.imread(img_path)
@@ -113,14 +120,13 @@ def equalization(img_path):
     return img_equal
 
 
-
-
 if __name__ == '__main__':
     #takePhoto() #takePhoto
     photo_path = '/home/user/matting/imagedata/bgr/2.jpg'
-    # Line_chart(photo_path)
-    equalization(photo_path)
+    Line_chart(photo_path)
+    #equalization(photo_path)
     #Line_chart("/home/user/matting/equal_bgr.jpg")
+
 
    
     
