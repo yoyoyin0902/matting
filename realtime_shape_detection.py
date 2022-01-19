@@ -51,27 +51,32 @@ def stackImages(scale,imgArray):
     return ver
 
 def getContours(img,imgContour):
-    contours, hierarchy = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    #print(contours)
+    contours, hierarchy = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     for cnt in contours:
-        area = cv2.contourArea(cnt)
+        area = cv2.contourArea(cnt) #輪廓面積
         areaMin = cv2.getTrackbarPos("Area", "Parameters")
         if area > areaMin:
-            cv2.drawContours(imgContour, cnt, -1, (255, 0, 255), 5)
-            peri = cv2.arcLength(cnt, True)
+            cv2.drawContours(imgContour, contours, -1, (255, 0, 255), 3)
+            peri = cv2.arcLength(cnt, True) #輪廓周長
             approx = cv2.approxPolyDP(cnt, 0.02 * peri, True)
             print(len(approx))
-            x , y , w, h = cv2.boundingRect(approx)
-            cv2.rectangle(imgContour, (x , y ), (x + w , y + h ), (0, 255, 0), 5)
+            #x , y , w, h = cv2.minAreaRect(cnt) #外接矩陣
+            rect = cv2.minAreaRect(cnt)
+            box = np.int0(cv2.boxPoints(rect))
+            cv2.drawContours(imgContour, [box], 0, (255, 251, 0), 5)
+            #cv2.rectangle(imgContour, (x , y ), (x + w , y + h ), (0, 255, 0), 5)
 
-            cv2.putText(imgContour, "Points: " + str(len(approx)), (x + w + 20, y + 20), cv2.FONT_HERSHEY_COMPLEX, .7,
-                        (0, 255, 0), 2)
-            cv2.putText(imgContour, "Area: " + str(int(area)), (x + w + 20, y + 45), cv2.FONT_HERSHEY_COMPLEX, 0.7,
-                        (0, 255, 0), 2)
+            # cv2.putText(imgContour, "Points: " + str(len(approx)), (x + w + 20, y + 20), cv2.FONT_HERSHEY_COMPLEX, .7,
+            #             (0, 255, 0), 2)
+            # cv2.putText(imgContour, "Area: " + str(int(area)), (x + w + 20, y + 45), cv2.FONT_HERSHEY_COMPLEX, 0.7,
+            #             (0, 255, 0), 2)
 
 while True:
     img_path = "/home/user/matting/img_output/pha/pha2.jpg"
+    img2_path = "/home/user/matting/img_output/com/com2.png"
     img = cv2.imread(img_path)
+    img2 = cv2.imread(img2_path)
+
 
     #success, img = cap.read()
     imgContour = img.copy()
@@ -91,9 +96,11 @@ while True:
     imgDil = cv2.dilate(imgCanny, kernel, iterations=1)
 
     getContours(imgDil,imgContour)
-    # imgStack = stackImages(0.8,([img,imgCanny],[imgDil,imgContour]))
-    imgStack = stackImages(0.8,([imgContour,binary],[imgDil,imgGray]))
-    cv2.imwrite(savefile_path+"imgStack.jpg",imgStack)
+    imgStack = stackImages(0.8,([binary,imgCanny],[imgDil,imgContour]))
+    #imgStack = stackImages(0.8,([img2,img]))
+    #imgStack = stackImages(0.8,([imgContour,binary],[imgDil,imgGray]))
+    # imgStack = stackImages(0.6,([imgGray,imgContour],[imgCanny,getContours]))
+    cv2.imwrite(savefile_path+"imgStack1.jpg",imgStack)
     cv2.imshow("Result", imgStack)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
