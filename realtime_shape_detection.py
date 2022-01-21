@@ -56,9 +56,9 @@ def getContours(img,imgContour):
         area = cv2.contourArea(cnt) #輪廓面積
         areaMin = cv2.getTrackbarPos("Area", "Parameters")
         if area > areaMin:
-            cv2.drawContours(imgContour, contours, -1, (255, 0, 255), 3)
+            cv2.drawContours(imgContour, contours, -1, (255, 0, 255), 3) #畫出輪廓
             peri = cv2.arcLength(cnt, True) #輪廓周長
-            approx = cv2.approxPolyDP(cnt, 0.02 * peri, True)
+            approx = cv2.approxPolyDP(cnt, 0.01 * peri, True)
             print(len(approx))
             #x , y , w, h = cv2.minAreaRect(cnt) #外接矩陣
             rect = cv2.minAreaRect(cnt)
@@ -97,9 +97,8 @@ while True:
 
     getContours(imgDil,imgContour)
     imgStack = stackImages(0.8,([binary,imgCanny],[imgDil,imgContour]))
-    #imgStack = stackImages(0.8,([img2,img]))
-    #imgStack = stackImages(0.8,([imgContour,binary],[imgDil,imgGray]))
-    # imgStack = stackImages(0.6,([imgGray,imgContour],[imgCanny,getContours]))
+    imgStack = stackImages(0.8,([img2,img]))
+    
     cv2.imwrite(savefile_path+"imgStack1.jpg",imgStack)
     cv2.imshow("Result", imgStack)
 

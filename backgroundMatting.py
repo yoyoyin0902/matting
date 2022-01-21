@@ -950,9 +950,9 @@ def handle(image_path, bgr_path):
     model.load_state_dict(torch.load(args.model_checkpoint, map_location=device), strict=False)
 
     #set outputfile
-    for output_type in args.output_types:
-        if os.path.exists(os.path.join(args.output_dir, output_type)) is False:
-            os.makedirs(os.path.join(args.output_dir, output_type))
+    # for output_type in args.output_types:
+    #     if os.path.exists(os.path.join(args.output_dir, output_type)) is False:
+    #         os.makedirs(os.path.join(args.output_dir, output_type))
    
     #load image
     imglist = sorted(os.listdir(image_path))
@@ -1023,7 +1023,7 @@ def handle(image_path, bgr_path):
 
                 if 'com' in args.output_types:
                     com = torch.cat([fgr * pha.ne(0), pha], dim=1)
-                    Thread(target=writer, args=(com, os.path.join(args.output_dir, 'com', 'com'+ filester + '.png'))).start()
+                    Thread(target=writer, args=(com, os.path.join(args.output_dir, 'com', 'com'+ filester + '.jpg'))).start()
 
                 if 'pha' in args.output_types:
                     Thread(target=writer, args=(pha, os.path.join(args.output_dir, 'pha', 'pha' +filester + '.jpg'))).start()
