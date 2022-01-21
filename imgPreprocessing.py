@@ -121,9 +121,9 @@ def equalization(img_path):
 
 
 if __name__ == '__main__':
-    #takePhoto() #takePhoto
-    photo_path = '/home/user/matting/imagedata/bgr/2.jpg'
-    Line_chart(photo_path)
+    takePhoto() #takePhoto
+    # photo_path = '/home/user/matting/imagedata/bgr/2.jpg'
+    # Line_chart(photo_path)
     #equalization(photo_path)
     #Line_chart("/home/user/matting/equal_bgr.jpg")
 

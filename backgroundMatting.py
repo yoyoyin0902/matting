@@ -1023,17 +1023,17 @@ def handle(image_path, bgr_path):
 
                 if 'com' in args.output_types:
                     com = torch.cat([fgr * pha.ne(0), pha], dim=1)
-                    Thread(target=writer, args=(com, os.path.join(args.output_dir, 'com', 'com'+ filester + '.jpg'))).start()
+                    Thread(target=writer, args=(com, os.path.join(args.output_dir, 'com', filester+'_com' + '.png'))).start()
 
                 if 'pha' in args.output_types:
-                    Thread(target=writer, args=(pha, os.path.join(args.output_dir, 'pha', 'pha' +filester + '.jpg'))).start()
+                    Thread(target=writer, args=(pha, os.path.join(args.output_dir, 'pha', filester +'_pha'  + '.jpg'))).start()
 
                 if 'fgr' in args.output_types:
-                    Thread(target=writer, args=(fgr, os.path.join(args.output_dir, 'fgr', 'fgr' +filester + '.jpg'))).start()
+                    Thread(target=writer, args=(fgr, os.path.join(args.output_dir, 'fgr', filester +'_fgr' + '.jpg'))).start()
 
                 if 'err' in args.output_types:
                     err = F.interpolate(err, src.shape[2:], mode='bilinear', align_corners=False)
-                    Thread(target=writer, args=(err, os.path.join(args.output_dir, 'err',  'err'+filester + '.jpg'))).start()
+                    Thread(target=writer, args=(err, os.path.join(args.output_dir, 'err',  filester + '_err'+ '.jpg'))).start()
 
                 if 'ref' in args.output_types:
                     ref = F.interpolate(ref, src.shape[2:], mode='nearest')
