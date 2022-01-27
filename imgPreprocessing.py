@@ -1,7 +1,12 @@
 import os
 import cv2
 import numpy as np
+from PIL import Image
 import matplotlib.pyplot as plt
+import glob 
+from os import listdir
+from os.path import isfile, join 
+
 
 savefile_path = "/home/user/matting/preprocessingfile/"
 
@@ -119,13 +124,75 @@ def equalization(img_path):
 
     return img_equal
 
+def opening(pha_path,com_path,fgr_path):
+      
+    pha = [ f for f in listdir(pha_path) if isfile(join(pha_path,f))]
+    com = [ f for f in listdir(com_path) if isfile(join(com_path,f))]
+    fgr = [ f for f in listdir(fgr_path) if isfile(join(fgr_path,f))]
+
+    #排序
+    pha.sort(key = lambda i: int(i.rstrip('_pha.jpg')))
+    com.sort(key = lambda i: int(i.rstrip('_com.png')))
+    fgr.sort(key = lambda i: int(i.rstrip('_fgr.jpg')))
+    
+    img_count = len(pha)
+    
+    images_pha = np.empty(img_count, dtype=object) 
+    images_com = np.empty(img_count, dtype=object)
+    images_fgr = np.empty(img_count, dtype=object)
+
+    gray_img = np.empty(img_count, dtype=object)
+    imgBlur = np.empty(img_count, dtype=object)
+    bin_img = np.empty(img_count, dtype=object)
+    imgErode = np.empty(img_count,dtype=object)
+    imgDil = np.empty(img_count,dtype=object)
+    hierarchy = np.empty(img_count,dtype=object)
+    ext = np.empty(img_count,dtype=object)
+    
+
+    test = np.empty(img_count, dtype=object)
+
+    for i in range(0, len(pha)): 
+        
+        filester = pha[i].split("_")[0]
+
+        images_pha[i] = cv2.imread(join(pha_path,pha[i]))
+        images_com[i] = cv2.imread(join(com_path,com[i]))
+        images_fgr[i] = cv2.imread(join(fgr_path,fgr[i]))
+        
+        #ret,binary[i]=cv2.threshold(imgBlur[i],80,255,cv2.THRESH_BINARY) #二值化
+        imgBlur[i] = cv2.GaussianBlur(images_pha[i], (5, 5), 0)
+        gray_img[i] = cv2.cvtColor(imgBlur[i],cv2.COLOR_BGR2GRAY)
+        
+        kernel = np.ones((5, 5),np.uint8)
+        imgErode[i] = cv2.erode(gray_img[i], kernel, iterations = 4)
+        imgDil[i] = cv2.dilate(imgErode[i], kernel, iterations = 4)
+
+        ret,bin_img[i] = cv2.threshold(imgDil[i],80,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+        contours, hierarchy[i] = cv2.findContours(bin_img[i],cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+        ext[i] = cv2.drawContours(imgBlur[i],contours,-1,(255,255,255),3)
+
+        
+        cv2.imwrite(savefile_path +filester+"_old.jpg",images_pha[i])
+        cv2.imwrite(savefile_path +filester+"_img.jpg",ext[i])
+        
+
+        # contours, hierarchy[i]	=cv.findContours(images_pha[i],mode= RETR_LIST,method = CHAIN_APPROX_SIMPLE
+        #     ,contours[, hierarchy[, offset]]])
+       
+
+       
+        
+                 
+
 
 if __name__ == '__main__':
-    takePhoto() #takePhoto
-    # photo_path = '/home/user/matting/imagedata/bgr/2.jpg'
-    # Line_chart(photo_path)
-    #equalization(photo_path)
-    #Line_chart("/home/user/matting/equal_bgr.jpg")
+    #takePhoto() #takePhoto
+    dataset_root_path = r"/home/user/matting/img_output/"
+    pha_path = os.path.join(dataset_root_path,"pha")
+    com_path = os.path.join(dataset_root_path,"com")
+    fgr_path = os.path.join(dataset_root_path,"fgr")
+    opening(pha_path,com_path,fgr_path)
 
 
    

@@ -110,33 +110,141 @@ savefile_path = "/home/user/matting/preprocessingfile/"
 #     if cv2.waitKey(1) & 0xFF == ord('q'):
 #         break
 
+def empty(a):
+    pass
+
+
+
+def takePhoto():
+    img_savefile = "/home/user/matting/imagedata/img/"
+
+    cam = cv2.VideoCapture(0)
+    cam.set(3,1920)
+    cam.set(4,1080)
+    if not cam.isOpened() | cam.isOpened():
+        print("Cannot open camera")
+        exit()
+    fps = 60
+
+    i = 0
+    while(True):
+        ret,frame = cam.read()
+        k = cv2.waitKey(1)
+        if k == 27:
+            break
+        elif k==ord('s'):
+            cv2.imwrite(img_savefile+str(i)+'.jpg',frame)
+            i+=1
+        cv2.imshow("capture",frame)
+    cam.release()
+    cam.destroyAllWindows()
+
+
 def opening(pha_path,com_path,fgr_path):
-    # sorted(os.listdir(pha_path))
-    # print(pha_path)
-    #count = len(imglist)
-    onlyfiles = [ f for f in listdir(pha_path) if isfile(join(pha_path,f)) ]
+      
+    pha = [ f for f in listdir(pha_path) if isfile(join(pha_path,f))]
+    com = [ f for f in listdir(com_path) if isfile(join(com_path,f))]
+    fgr = [ f for f in listdir(fgr_path) if isfile(join(fgr_path,f))]
+
+    #排序
+    pha.sort(key = lambda i: int(i.rstrip('_pha.jpg')))
+    com.sort(key = lambda i: int(i.rstrip('_com.png')))
+    fgr.sort(key = lambda i: int(i.rstrip('_fgr.jpg')))
     
-    images = np.empty(len(onlyfiles), dtype=object) 
-    imgBlur = np.empty(len(onlyfiles), dtype=object)
-    imgGray = np.empty(len(onlyfiles), dtype=object)
-    binary = np.empty(len(onlyfiles), dtype=object)
+    img_count = len(pha)
+    
+    images_pha = np.empty(img_count, dtype=object) 
+    images_com = np.empty(img_count, dtype=object)
+    images_fgr = np.empty(img_count, dtype=object)
 
+    imgBlur = np.empty(img_count, dtype=object)
+    imgGray = np.empty(img_count, dtype=object)
+    binary = np.empty(img_count, dtype=object)
+    imgErode = np.empty(img_count, dtype=object)
+    imgDil = np.empty(img_count, dtype=object)
+    imgCanny = np.empty(img_count, dtype=object)
+    imgDil2 = np.empty(img_count, dtype=object)
 
-    onlyfiles.sort()
-    print(onlyfiles)
-    for i in range(0, len(onlyfiles)): 
+    test = np.empty(img_count, dtype=object)
+
+    for i in range(0, len(pha)): 
         
-        filester = onlyfiles[i].split("_")[0]
-        #print(filester)
-        images[i] = cv2.imread(join(pha_path,onlyfiles[i]))
+        filester = pha[i].split("_")[0]
+
+        images_pha[i] = cv2.imread(join(pha_path,pha[i]))
+        images_com[i] = cv2.imread(join(com_path,com[i]))
+        images_fgr[i] = cv2.imread(join(fgr_path,fgr[i]))
+        #cv2.imwrite(savefile_path +filester+"_img.jpg",images_pha[i])
+       
+      
+       
+        
+        # kernel = np.ones((5, 5),np.uint8)
+        # imgErode[i] = cv2.erode(images_pha[i], kernel, iterations =5)
+        # imgDil[i] = cv2.dilate(imgErode[i], kernel, iterations = 5)
+        
+        imgGray[i] = cv2.cvtColor(images_pha[i], cv2.COLOR_BGR2GRAY)
+        imgBlur[i] = cv2.GaussianBlur(imgGray[i], (5, 5), 3)
+        #cv2.imwrite(savefile_path +filester+"_imgBlur1.jpg",imgBlur[i])
+        
+        ret,binary[i]=cv2.threshold(imgBlur[i],80,255,cv2.THRESH_BINARY) #二值化
+        #binary[i]  = cv2.adaptiveThreshold(imgBlur[i],255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,15,3)
+        
+
+        kernel = np.ones((3, 3),np.uint8)
+        imgErode[i] = cv2.erode(binary[i], kernel, iterations =3)
+        imgDil[i] = cv2.dilate(imgErode[i], kernel, iterations = 4)
+
+        imgCanny[i] = cv2.Canny(imgDil[i],10,255)
+        
+
+        kernel = np.ones((5, 5),np.uint8)
+        imgDil2[i] = cv2.dilate(imgCanny[i], kernel, iterations=1)
+        cv2.imwrite(savefile_path +filester+"_img.jpg",binary[i])
+
+        
+
+
+        
+#     #success, img = cap.read()
+#     imgContour = img.copy()
+
+
+
+
+#     threshold1 = cv2.getTrackbarPos("Threshold1", "Parameters")
+#     threshold2 = cv2.getTrackbarPos("Threshold2", "Parameters")
+#     ret,binary=cv2.threshold(imgGray,140,255,cv2.THRESH_BINARY) #二值化
+    
+#     imgCanny = cv2.Canny(binary,threshold1,threshold2)
+    
+
+#     kernel = np.ones((5, 5),np.uint8)
+#     imgDil = cv2.dilate(imgCanny, kernel, iterations=1)
+
+#     getContours(imgDil,imgContour)
+
+
+        
+        
+
+        
+        
+        
+        #cv2.dilate(images_pha[i], kernel, iterations=5)
+        # cv2.imwrite(savefile_path +filester+"_imgBlur.jpg",imgDil[i])
+        #cv2.cvtColor(images_com[i], cv2.COLOR_BGR2GRAY)
+        #ret,binary[i]=cv2.threshold(images_pha[i],140,255,cv2.THRESH_BINARY) #二值化
+        # test[i] = cv2.bitwise_xor(images_pha[i], images_com[i])
+
         # cv2.imshow('a',images[i]) 
-        imgBlur[i] = cv2.GaussianBlur(images[i], (11, 11), 20)
+        # imgBlur[i] = cv2.GaussianBlur(images_pha[i], (11, 11), 10)
 
-        imgGray[i] = cv2.cvtColor(imgBlur[i], cv2.COLOR_BGR2GRAY)
+        # imgGray[i] = cv2.cvtColor(imgBlur[i], cv2.COLOR_BGR2GRAY)
 
-        ret,binary[i]=cv2.threshold(imgGray[i],140,255,cv2.THRESH_BINARY) #二值化
+        # ret,binary[i]=cv2.threshold(imgGray[i],100,255,cv2.THRESH_BINARY) #二值化
 
-        cv2.imwrite(savefile_path +filester+"_imgBlur.jpg",binary[i])
+        #cv2.imwrite(savefile_path +filester+"_imgBlur.jpg",images_pha[i])
 
 
         
@@ -162,6 +270,7 @@ def opening(pha_path,com_path,fgr_path):
 
 
 if __name__ == '__main__':
+    #takePhoto() #takePhoto
     dataset_root_path = r"/home/user/matting/img_output/"
     pha_path = os.path.join(dataset_root_path,"pha")
     com_path = os.path.join(dataset_root_path,"com")
