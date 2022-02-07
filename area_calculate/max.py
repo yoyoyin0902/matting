@@ -409,20 +409,59 @@ def getinformation(result,image_path):
 		cv2.destroyAllWindows()
 		 
 
-			
+def turn(image_path):
+
+	img=cv2.imread(image_path)
+	imgGray = cv2.imread(image_path,0)
+
+	img2 = cv2.medianBlur(imgGray,39)
+
+	ret,thresh1=cv2.threshold(img2,50,255,cv2.THRESH_BINARY)
+
+	#形态学运算中的开运算（opening）:先腐蚀再膨胀
+	kernel = np.ones((5,5),np.uint8)
+	opening = cv2.morphologyEx(thresh1, cv2.MORPH_OPEN, kernel)
+	contours, hierarchy = cv2.findContours(opening, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+
+	cnt = contours[0]
+	rect = cv2.minAreaRect(cnt)
+	box = cv2.boxPoints(rect)
+	box = np.int0(box)
+	cv2.drawContours(img, [box], 0, (0, 0, 255), 2)
+	x,y,w,h = cv2.boundingRect(cnt) #（x,y）是旋转的边界矩形左上角的点，w ,h分别是宽和高
+
+	o1,o2 = rect[0]
+	o1 = int(o1)
+	if w < h:
+		angle = int(rect[2])
+		M = cv2.getRotationMatrix2D((o1, o2), angle, 1)
+		rows, cols = img.shape[:2]
+		print('left')
+		# print(rows,cols)
+		dst = cv2.warpAffine(img, M, (cols, rows))
+		cv2.imshow("image1",dst)
+
+	if w > h:
+		angle = 90 + int(rect[2])
+		M = cv2.getRotationMatrix2D((o1, o2), angle, 1)
+		rows, cols = img.shape[:2]
+		# print(rows,cols)
+		dst = cv2.warpAffine(img, M, (cols, rows))
+		print('right')
+		cv2.imshow("image",dst)
+
+	cv2.waitKey(0)
+	cv2.destroyAllWindows()
 
 
-	
-	
-	
-	# bb =cv2.rectangle(aa, (xmin,height-ymax), (xmax-1,height-ymin-1),(0,255,0), thickness=1, lineType=8, shift=0)
 
-	# cv2.imshow("image",bb)
-	# cv2.waitKey(0)
-	# cv2.destroyAllWindows()
 
-	# def getinformation(result):
-	# 	print(result)
+
+
+
+
+
+
 
 
 
@@ -441,9 +480,10 @@ if __name__ == '__main__':
 	# dataset_root_path = r"/home/user/matting/img_output/"
 	# image_path = os.path.join(dataset_root_path,"com")
 	# print(image_path)
-	image_path="15484244577811.jpg"
+	image_path="15483951094941.jpg"
 	#maxmalRectangle(image_path)
-	find_max_rectangle(image_path)
+	turn(image_path)
+	#find_max_rectangle(image_path)
 	
 
 	

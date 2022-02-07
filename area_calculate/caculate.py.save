@@ -1,0 +1,17 @@
+import numpy
+from PIL import Image
+
+def pret
+def pretreatment(ima):
+    ima=ima.convert('L')         #转化为灰度图像
+    im=numpy.array(ima)        #转化为二维数组
+    for i in range(im.shape[0]):#转化为二值矩阵
+        for j in range(im.shape[1]):
+            if im[i,j]==75 or im[i,j]==76:
+                im[i,j]=1
+            else:
+                im[i,j]=0
+    return im
+
+ima = Image.open('')
+im = 
