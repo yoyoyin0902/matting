@@ -212,12 +212,14 @@ class Solution:
 
         height, width = len(matrix), len(matrix[0])
         curr, result = [0]*width, 0
+        
+        #print(curr)
 
 
         for height in matrix:
             for i in range(width):
                 curr[i] = curr[i] + 1 if height[i] == 1 else 0
-            print(curr)
+            #print(curr)
             result = max(self.maxHist(curr), result)
         return result
     
@@ -236,20 +238,27 @@ class Solution:
         # Run through all bars of given
         # histogram (or row)
         i = 0
+        
+        #print(len(row))
         while (i < len(row)):
  
             # If this bar is higher than the
             # bar on top stack, push it to stack
-            if (len(result) == 0) or (row[result[-1]] <= row[i]):
+            print( row[i])
+            if (len(result) == 0) or (row[result[-1]] <= row[i]):   
+                
                 result.append(i)
+                
                 i += 1
             else:
  
                 top_val = row[result.pop()]
+                #print(top_val)
                 area = top_val * i
  
                 if (len(result)):
                     area = top_val * (i - result[-1] - 1)
+                    #print(area)
                 max_area = max(area, max_area)
         while (len(result)):
             top_val = row[result.pop()]
@@ -277,6 +286,12 @@ if __name__ == '__main__':
 
     print(height) #m
     print(width) #n
+
+    A = [ [0, 0, 0, 0],
+      [1, 1, 1, 1],
+      [1, 1, 1, 1],
+      [1, 1, 1, 0],
+      [1, 1, 0, 0]]
 
     # list_string  = List[List[map(str,A)]]
     # print(A)
