@@ -1,7 +1,11 @@
+import os
 import cv2
 import time
 import math
+import tracemalloc 
 import numpy as np
+from os import listdir
+from os.path import isfile, join
 import matplotlib.pyplot as plt
 
 
@@ -403,78 +407,249 @@ def find_max_rectangle(image_path):
 	# cv2.destroyAllWindows()	
 	return results
 
-
-def houngh_transform(image_path):
-
-	img = cv2.imread(image_path)
-	gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-	# cv2.imshow("img",img)
-	edges = cv2.Canny(img,50,255) 
-
-	lsd = cv2.createLineSegmentDetector(1)
-
-	dlines = lsd.detect(gray)
-	#drawn_img = lsd.drawSegments(img,dlines)
-	# print(dlines[0][0][0])
-
-	ver_lines = []
-	coordinate 	= []
-
-	max_value = None
-	# for line in lines:
-		# angletan = math.degrees(math.atan2((round(line[0][3],2)-round(line[0][1],2)),(round(line[0][2],2)-round(line[0][0],2))))
-    	
-	# 	if (angletan >85 and angletan <95):
-	# 		ver_lines.append(line)
-
-	# drawn_img = lsd.drawSegments(img,dlines)
-
-	for dline in dlines[0]:
-		x0 = int(round(dline[0][0]))
-		y0 = int(round(dline[0][1]))
-		x1 = int(round(dline[0][2]))
-		y1 = int(round(dline[0][3]))
-		# print("{0},{1}".format(x0,y0))
-		# print("{0},{1}".format(x1,y1))
-		distance = math.sqrt((x0-x1)**2+(y0-y1)**2)
-		# print(distance)
-		ver_lines.append(distance)
-		a = findIndex(ver_lines)
-
-		# print(max_value)
-		if(distance >=a):
-			cv2.line(img,(x0,y0),(x1,y1),(0,255,0),2,cv2.LINE_AA)
-			
-			coordinate.append(([x0,y0],[x1,y1]))
-			
-	print(coordinate)
-	# print(ver_lines)
-	# print()
-
-	# for num in ver_lines:
-	# 	if(max_value is None or num > max_value):
-	# 		max_value = num
-	# print('Maximum value:', max_value)
-
-	cv2.imshow("LSD", img)
-
-
-def findIndex(list):
-    m1 = max(list)
-    x2 = list.copy()
+def max2(x):
+    m1 = max(x)
+    x2 = x.copy()
     x2.remove(m1)
     m2 = max(x2)
-    return m2 
+    return m1,m2  
+
+def transform(image_path,original_path):
+	# img_savefile = "/home/user/matting/area_calculate/save"
+
+	if image_path is None:
+		print("no picture in there~~")
+		return -1 
+
+	img = [ f for f in listdir(image_path) if isfile(join(image_path,f))]
+	orig_img = [ f for f in listdir(original_path) if isfile(join(original_path,f))]
+
+	#排序
+	img.sort(key = lambda i: int(i.rstrip('.jpg')))
+	orig_img.sort(key = lambda i: int(i.rstrip('.jpg')))
 	
+	img_count = len(img)
+	
+	img_pha = np.empty(img_count, dtype=object)
+	img_com = np.empty(img_count, dtype=object)
+	gray = np.empty(img_count, dtype=object)
+	dlines = np.empty(img_count, dtype=object)
+	lsd = np.empty(img_count, dtype=object)
+	dline = np.empty(img_count, dtype=object)
+	maxIndex = np.empty(img_count, dtype=object)
+
+	x0 = np.empty(img_count, dtype=object)
+	y0 = np.empty(img_count, dtype=object)
+	x1 = np.empty(img_count, dtype=object)
+	y1 = np.empty(img_count, dtype=object)
+	distance = np.empty(img_count, dtype=object)
+	coordinate = np.empty(img_count, dtype=object)
+	ver_lines = np.empty(img_count, dtype=object)
+
+	circle_x = np.empty(img_count, dtype=object)
+	circle_y = np.empty(img_count, dtype=object)
+
+	line1 = np.empty(img_count, dtype=object)
+	line2 = np.empty(img_count, dtype=object)
+	
+	for i in range(0,len(img)):
+		filester = img[i].split(".")[0]
+		
+
+		img_pha[i] = cv2.imread(join(image_path,img[i]))
+		img_com[i] = cv2.imread(join(original_path,orig_img[i]))
+
+		gray[i] = cv2.cvtColor(img_pha[i],cv2.COLOR_BGR2GRAY)
+
+		lsd[i] = cv2.createLineSegmentDetector(0)
+	
+		dlines[i] = lsd[i].detect(gray[i])
+
+		ver_lines[i] = []
+		coordinate[i] = []
+
+		for dline[i] in dlines[i][0]:
+			# print(dline[i])
+			x0[i] = int(round(dline[i][0][0]))
+			y0[i] = int(round(dline[i][0][1]))
+			x1[i] = int(round(dline[i][0][2]))
+			y1[i] = int(round(dline[i][0][3]))
+			distance[i] = math.sqrt((x0[i]-x1[i])**2+(y0[i]-y1[i])**2)
+			ver_lines[i].append(distance[i])
+
+		maxIndex[i] = max2(ver_lines[i])
+
+		for dline[i] in dlines[i][0]:
+			# # print(dline[i])
+			x0[i] = int(round(dline[i][0][0]))
+			y0[i] = int(round(dline[i][0][1]))
+			x1[i] = int(round(dline[i][0][2]))
+			y1[i] = int(round(dline[i][0][3]))
+			distance[i] = math.sqrt((x0[i]-x1[i])**2+(y0[i]-y1[i])**2)
+			# # print(distance[i])
+
+			# ver_lines[i].append(distance[i])
+			
+			if(distance[i] >= int(maxIndex[i][1])):
+				cv2.line(img_com[i],(x0[i],y0[i]),(x1[i],y1[i]),(0,255,0),2,cv2.LINE_AA)
+			
+				coordinate[i].append(((x0[i],y0[i]),(x1[i],y1[i])))
+
+		# print(coordinate[i])
+
+		line1[i] = math.sqrt((coordinate[i][0][1][0]-coordinate[i][1][1][0])**2+(coordinate[i][0][1][1]-coordinate[i][1][1][1])**2)
+		
+
+		line2[i] = math.sqrt((coordinate[i][0][0][0]-coordinate[i][1][0][0])**2+(coordinate[i][0][0][1]-coordinate[i][1][0][1])**2)
+			
+		if(line1[i] > line2[i]):
+			cv2.line(img_com[i],coordinate[i][0][1],coordinate[i][1][1],(255,0,0),2,cv2.LINE_AA)
+			circle_x[i] = (coordinate[i][0][1][0] + coordinate[i][1][1][0])/2
+			circle_y[i] = (coordinate[i][0][1][1] + coordinate[i][1][1][1])/2
+
+		else:
+			cv2.line(img_com[i],coordinate[i][0][0],coordinate[i][1][0],(255,0,0),2,cv2.LINE_AA)
+			circle_x[i] = (coordinate[i][0][0][0] + coordinate[i][1][0][0])/2
+			circle_y[i] = (coordinate[i][0][0][1] + coordinate[i][1][0][1])/2
+		
+	
+		cv2.circle(img_com[i],(int(circle_x[i]),int(circle_y[i])),2,(0,0,255),2)	
+
+		cv2.imwrite(savefile_path + filester+".jpg",img_com[i])
+	
+	del(img_pha,img_com,gray,dlines,lsd,dline,maxIndex,x0,y0,x1,y1,distance,coordinate,circle_x,circle_y,line1,line2)
+
+#circle_transform
+def circle_transform(image_path,original_path):
+
+	if image_path is None:
+		print("no picture in there~~")
+		return -1 
+
+	img = [ f for f in listdir(image_path) if isfile(join(image_path,f))]
+	orig_img = [ f for f in listdir(original_path) if isfile(join(original_path,f))]
+	print(img)
+
+	#排序
+	img.sort(key = lambda i: int(i.rstrip('.jpg')))
+	orig_img.sort(key = lambda i: int(i.rstrip('.jpg')))
+	
+	img_count = len(img)
+
+	img_pha = np.empty(img_count, dtype=object)
+	img_com = np.empty(img_count, dtype=object)
+	gray = np.empty(img_count, dtype=object)
+	edges = np.empty(img_count, dtype=object)
+	hierarchy = np.empty(img_count, dtype=object)
+	center_x = np.empty(img_count,dtype=object)
+	center_y = np.empty(img_count,dtype=object)
+	M_point = np.empty(img_count,dtype=object)
+
+	for i in range(0,len(img)):
+		filester = img[i].split(".")[0]
+		
+		img_pha[i] = cv2.imread(join(image_path,img[i]))
+		img_com[i] = cv2.imread(join(original_path,orig_img[i]))
+
+		gray[i] = cv2.cvtColor(img_pha[i],cv2.COLOR_BGR2GRAY)
+		edges[i] = cv2.Canny(gray[i], 70, 210)
+
+		contours, hierarchy[i] = cv2.findContours(edges[i], cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+		M_point = cv2.moments(contours[0])
+		# print(M_point)
+		cv2.drawContours(img_pha[i], contours, -1, (0, 0, 255), 2)
+		
+
+		center_x[i] = int(M_point['m10']/M_point['m00'])
+		center_y[i] = int(M_point['m01']/M_point['m00'])
+		drawCenter = cv2.circle(img_pha[i],(int(center_x[i]),int(center_y[i])),2,(255,0,0),2)
+
+		# cv2.imshow('src', img_pha[i])
+	
+		cv2.imwrite(savefile_path + filester+".jpg",img_pha[i])
+
+	del(img_pha,img_com,gray,edges,hierarchy,center_x,center_y,M_point)
+
+		
+	#-----------------------------------------one_picture-------------------------------------------------#
+	# img = cv2.imread(image_path)
+	# orig_img = cv2.imread(original_path)
+
+	# gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+	# # cv2.imshow("img",img)
+	# # circle_transform(gray)
+	# edges = cv2.Canny(img,50,255) 
+
+	# lsd = cv2.createLineSegmentDetector(0)
+
+	# dlines = lsd.detect(gray)
+	# print(dlines)
+	# #drawn_img = lsd.drawSegments(img,dlines)
+	# # print(dlines[0][0][0])
+
+	# ver_lines = []
+	# coordinate 	= []
+
+	# max_value = None
+	
+	# for dline in dlines[0]:
+	# 	x0 = int(round(dline[0][0]))
+	# 	y0 = int(round(dline[0][1]))
+	# 	x1 = int(round(dline[0][2]))
+	# 	y1 = int(round(dline[0][3]))
+	# 	distance = math.sqrt((x0-x1)**2+(y0-y1)**2)
+	# 	print(distance)
+		
+	# 	if(distance >=100):
+	# 		cv2.line(orig_img[i],(x0,y0),(x1,y1),(0,255,0),2,cv2.LINE_AA)
+			
+	# 		coordinate.append(((x0,y0),(x1,y1)))
+
+		
+	# cv2.line(orig_img,coordinate[0][0],coordinate[1][0],(255,0,0),2,cv2.LINE_AA)
+	# circle_x = (coordinate[0][0][0] + coordinate[1][0][0])/2
+	# circle_y = (coordinate[0][0][1] + coordinate[1][0][1])/2
+	# print(circle_x)
+	# print(circle_y)
+	# cv2.circle(orig_img,(int(circle_x),int(circle_y)),2,(0,0,255),2)
+	# cv2.imshow("LSD", orig_img)
+	#-----------------------------------------one_picture-------------------------------------------------#
+
+# def circle_transform(gray_img):
+# 	cv2.imshow('res',gray_img)
+# 	cv2.waitKey(0)
+
+# 	circles = cv2.HoughCircles(gray_img,cv2.HOUGH_GRADIENT,1,20,param1=50,param2=30,minRadius=0,maxRadius=0)
+# 	print(circles)
+# 	# print(len(circles[0]))
+# 	for circle in circles[0]:
+# 		print(circle[2])
+# 		x = int(circle[0])
+# 		y = int(circle[1])
+# 		r = int(circle[2])
+# 		img=cv2.circle(gray_img,(x,y),r,(0,0,255),-1)
+# 	cv2.imshow('res',img)
 
 	
-	
-
+savefile_path = "/home/user/matting/area_calculate/save/"
 
 if __name__ == '__main__':
 
-	image_path="1928391.jpg"
-	houngh_transform(image_path)
+	tracemalloc.start() 
+	# my_complex_analysis_method() 
+	current, peak = tracemalloc.get_traced_memory() 
+
+	dataset_root_path = r"/home/user/matting/area_calculate/"
+	image_path = os.path.join(dataset_root_path,"img")
+	original_path = os.path.join(dataset_root_path,"orig_img")
+
+	
+	circle_transform(image_path,original_path)
+	transform(image_path,original_path)
+	print(f"Current memory usage is {current / 10**6}MB; Peak was {peak / 10**6}MB")
+
+
+	tracemalloc.stop() 
 	# a=find_max_rectangle(image_path)
 	# print(a)
 	# cv2.imshow("image",real_image)
