@@ -91,8 +91,12 @@ def circle_transform(img,orig):
 
     drawCenter = cv2.circle(orig,(int(center_x),int(center_y)),2,(255,0,0),2)
 
+def circle_check(contour):
+    perimeter = cv2.arcLength(contour, True)  #週長
+    area = cv2.contourArea(contour)  #面積
+    alpha = 4*np.pi*area/(perimeter**2)
+    return alpha , area, perimeter
     
-
 
 if __name__ == '__main__':
     show_memory_info('initial')
@@ -101,7 +105,7 @@ if __name__ == '__main__':
 
     image_path = os.path.join(dataset_root_path,"img")
     original_path = os.path.join(dataset_root_path,"orig_img")
-    print(original_path)
+    # print(original_path)
 
     # if image_path is None:
     #     print("no picture in there~~")
@@ -114,44 +118,45 @@ if __name__ == '__main__':
     img.sort(key = lambda i: int(i.rstrip('.jpg')))
     orig_img.sort(key = lambda i: int(i.rstrip('.jpg')))
     
-    img_pha = np.empty(len(img), dtype=object)
-    img_com = np.empty(len(img), dtype=object)
-    gray = np.empty(len(img), dtype=object)
-    edges = np.empty(len(img), dtype=object)
-    hierarchy = np.empty(len(img), dtype=object)
-    approx1 = np.empty(len(img), dtype=object)
-    cnt = np.empty(len(img), dtype=object)
+    img_pha = np.empty(len(img), dtype = object)
+    img_com = np.empty(len(img), dtype = object)
+    gray = np.empty(len(img), dtype = object)
+
+
+    edges = np.empty(len(img), dtype = object)
+    hierarchy = np.empty(len(img), dtype = object)
+
+    contours = np.empty(len(img), dtype = object)
+    contour = np.empty(len(img), dtype = object)
+    parameter = np.empty(len(img), dtype = object)
 
     for i in range(0, len(img)):
         filester = img[i].split(".")[0]
         
         img_pha[i] = cv2.imread(join(image_path,img[i]))
-        print(img_pha[i])
+        # print(img_pha[i])
         img_com[i] = cv2.imread(join(original_path,orig_img[i]))
 
         gray[i] = cv2.cvtColor(img_pha[i],cv2.COLOR_BGR2GRAY)
+
         edges[i] = cv2.Canny(gray[i], 70, 210)
         
-        contours, hierarchy[i] = cv2.findContours(edges[i], cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        contours, hierarchy[i] = cv2.findContours(edges[i], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         
-        cnt[i] = contours[0]
+        parameter[i] = circle_check(contours[0])
+        print('alpha:{0:>7,.0f} area:{1:>9,.2f} perimeter:{2:>7,.3f}'.format(parameter[i][1], parameter[i][2], parameter[i][0]))
+        # perimeter[i] = cv2.arcLength(contours[0], True)  #週長
+        # area[i] = cv2.contourArea(contours[0])
+        # alpha[i] = 4*np.pi*area[i]/(perimeter[i]**2) 
+        # print(parameter[i][0])
 
-        approx1[i] = cv2.approxPolyDP(cnt[i], 20, True)
-        # print(len(approx1[i]))
-
-        if(len(approx1[i]) > 4):
+        if parameter[i][0] > 0.8:
             circle_transform(img_pha[i],img_com[i])
         else:
             line_Segment(img_pha[i],img_com[i])
 
         cv2.imwrite(savefile_path +filester+".jpg",img_com[i])
 
-
-
-        # cv2.polylines(img_com[i], [approx1[i]], True, (255, 0, 0), 2)
-
-        # cv2.imwrite(savefile_path + filester+".jpg",img_com[i]
-
-    del(img_pha,img_com,gray,edges,hierarchy,approx1,cnt)
+    del(img_pha,img_com,gray,edges,hierarchy,contours,contour,parameter)
     gc.collect()
     show_memory_info('finished')
