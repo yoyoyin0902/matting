@@ -144,7 +144,7 @@ if __name__ == '__main__':
         contours, hierarchy[i] = cv2.findContours(edges[i], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         
         parameter[i] = circle_check(contours[0])
-        print('alpha:{0:>7,.0f} area:{1:>9,.2f} perimeter:{2:>7,.3f}'.format(parameter[i][1], parameter[i][2], parameter[i][0]))
+        print('area:{0:>7,.0f} perimeter :{1:>9,.2f} alpha:{2:>7,.3f}'.format(parameter[i][1], parameter[i][2], parameter[i][0]))
         # perimeter[i] = cv2.arcLength(contours[0], True)  #週長
         # area[i] = cv2.contourArea(contours[0])
         # alpha[i] = 4*np.pi*area[i]/(perimeter[i]**2) 
