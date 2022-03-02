@@ -1,77 +1,313 @@
 import os
-import numpy as np 
+import gc
 import cv2
 import time
 import math
-import matplotlib.pyplot as plt
-from collections import defaultdict
+import psutil
+import tracemalloc 
+import numpy as np
+from os import listdir
+from os.path import isfile, join
 
-def max2(x):
-    m1 = max(x)
-    x2 = x.copy()
-    x2.remove(m1)
-    m2 = max(x2)
-    return m1,m2  
 
-def line_Segment(img):
+savefile_path = "/home/user/matting/area_calculate/test/"
+
+def FillHole(imgPath):
+
+    # 复制 im_in 图像
+    im_floodfill = imgPath.copy()
     
-    ver_lines=[]
-    coordinate=[]
-
-    gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-
-    lsd = cv2.createLineSegmentDetector(0)
-    dlines = lsd.detect(gray)
-
-    for dline in dlines[0]:
-        x0 = int(round(dline[0][0])) 
-        y0 = int(round(dline[0][1])) 
-        x1 = int(round(dline[0][2]))
-        y1 = int(round(dline[0][3]))
-        distance = math.sqrt((x0-x1)**2+(y0-y1)**2)
-        ver_lines.append(distance)
-    maxIndex = max2(ver_lines)
-
-    for dline in dlines[0]:
-        x0 = int(round(dline[0][0]))
-        y0 = int(round(dline[0][1]))
-        x1 = int(round(dline[0][2]))
-        y1 = int(round(dline[0][3]))
-        
-        distance = math.sqrt((x0-x1)**2+(y0-y1)**2)
-        # # print(distance[i])
-
-		# ver_lines[i].append(distance[i])
-			
-        if(distance >= int(maxIndex[1])):
-            cv2.line(img,(x0,y0),(x1,y1),(0,255,0),2,cv2.LINE_AA)
-            plt.axline((x0,y0), (x1,y1), linewidth=2, color="r",marker='o')
-            plt.show()
-            coordinate.append(((x0,y0),(x1,y1)))
+    # Mask 用于 floodFill，官方要求长宽+2
+    h, w = imgPath.shape[:2]
+    mask = np.zeros((h+2, w+2), np.uint8)
     
-    # line1 = math.sqrt((coordinate[0][1][0]-coordinate[1][1][0])**2+(coordinate[0][1][1]-coordinate[1][1][1])**2)
-    # line2 = math.sqrt((coordinate[0][0][0]-coordinate[1][0][0])**2+(coordinate[0][0][1]-coordinate[1][0][1])**2)
-        
-    # if(line1 > line2):
-    #     cv2.line(img,coordinate[0][1],coordinate[1][1],(255,0,0),2,cv2.LINE_AA)
-    #     circle_x = (coordinate[0][1][0] + coordinate[1][1][0])/2
-    #     circle_y = (coordinate[0][1][1] + coordinate[1][1][1])/2
-    # else:
-    #     cv2.line(orig,coordinate[0][0],coordinate[1][0],(255,0,0),2,cv2.LINE_AA)
-    #     circle_x = (coordinate[0][0][0] + coordinate[1][0][0])/2
-    #     circle_y = (coordinate[0][0][1] + coordinate[1][0][1])/2
-		
-    # cv2.circle(img,(int(circle_x),int(circle_y)),2,(0,0,255),2)	
-        # cv2.imwrite(savefile_path + filester+".jpg",img_com[i])
-    cv2.imshow("img",img)
+    # floodFill函数中的seedPoint必须是背景
+    isbreak = False
+    for i in range(im_floodfill.shape[0]):
+        for j in range(im_floodfill.shape[1]):
+            if(im_floodfill[i][j]==0):
+                seedPoint=(i,j)
+                isbreak = True
+                break
+        if(isbreak):
+            break
+    # 得到im_floodfill
+    cv2.floodFill(im_floodfill, mask, seedPoint, 255)
+
+    # 得到im_floodfill的逆im_floodfill_inv
+    im_floodfill_inv = cv2.bitwise_not(im_floodfill)
+    # 把im_in、im_floodfill_inv这两幅图像结合起来得到前景
+    im_out = imgPath | im_floodfill_inv
+
+    return im_out
+     
+    # 保存结果
+    # cv2.imwrite(SavePath, im_out)
+
+def retangle_area(coordinate_0,coordinate_1,coordinate_3):
+    w = coordinate_1[0] - coordinate_0[0]
+    h = coordinate_3[1] - coordinate_0[1]
+    area = w*h
+    return area
+
+def circle_area(radius):
+    pi = 3.1415926
+    area = radius * radius * pi
+    return area
 
 
 if __name__ == '__main__':
 
-    image_path = "29_img.jpg"
-    img_pha = cv2.imread(image_path)
-    line_Segment(img_pha)
-    cv2.waitKey(0)
+    dataset_root_path = r"/home/user/matting/area_calculate/"
+
+    image_path = os.path.join(dataset_root_path,"img")
+    original_path = os.path.join(dataset_root_path,"orig_img")
+
+    img = [ f for f in listdir(image_path) if isfile(join(image_path,f))]
+    orig_img = [ f for f in listdir(original_path) if isfile(join(original_path,f))]
+
+    #排序
+    img.sort(key = lambda i: int(i.rstrip('.jpg')))
+    orig_img.sort(key = lambda i: int(i.rstrip('.jpg')))
+
+    img_pha = np.empty(len(img), dtype = object)
+    img_com = np.empty(len(img), dtype = object)
+    gray = np.empty(len(img), dtype = object)
+    edges = np.empty(len(img), dtype = object)
+    hierarchy = np.empty(len(img), dtype = object)
+    drawContours = np.empty(len(img), dtype = object)
+    bin_image = np.empty(len(img), dtype = object)
+    # floodfill = np.empty(len(img), dtype = object)
+    # h = np.empty(len(img), dtype = object)
+    # w = np.empty(len(img), dtype = object)
+    # mask = np.empty(len(img), dtype = object)
+    
+    # floodfill_block = np.empty(len(img), dtype = object)
+    fill_out = np.empty(len(img), dtype = object)
+    img2 = np.empty(len(img), dtype = object)
+    areas = np.empty(len(img), dtype = object)
+    max_rect = np.empty(len(img), dtype = object)
+    max_box = np.empty(len(img), dtype = object)
+    retangleArea = np.empty(len(img), dtype = object)
+    circleArea = np.empty(len(img), dtype = object)
+
+    max_id = np.empty(len(img), dtype = object)
+    thingarea = np.empty(len(img), dtype = object)
+
+    pts1 = np.empty(len(img), dtype = object)
+    pts2 = np.empty(len(img), dtype = object)
+    M = np.empty(len(img), dtype = object)
+    dst = np.empty(len(img), dtype = object)
+
+
+    x = np.empty(len(img), dtype = object)
+    y = np.empty(len(img), dtype = object)
+    radius = np.empty(len(img), dtype = object)
+    center  = np.empty(len(img), dtype = object)
+
+    for i in range(0, len(img)):
+        isbreak = False
+        filester = img[i].split(".")[0]
+        img_pha[i] = cv2.imread(join(image_path,img[i]))
+        img_com[i] = cv2.imread(join(original_path,orig_img[i]))
+
+        gray[i] = cv2.cvtColor(img_pha[i],cv2.COLOR_BGR2GRAY)
+
+        ret,bin_image[i] = cv2.threshold(gray[i],127,255,cv2.THRESH_BINARY)
+
+        fill_out[i] = FillHole(bin_image[i])
+
+        # floodfill[i]  = bin_image[i].copy()
+
+        # h[i], w[i] = gray[i].shape[:2]
+        # mask[i] = np.zeros((h[i]+2, w[i]+2), np.uint8)
+        # print(h[i],w[i])
+             
+        # for a in  range(floodfill[i].shape[0]):
+        #     for b in range(floodfill[i].shape[1]):
+        #         if(floodfill[i][a][b] == 0):
+        #             seedPoint = (a,b)
+        #             isbreak = True
+        #             break
+        #     if(isbreak):
+        #         break
+
+        # cv2.floodFill(floodfill[i], mask[i], seedPoint, 255)
+        # floodfill_block[i] = cv2.bitwise_not(floodfill[i]) #要被填滿的空洞
+        # fill_out[i] = bin_image[i] | floodfill_block[i] #把空洞和上面要被填滿的結合
+
+        edges[i] = cv2.Canny(fill_out[i], 70, 210)
+        contours, hierarchy[i] = cv2.findContours(edges[i], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        # print(len(contours))
+
+
+
+        # contours.sort(key = cnt_area, reverse=False)
+        
+
+        
+        drawContours[i] = cv2.drawContours(img_com[i], contours, -1, (0, 0, 255), 2) 
+
+        
+        areas[i] = []
+        for c in range(len(contours)):
+            areas[i].append(cv2.contourArea(contours[c]))
+
+        max_id[i] = areas[i].index(max(areas[i]))
+        cnt = contours[max_id[i]]
+        # print(max_id[i])
+
+        max_rect[i] = cv2.minAreaRect(contours[max_id[i]])
+        max_box[i] = cv2.boxPoints(max_rect[i])
+        
+        #矩形輪廓面積
+        retangleArea[i] = retangle_area(max_box[i][0],max_box[i][1],max_box[i][3])
+        max_box[i] = np.int0(max_box[i])
+
+        thingarea[i] = cv2.contourArea(cnt)
+        print("thingarea:  ",thingarea[i])
+        print("retangleArea:",retangleArea[i])
+        
+        
+        
+        img2[i] = cv2.drawContours(img_com[i],[max_box[i]],0,(0,255,0),2)
+
+        # pts1[i] = np.float32(max_box[i])
+        # pts2[i] = np.float32([[max_rect[i][0][0]+max_rect[i][1][1]/2, max_rect[i][0][1]+max_rect[i][1][0]/2],
+        #               [max_rect[i][0][0]-max_rect[i][1][1]/2, max_rect[i][0][1]+max_rect[i][1][0]/2],
+        #               [max_rect[i][0][0]-max_rect[i][1][1]/2, max_rect[i][0][1]-max_rect[i][1][0]/2],
+        #               [max_rect[i][0][0]+max_rect[i][1][1]/2, max_rect[i][0][1]-max_rect[i][1][0]/2]])
+
+        # print(pts1[i],pts2[i])
+        # M[i] = cv2.getPerspectiveTransform(pts1[i],pts2[i])
+        # dst[i] = cv2.warpPerspective(img2[i], M[i], (img2[i].shape[1],img2[i].shape[0])) 
+        
+
+        (x[i], y[i]), radius[i] = cv2.minEnclosingCircle(cnt)
+        center[i] = (int(x[i]), int(y[i]))
+        radius[i] = int(radius[i])
+        circleArea[i] = circle_area(radius[i])
+        print("circleArea:  ",circleArea[i])
+        print()
+        cv2.circle(img2[i], center[i], radius[i], (255, 0, 0), 2) 
+
+
+        # cv2.imshow("img",img2[i])
+        # cv2.waitKey(0)
+
+        
+
+
+        # print(floodfill[i].shape)
+        cv2.imwrite(savefile_path +filester+"_1.jpg",fill_out[i])
+        cv2.imwrite(savefile_path +filester+".jpg",img2[i])
+
+    
+    del(img_pha,img_com,gray,edges,hierarchy,drawContours,bin_image,fill_out)#
+    # gc.collect()
+
+
+
+        
+
+        
+
+
+        # edges[i] = cv2.Canny(gray[i], 70, 210)
+
+        # contours, hierarchy[i] = cv2.findContours(edges[i], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        # print(len(contours))
+
+        # drawContours[i] = cv2.drawContours(img_com[i], contours, -1, (0, 0, 255), 2) 
+
+
+        # cv2.imwrite(savefile_path +filester+".jpg",bin_image[i])
+
+
+ 
+
+
+
+
+    # img_pha = cv2.imread(image_path)
+
+    # # cv2.imshow("111",img_pha)
+    # img_com = cv2.imread(original_path)
+    
+    # gray = cv2.cvtColor(img_pha,cv2.COLOR_BGR2GRAY)
+    # edges = cv2.Canny(gray, 70, 210)
+    
+    # contours, hierarchy = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    # cnt = contours[13]
+    # #aa = cv2.drawContours(img_com, contours, -1, (0, 0, 255), 2)
+    
+    # areas = []
+    # print(len(contours))
+    # for c in range(len(contours)):
+    #     areas.append(cv2.contourArea(contours[c]))
+
+    # max_id = areas.index(max(areas))
+
+    # max_rect = cv2.minAreaRect(contours[max_id])
+    # max_box = cv2.boxPoints(max_rect)
+    # max_box = np.int0(max_box)
+    # img2 = cv2.drawContours(img_com,[max_box],0,(0,255,0),2)
+
+    # pts1 = np.float32(max_box)
+    # pts2 = np.float32([[max_rect[0][0]+max_rect[1][1]/2, max_rect[0][1]+max_rect[1][0]/2],
+    #                   [max_rect[0][0]-max_rect[1][1]/2, max_rect[0][1]+max_rect[1][0]/2],
+    #                   [max_rect[0][0]-max_rect[1][1]/2, max_rect[0][1]-max_rect[1][0]/2],
+    #                   [max_rect[0][0]+max_rect[1][1]/2, max_rect[0][1]-max_rect[1][0]/2]])
+
+    # M = cv2.getPerspectiveTransform(pts1,pts2)
+    # dst = cv2.warpPerspective(img2, M, (img2.shape[1],img2.shape[0]))  
+
+    # #外接圓
+    # (x, y), radius = cv2.minEnclosingCircle(cnt)
+    # center = (int(x), int(y))
+    # radius = int(radius)
+    # cv2.circle(img2, center, radius, (255, 0, 0), 2)
+
+
+    # cv2.imshow('img2',img2)
+    # #line_Segment(img_pha)
+    # cv2.waitKey(0)
+
+
+ 
+
+ 
+# max_id = areas.index(max(areas))
+ 
+# max_rect = cv2.minAreaRect(contours[max_id])
+# max_box = cv2.boxPoints(max_rect)
+# max_box = np.int0(max_box)
+# img2 = cv2.drawContours(img2,[max_box],0,(0,255,0),2)
+ 
+# pts1 = np.float32(max_box)
+# pts2 = np.float32([[max_rect[0][0]+max_rect[1][1]/2, max_rect[0][1]+max_rect[1][0]/2],
+#                   [max_rect[0][0]-max_rect[1][1]/2, max_rect[0][1]+max_rect[1][0]/2],
+#                   [max_rect[0][0]-max_rect[1][1]/2, max_rect[0][1]-max_rect[1][0]/2],
+#                   [max_rect[0][0]+max_rect[1][1]/2, max_rect[0][1]-max_rect[1][0]/2]])
+# M = cv2.getPerspectiveTransform(pts1,pts2)
+# dst = cv2.warpPerspective(img2, M, (img2.shape[1],img2.shape[0]))
+ 
+# # 此处可以验证 max_box点的顺序
+# color = [(0, 0, 255),(0,255,0),(255,0,0),(255,255,255)]
+# i = 0
+# for point in pts2:
+#     cv2.circle(dst, tuple(point), 2, color[i], 4)
+#     i+=1
+ 
+# target = dst[int(pts2[2][1]):int(pts2[1][1]),int(pts2[2][0]):int(pts2[3][0]),:]
+ 
+ 
+# cv2.imshow('img2',img2)
+# cv2.imshow('dst',dst)
+# cv2.imshow('target',target)
+# cv2.waitKey()
+# cv2.destroyAllWindows()
+
 	
     
     

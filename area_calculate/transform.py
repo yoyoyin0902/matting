@@ -96,6 +96,9 @@ def circle_check(contour):
     area = cv2.contourArea(contour)  #面積
     alpha = 4*np.pi*area/(perimeter**2)
     return alpha , area, perimeter
+
+def shape_detection():
+    
     
 
 if __name__ == '__main__':
