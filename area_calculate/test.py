@@ -8,9 +8,15 @@ import tracemalloc
 import numpy as np
 from os import listdir
 from os.path import isfile, join
+import matplotlib.pyplot as plt
+
 
 
 savefile_path = "/home/user/matting/area_calculate/test/"
+#分類器
+savefile_cirlce = "/home/user/matting/area_calculate/circle/"
+savefile_triangle ="/home/user/matting/area_calculate/triangle/"
+savefile_rectangle =  "/home/user/matting/area_calculate/rectangle/"
 
 def FillHole(imgPath):
 
@@ -55,6 +61,20 @@ def circle_area(radius):
     area = radius * radius * pi
     return area
 
+def circle_check(contour):
+    perimeter = cv2.arcLength(contour, True)  #週長
+    area = cv2.contourArea(contour)  #面積
+    alpha = 4*np.pi*area/(perimeter**2)
+    return alpha , area, perimeter
+
+def plot(grayHist):
+    plt.plot(range(256), grayHist, 'r', linewidth=1.5, c='red')
+    y_maxValue = np.max(grayHist)
+    plt.axis([0, 255, 0, y_maxValue]) # x和y的范围
+    plt.xlabel("gray Level")
+    plt.ylabel("Number Of Pixels")
+    plt.show()
+    # plt.savefig(savefile_path +filester+".jpg")
 
 if __name__ == '__main__':
 
@@ -92,16 +112,28 @@ if __name__ == '__main__':
     circleArea = np.empty(len(img), dtype = object)
 
     max_id = np.empty(len(img), dtype = object)
+    epsilon = np.empty(len(img), dtype = object)
+    approx = np.empty(len(img), dtype = object)
+
     thingarea = np.empty(len(img), dtype = object)
+    parameter = np.empty(len(img), dtype = object)
+
 
     pts1 = np.empty(len(img), dtype = object)
     pts2 = np.empty(len(img), dtype = object)
     M = np.empty(len(img), dtype = object)
     dst = np.empty(len(img), dtype = object)
 
+    h = np.empty(len(img), dtype = object)
+    w = np.empty(len(img), dtype = object)
+    answer = np.empty(len(img), dtype = object)
+    answer1 = np.empty(len(img), dtype = object)
+
 
     x = np.empty(len(img), dtype = object)
     y = np.empty(len(img), dtype = object)
+    grayHist = np.empty(len(img), dtype = object)
+
     radius = np.empty(len(img), dtype = object)
     center  = np.empty(len(img), dtype = object)
 
@@ -110,61 +142,54 @@ if __name__ == '__main__':
         filester = img[i].split(".")[0]
         img_pha[i] = cv2.imread(join(image_path,img[i]))
         img_com[i] = cv2.imread(join(original_path,orig_img[i]))
+        
+        
 
         gray[i] = cv2.cvtColor(img_pha[i],cv2.COLOR_BGR2GRAY)
 
+        # h[i], w[i] = gray[i].shape
+        # grayHist[i] = np.zeros([256], np.uint64)
+        # for c in range(h[i]):
+        #     for d in range(w[i]):
+        #         grayHist[i][gray[i][c][d]] += 1
+        # plot(grayHist[i])
+        
+
         ret,bin_image[i] = cv2.threshold(gray[i],127,255,cv2.THRESH_BINARY)
 
-        fill_out[i] = FillHole(bin_image[i])
-
-        # floodfill[i]  = bin_image[i].copy()
-
-        # h[i], w[i] = gray[i].shape[:2]
-        # mask[i] = np.zeros((h[i]+2, w[i]+2), np.uint8)
-        # print(h[i],w[i])
-             
-        # for a in  range(floodfill[i].shape[0]):
-        #     for b in range(floodfill[i].shape[1]):
-        #         if(floodfill[i][a][b] == 0):
-        #             seedPoint = (a,b)
-        #             isbreak = True
-        #             break
-        #     if(isbreak):
-        #         break
-
-        # cv2.floodFill(floodfill[i], mask[i], seedPoint, 255)
-        # floodfill_block[i] = cv2.bitwise_not(floodfill[i]) #要被填滿的空洞
-        # fill_out[i] = bin_image[i] | floodfill_block[i] #把空洞和上面要被填滿的結合
+        fill_out[i] = FillHole(bin_image[i]) #填滿輪廓
 
         edges[i] = cv2.Canny(fill_out[i], 70, 210)
+
         contours, hierarchy[i] = cv2.findContours(edges[i], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-        # print(len(contours))
 
-
-
-        # contours.sort(key = cnt_area, reverse=False)
-        
-
-        
-        drawContours[i] = cv2.drawContours(img_com[i], contours, -1, (0, 0, 255), 2) 
-
-        
         areas[i] = []
         for c in range(len(contours)):
             areas[i].append(cv2.contourArea(contours[c]))
 
         max_id[i] = areas[i].index(max(areas[i]))
-        cnt = contours[max_id[i]]
-        # print(max_id[i])
+        cnt = contours[max_id[i]] #最大輪廓
+        
+        #輪廓逼近
+        epsilon[i] = 0.0001 * cv2.arcLength(cnt, True)
+        approx[i] = cv2.approxPolyDP(cnt, epsilon[i], True)
+        print(len(approx[i]))
 
+        drawContours[i] = cv2.drawContours(img_com[i], approx[i], -1, (0, 0, 255), 2) #物體輪廓
+ 
+        thingarea[i] = cv2.contourArea(approx[i]) #計算輪廓面積
+
+        
+
+        
+
+        #外接矩形 外接矩形面積計算
         max_rect[i] = cv2.minAreaRect(contours[max_id[i]])
         max_box[i] = cv2.boxPoints(max_rect[i])
-        
-        #矩形輪廓面積
         retangleArea[i] = retangle_area(max_box[i][0],max_box[i][1],max_box[i][3])
         max_box[i] = np.int0(max_box[i])
 
-        thingarea[i] = cv2.contourArea(cnt)
+        
         print("thingarea:  ",thingarea[i])
         print("retangleArea:",retangleArea[i])
         
@@ -183,24 +208,34 @@ if __name__ == '__main__':
         # dst[i] = cv2.warpPerspective(img2[i], M[i], (img2[i].shape[1],img2[i].shape[0])) 
         
 
-        (x[i], y[i]), radius[i] = cv2.minEnclosingCircle(cnt)
+        (x[i], y[i]), radius[i] = cv2.minEnclosingCircle(approx[i])
         center[i] = (int(x[i]), int(y[i]))
         radius[i] = int(radius[i])
         circleArea[i] = circle_area(radius[i])
         print("circleArea:  ",circleArea[i])
-        print()
+
         cv2.circle(img2[i], center[i], radius[i], (255, 0, 0), 2) 
 
 
         # cv2.imshow("img",img2[i])
         # cv2.waitKey(0)
 
-        
+        parameter[i] = circle_check(approx[i])
+        answer[i] = abs(circleArea[i] - thingarea[i] )
+        answer1[i] = abs(retangleArea[i] -thingarea[i]  )
+    
+        if(parameter[i][0]>0.85):
+            print("It's circle")
+            cv2.imwrite(savefile_cirlce +filester+".jpg",img2[i])
+        else:
+            if(answer1[i]<answer[i]):
+                print("It's rectangle")
+                cv2.imwrite(savefile_rectangle +filester+".jpg",img2[i])  
+            else:
+                print("It's triangle")
+                cv2.imwrite(savefile_triangle +filester+".jpg",img2[i])
 
 
-        # print(floodfill[i].shape)
-        cv2.imwrite(savefile_path +filester+"_1.jpg",fill_out[i])
-        cv2.imwrite(savefile_path +filester+".jpg",img2[i])
 
     
     del(img_pha,img_com,gray,edges,hierarchy,drawContours,bin_image,fill_out)#

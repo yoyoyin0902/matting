@@ -12,9 +12,9 @@ savefile_path = "/home/user/matting/preprocessingfile/"
 
 
 def takePhoto():
-    img_savefile = "/home/user/matting/imagedata/img/"
+    img_savefile = "/home/user/matting/imagedata/img_right/"
 
-    cam = cv2.VideoCapture(0)
+    cam = cv2.VideoCapture(6)
     cam.set(3,1920)
     cam.set(4,1080)
     if not cam.isOpened() | cam.isOpened():
@@ -187,7 +187,7 @@ def opening(pha_path,com_path,fgr_path):
 
 
 if __name__ == '__main__':
-    #takePhoto() #takePhoto
+    # takePhoto() #takePhot
     dataset_root_path = r"/home/user/matting/img_output/"
     pha_path = os.path.join(dataset_root_path,"pha")
     com_path = os.path.join(dataset_root_path,"com")
