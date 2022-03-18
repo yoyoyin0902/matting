@@ -10,6 +10,49 @@ from os.path import isfile, join
 
 savefile_path = "/home/user/matting/preprocessingfile/"
 
+savefile_Left  = "/media/user/Extreme SSD/takeCam/yolo/imgL/"
+savefile_Right = "/media/user/Extreme SSD/takeCam/yolo/imgR/"
+
+def TwoCamera():
+    camR = cv2.VideoCapture(2)
+    camL = cv2.VideoCapture(0)
+    print(camR)
+
+    camR.set(3,960)
+    camR.set(4,540)
+
+    camL.set(3,960)
+    camL.set(4,540)
+    fps = 60
+
+    # if not camR.isOpened():
+    #     print("Cannot open cameraRight")
+    #     exit()
+    
+    # if not camL.isOpened():
+    #     print("Cannot open cameraLeft")
+    #     exit()
+    
+    i = 0
+    while(True):
+        retR, frameR = camR.read()
+        retL, frameL = camL.read()
+        k = cv2.waitKey(1)
+        if k == 27:
+            break
+        elif k==ord('s'):
+            cv2.imwrite(savefile_Left+str(i)+'.jpg',frameL)
+            cv2.imwrite(savefile_Right+str(i)+'.jpg',frameR)
+            i+=1
+
+        cv2.imshow("captureR",frameR)
+        cv2.imshow("captureL",frameL)
+
+    camR.release()
+    camL.release()
+    cv2.destroyAllWindows()
+    # camL.destroyAllWindows()
+
 
 def takePhoto():
     img_savefile = "/home/user/matting/imagedata/img_right/"
@@ -188,11 +231,12 @@ def opening(pha_path,com_path,fgr_path):
 
 if __name__ == '__main__':
     # takePhoto() #takePhot
-    dataset_root_path = r"/home/user/matting/img_output/"
-    pha_path = os.path.join(dataset_root_path,"pha")
-    com_path = os.path.join(dataset_root_path,"com")
-    fgr_path = os.path.join(dataset_root_path,"fgr")
-    opening(pha_path,com_path,fgr_path)
+    TwoCamera()
+    # dataset_root_path = r"/home/user/matting/img_output/"
+    # pha_path = os.path.join(dataset_root_path,"pha")
+    # com_path = os.path.join(dataset_root_path,"com")
+    # fgr_path = os.path.join(dataset_root_path,"fgr")
+    # opening(pha_path,com_path,fgr_path)
 
 
    

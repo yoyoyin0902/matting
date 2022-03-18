@@ -1,0 +1,5 @@
+classes= 6
+train  = /home/user/darknet/build/darknet/x64/data/obj_train.txt
+valid  = /home/user/darknet/build/darknet/x64/data/obj_test.txt
+names = /home/user/darknet/build/darknet/x64/data/obj.names
+backup = backup/

@@ -1,28 +1,40 @@
-import argparse
-import torch
 import os
+import cv2
+import uuid
+import glob
+import time
 import shutil
+import random
+import torch
+import darknet
+import shutil
+import datetime
+import argparse
+import torchvision
+import numpy as np
+
+from tqdm import tqdm
+from PIL import Image
+from queue import Queue
 from shutil import copyfile
-
-
-  
+from threading import Thread, enumerate 
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
 from torchvision import transforms as T
 from torchvision.transforms.functional import to_pil_image
 from threading import Thread
-from tqdm import tqdm
+
 from torch.utils.data import Dataset
-from PIL import Image
+
 from typing import Callable, Optional, List, Tuple
-import glob
+
 from torch import nn
 from torchvision.models.resnet import ResNet, Bottleneck
 from torch import Tensor
-import torchvision
-import numpy as np
-import cv2
-import uuid
+
+
+
+
   
   
 # --------------- hy ---------------
@@ -928,6 +940,10 @@ parser.add_argument('--output-types', type=str, required=False, nargs='+',
                     choices=['com', 'pha', 'fgr', 'err', 'ref', 'new'])
 parser.add_argument('-y', action='store_true')
 args = parser.parse_args()
+
+local_img_name=r'/home/user/shape_detection/bgr/1.jpg'
+
+bgrimg_path = r'/home/user/shape_detection/bgr/'
   
   
 def handle(image_path, bgr_path):
@@ -953,18 +969,25 @@ def handle(image_path, bgr_path):
     # for output_type in args.output_types:
     #     if os.path.exists(os.path.join(args.output_dir, output_type)) is False:
     #         os.makedirs(os.path.join(args.output_dir, output_type))
-   
+
     #load image
     imglist = sorted(os.listdir(image_path))
     bgrlist = sorted(os.listdir(bgr_path))
-    
     count = len(imglist)
+
+    #指定存放圖片的目錄
+    # if len(imglist) > 1:
+    #     for i in range(len(imglist)):
+    #         print(i)
+    #         new_obj_name = str(i) +'.jpg'
+    #         shutil.copy(local_img_name, bgrimg_path +new_obj_name)
+   
     for i in range(count):
         filester = imglist[i].split(".")[0]
-        bground_path = bgr_path +"/"+ filester +".jpg"
-        img_path = image_path +"/"+ filester +".jpg"
-        
-        # print(img_path)
+        bground_path = bgr_path + filester +".jpg"
+        img_path = image_path + filester +".jpg"
+    
+        print(img_path,bground_path)
         # print(bground_path)
 
         assert 'err' not in args.output_types or args.model_type in ['mattingbase', 'mattingrefine'], \
@@ -987,8 +1010,9 @@ def handle(image_path, bgr_path):
             HomographicAlignment() if args.preprocess_alignment else PairApply(nn.Identity()),
             PairApply(T.ToTensor())
         ]))
-
-        dataloader = DataLoader(dataset, batch_size=3, num_workers=args.num_workers, pin_memory=True)
+        
+        dataloader = DataLoader(dataset, batch_size=1, num_workers=args.num_workers, pin_memory=True)
+        
 
         # Worker function
         def writer(img, path):
@@ -996,9 +1020,10 @@ def handle(image_path, bgr_path):
             #print(path)
             img.save(path)
 
+        print(dataloader)
         
         with torch.no_grad():
-            for i, (src, bgr) in enumerate(tqdm(dataloader)):
+            for (src, bgr) in dataloader:
                 src = src.to(device, non_blocking=True)
                 bgr = bgr.to(device, non_blocking=True)
 
@@ -1006,14 +1031,14 @@ def handle(image_path, bgr_path):
                     pha, fgr, err, _ = model(src, bgr)
                 elif args.model_type == 'mattingrefine':
                     pha, fgr, _, _, err, ref = model(src, bgr)
-            
+                
             
                 pathname = dataset.datasets[0].filenames[i]
                 # print(pathname)
 
                 pathname1 = os.path.relpath(pathname, img_path)
                 # print(pathname1)
- 
+
                 pathname2 = os.path.splitext(pathname)[0]
                 # print(pathname2)
             
@@ -1038,36 +1063,116 @@ def handle(image_path, bgr_path):
                 if 'ref' in args.output_types:
                     ref = F.interpolate(ref, src.shape[2:], mode='nearest')
                     Thread(target=writer, args=(ref, os.path.join(args.output_dir, 'ref', pathname +filester + '.jpg'))).start()
-  
-#    #return os.path.join(args.output_dir, 'com', result_file_name + '.png')
-
- 
-    # # Create output directory
-    # if os.path.exists(args.output_dir):
-    #     if args.y or input(f'Directory {args.output_dir} already exists. Override? [Y/N]: ').lower() == 'y':
-    #         shutil.rmtree(args.output_dir)
-    #     else:
-    #         exit()
-  
-  
-    # Worker function
-    # def writer_hy(img, new_bg, path):
-    #     img = to_pil_image(img[0].cpu())
-    #     img_size = img.size
-    #     new_bg_img = Image.open(new_bg).convert('RGBA')
-    #     new_bg_img.resize(img_size, Image.ANTIALIAS)
-    #     out = Image.alpha_composite(new_bg_img, img)
-    #     out.save(path)
-  
-    # result_file_name = str(uuid.uuid4())
-  
-    # Conversion loop
     
+# --------------------------------------------------------------------------------------------------------#
+weights = "yolo_data/yolov4-obj_final.weights"
+config = "yolo_data/yolov4-obj.cfg"
+classes = "yolo_data/obj.names"
+data = "yolo_data/obj.data"
+thresh = 0.7
+show_coordinates = True
 
- 
+save_path_columnar = "/home/user/shape_detection/columnar/"
+save_path_long = "/home/user/shape_detection/long/"
+save_path_circle = "/home/user/shape_detection/circle/"
+save_path_blade = "/home/user/shape_detection/blade/"
+save_bgr = "/home/user/shape_detection/bgr/"
+
+curr_time = datetime.datetime.now()
+
+dataset_root_path = r"/home/user/matting/imagedata"
+img_floder = os.path.join(dataset_root_path,"img")
+bgr_floder = os.path.join(dataset_root_path,"bgr")
+
+
+
+
+
 if __name__ == '__main__':
-    dataset_root_path = r"/home/user/matting/imagedata"
-    img_floder = os.path.join(dataset_root_path,"img")
-    bgr_floder = os.path.join(dataset_root_path,"bgr")
+
+    network, class_names, class_colors = darknet.load_network(config,data,weights,batch_size=1)
+    cap = cv2.VideoCapture(0)
+    cap.set(3,1600)
+    cap.set(4,896)
+    fps = 60
+
+    i = 0
+    a = 0
+    while(True):
     
-    handle(img_floder,bgr_floder)
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        if i == 0:
+            i += 1
+            cv2.imwrite(save_bgr + str(i) + '.jpg',frame)
+            
+
+        width = frame.shape[1]
+        height = frame.shape[0]
+
+        t_prev = time.time()
+
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame_resized = cv2.resize(frame_rgb, (width, height))
+
+        darknet_image = darknet.make_image(width, height, 3)
+        darknet.copy_image_from_bytes(darknet_image, frame_resized.tobytes()) 
+        detections = darknet.detect_image(network, class_names, darknet_image, thresh=thresh)
+        darknet.print_detections(detections, show_coordinates)
+        # label,confidence,x,y,w,h
+     
+        darknet.free_image(darknet_image)
+
+        #draw bounding box
+        image = darknet.draw_boxes(detections, frame_resized, class_colors)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    
+
+        fps = int(1/(time.time()-t_prev))
+
+        # cv2.rectangle(image, (5, 5), (75, 25), (0,0,0), -1)
+        # cv2.putText(image, f'FPS {fps}', (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+
+        key = cv2.waitKey(1)
+        if  len(detections) != 0:
+            if int(float(detections[0][1])) >= 90:
+                if detections[0][0] == "long":
+                    if key == 32:
+                        a += 1
+                        cv2.imwrite(save_path_long+str(a) +'.jpg',frame)
+                        handle(save_path_long,save_bgr)
+
+                elif detections[0][0] == "circle":
+                    if key == 32:
+                        a += 1
+                        cv2.imwrite(save_path_circle+str(a) +'.jpg',frame)
+                        handle(save_path_circle,save_bgr)
+
+                elif detections[0][0] == "columnar":
+                    if key == 32:
+                        a += 1
+                        cv2.imwrite(save_path_columnar+str(a) +'.jpg',frame)
+                        handle(save_path_columnar,save_bgr)
+
+                elif detections[0][0] == "blade":
+                    if key == 32:
+                        a += 1
+                        cv2.imwrite(save_path_blade+str(a) +'.jpg',frame)
+                        handle(save_path_blade,save_bgr)
+                        
+        if key == 27:
+            break
+        cv2.imshow("win_title", image)
+
+        
+    cv2.destroyAllWindows()
+    cap.release()
+
+
+    # dataset_root_path = r"/home/user/matting/imagedata"
+    # img_floder = os.path.join(dataset_root_path,"img")
+    # bgr_floder = os.path.join(dataset_root_path,"bgr")
+    
+    # handle(img_floder,bgr_floder)
