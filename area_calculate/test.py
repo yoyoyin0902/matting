@@ -67,14 +67,7 @@ def circle_check(contour):
     alpha = 4*np.pi*area/(perimeter**2)
     return alpha , area, perimeter
 
-def plot(grayHist):
-    plt.plot(range(256), grayHist, 'r', linewidth=1.5, c='red')
-    y_maxValue = np.max(grayHist)
-    plt.axis([0, 255, 0, y_maxValue]) # x和y的范围
-    plt.xlabel("gray Level")
-    plt.ylabel("Number Of Pixels")
-    plt.show()
-    # plt.savefig(savefile_path +filester+".jpg")
+
 
 if __name__ == '__main__':
 
@@ -126,8 +119,8 @@ if __name__ == '__main__':
 
     h = np.empty(len(img), dtype = object)
     w = np.empty(len(img), dtype = object)
-    answer = np.empty(len(img), dtype = object)
-    answer1 = np.empty(len(img), dtype = object)
+    circle1 = np.empty(len(img), dtype = object)
+    rect = np.empty(len(img), dtype = object)
 
 
     x = np.empty(len(img), dtype = object)
@@ -136,6 +129,16 @@ if __name__ == '__main__':
 
     radius = np.empty(len(img), dtype = object)
     center  = np.empty(len(img), dtype = object)
+
+    area_tri = np.empty(len(img), dtype = object)
+    trg = np.empty(len(img), dtype = object)
+    triangleArea = np.empty(len(img), dtype = object)
+    start_point = np.empty(len(img), dtype = object)
+    end_point = np.empty(len(img), dtype = object)
+
+    tri = np.empty(len(img), dtype = object)
+    # bbb = np.empty(len(img), dtype = object)
+
 
     for i in range(0, len(img)):
         isbreak = False
@@ -146,14 +149,6 @@ if __name__ == '__main__':
         
 
         gray[i] = cv2.cvtColor(img_pha[i],cv2.COLOR_BGR2GRAY)
-
-        # h[i], w[i] = gray[i].shape
-        # grayHist[i] = np.zeros([256], np.uint64)
-        # for c in range(h[i]):
-        #     for d in range(w[i]):
-        #         grayHist[i][gray[i][c][d]] += 1
-        # plot(grayHist[i])
-        
 
         ret,bin_image[i] = cv2.threshold(gray[i],127,255,cv2.THRESH_BINARY)
 
@@ -171,74 +166,70 @@ if __name__ == '__main__':
         cnt = contours[max_id[i]] #最大輪廓
         
         #輪廓逼近
-        epsilon[i] = 0.0001 * cv2.arcLength(cnt, True)
+        epsilon[i] = 0.00001 * cv2.arcLength(cnt, True)
         approx[i] = cv2.approxPolyDP(cnt, epsilon[i], True)
-        print(len(approx[i]))
+        # print(len(approx[i]))
 
         drawContours[i] = cv2.drawContours(img_com[i], approx[i], -1, (0, 0, 255), 2) #物體輪廓
  
         thingarea[i] = cv2.contourArea(approx[i]) #計算輪廓面積
 
-        
-
-        
 
         #外接矩形 外接矩形面積計算
-        max_rect[i] = cv2.minAreaRect(contours[max_id[i]])
+        max_rect[i] = cv2.minAreaRect(cnt)
         max_box[i] = cv2.boxPoints(max_rect[i])
         retangleArea[i] = retangle_area(max_box[i][0],max_box[i][1],max_box[i][3])
         max_box[i] = np.int0(max_box[i])
-
-        
-        print("thingarea:  ",thingarea[i])
-        print("retangleArea:",retangleArea[i])
-        
-        
-        
         img2[i] = cv2.drawContours(img_com[i],[max_box[i]],0,(0,255,0),2)
 
-        # pts1[i] = np.float32(max_box[i])
-        # pts2[i] = np.float32([[max_rect[i][0][0]+max_rect[i][1][1]/2, max_rect[i][0][1]+max_rect[i][1][0]/2],
-        #               [max_rect[i][0][0]-max_rect[i][1][1]/2, max_rect[i][0][1]+max_rect[i][1][0]/2],
-        #               [max_rect[i][0][0]-max_rect[i][1][1]/2, max_rect[i][0][1]-max_rect[i][1][0]/2],
-        #               [max_rect[i][0][0]+max_rect[i][1][1]/2, max_rect[i][0][1]-max_rect[i][1][0]/2]])
+        #外接三角形 並繪製
+        area_tri[i],trg[i] = cv2.minEnclosingTriangle(cnt)
+        for a in range(0,3):
+            start_point[i] = list(map(int,trg[i][a][0]))
+            end_point[i] = list(map(int,trg[i][(a+1) % 3][0]))
+            cv2.line(img2[i],start_point[i],end_point[i],(0, 127, 255), 2)
 
-        # print(pts1[i],pts2[i])
-        # M[i] = cv2.getPerspectiveTransform(pts1[i],pts2[i])
-        # dst[i] = cv2.warpPerspective(img2[i], M[i], (img2[i].shape[1],img2[i].shape[0])) 
-        
 
         (x[i], y[i]), radius[i] = cv2.minEnclosingCircle(approx[i])
         center[i] = (int(x[i]), int(y[i]))
         radius[i] = int(radius[i])
         circleArea[i] = circle_area(radius[i])
-        print("circleArea:  ",circleArea[i])
+        
 
         cv2.circle(img2[i], center[i], radius[i], (255, 0, 0), 2) 
 
+        print("thingarea:  ",thingarea[i])
+        print("retangleArea:",retangleArea[i])
+        print("circleArea:  ",circleArea[i])
+        print("triangleArea:  ",area_tri[i])
 
-        # cv2.imshow("img",img2[i])
-        # cv2.waitKey(0)
+
+        
+
 
         parameter[i] = circle_check(approx[i])
-        answer[i] = abs(circleArea[i] - thingarea[i] )
-        answer1[i] = abs(retangleArea[i] -thingarea[i]  )
+        print(parameter[i][0])
+
+        circle1[i] = abs(circleArea[i] - thingarea[i] )
+        rect[i] = abs(retangleArea[i] -thingarea[i])
+        tri[i] = abs(area_tri[i] -thingarea[i])
+        print(rect[i],circle1[i],tri[i])
     
         if(parameter[i][0]>0.85):
             print("It's circle")
             cv2.imwrite(savefile_cirlce +filester+".jpg",img2[i])
         else:
-            if(answer1[i]<answer[i]):
+            if(rect[i]<circle1[i]):
                 print("It's rectangle")
                 cv2.imwrite(savefile_rectangle +filester+".jpg",img2[i])  
             else:
-                print("It's triangle")
+                print("It's 11111")
                 cv2.imwrite(savefile_triangle +filester+".jpg",img2[i])
-
+        print(" ")
 
 
     
-    del(img_pha,img_com,gray,edges,hierarchy,drawContours,bin_image,fill_out)#
+    del(img_pha,img_com,gray,edges,hierarchy,drawContours,bin_image,fill_out)
     # gc.collect()
 
 

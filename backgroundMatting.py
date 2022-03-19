@@ -1,28 +1,40 @@
-import argparse
-import torch
 import os
+import cv2
+import uuid
+import glob
+import time
 import shutil
+import random
+import torch
+import darknet
+import shutil
+import datetime
+import argparse
+import torchvision
+import numpy as np
+
+from tqdm import tqdm
+from PIL import Image
+from queue import Queue
 from shutil import copyfile
-
-
-  
+from threading import Thread, enumerate 
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
 from torchvision import transforms as T
 from torchvision.transforms.functional import to_pil_image
 from threading import Thread
-from tqdm import tqdm
+
 from torch.utils.data import Dataset
-from PIL import Image
+
 from typing import Callable, Optional, List, Tuple
-import glob
+
 from torch import nn
 from torchvision.models.resnet import ResNet, Bottleneck
 from torch import Tensor
-import torchvision
-import numpy as np
-import cv2
-import uuid
+
+
+
+
   
   
 # --------------- hy ---------------
@@ -928,6 +940,13 @@ parser.add_argument('--output-types', type=str, required=False, nargs='+',
                     choices=['com', 'pha', 'fgr', 'err', 'ref', 'new'])
 parser.add_argument('-y', action='store_true')
 args = parser.parse_args()
+
+def writer(img, path):
+        img = to_pil_image(img[0].cpu())
+        print(path)
+        img.save(path)
+
+
   
   
 def handle(image_path, bgr_path):
@@ -953,18 +972,23 @@ def handle(image_path, bgr_path):
     # for output_type in args.output_types:
     #     if os.path.exists(os.path.join(args.output_dir, output_type)) is False:
     #         os.makedirs(os.path.join(args.output_dir, output_type))
-   
+
     #load image
     imglist = sorted(os.listdir(image_path))
     bgrlist = sorted(os.listdir(bgr_path))
+    count_img = len(imglist)
+    count_bgr = len(bgrlist)
+    print(count_img,count_bgr)
+    # 指定存放圖片的目錄
     
-    count = len(imglist)
-    for i in range(count):
-        filester = imglist[i].split(".")[0]
-        bground_path = bgr_path +"/"+ filester +".jpg"
-        img_path = image_path +"/"+ filester +".jpg"
-        
-        # print(img_path)
+   
+    for i in range(count_img):
+        filester_img = imglist[i].split(".")[0]
+        filester_bgr = bgrlist[i].split(".")[0]
+        bground_path = bgr_path + filester_bgr +".jpg"
+        img_path = image_path + filester_img +".jpg"
+    
+        # print(img_path,bground_path)
         # print(bground_path)
 
         assert 'err' not in args.output_types or args.model_type in ['mattingbase', 'mattingrefine'], \
@@ -987,18 +1011,17 @@ def handle(image_path, bgr_path):
             HomographicAlignment() if args.preprocess_alignment else PairApply(nn.Identity()),
             PairApply(T.ToTensor())
         ]))
-
-        dataloader = DataLoader(dataset, batch_size=3, num_workers=args.num_workers, pin_memory=True)
+        
+        dataloader = DataLoader(dataset, batch_size=1, num_workers=args.num_workers, pin_memory=True)
+        
 
         # Worker function
-        def writer(img, path):
-            img = to_pil_image(img[0].cpu())
-            #print(path)
-            img.save(path)
+     
 
+        print(dataloader)
         
         with torch.no_grad():
-            for i, (src, bgr) in enumerate(tqdm(dataloader)):
+            for  (src, bgr) in dataloader:
                 src = src.to(device, non_blocking=True)
                 bgr = bgr.to(device, non_blocking=True)
 
@@ -1006,68 +1029,197 @@ def handle(image_path, bgr_path):
                     pha, fgr, err, _ = model(src, bgr)
                 elif args.model_type == 'mattingrefine':
                     pha, fgr, _, _, err, ref = model(src, bgr)
+                
+                com = torch.cat([fgr * pha.ne(0), pha], dim=1)
             
-            
-                pathname = dataset.datasets[0].filenames[i]
+            return com,pha,fgr
+                
+                # print(dataset.datasets[0])
+                # pathname = dataset.datasets[0].filenames[i]
                 # print(pathname)
 
-                pathname1 = os.path.relpath(pathname, img_path)
-                # print(pathname1)
- 
-                pathname2 = os.path.splitext(pathname)[0]
-                # print(pathname2)
+                # pathname1 = os.path.relpath(pathname, img_path)
+                # # print(pathname1)
+
+                # pathname2 = os.path.splitext(pathname)[0]
+                # # print(pathname2)
             
                 # if 'new' in args.output_types:
                 #     new = torch.cat([fgr * pha.ne(0), pha], dim=1)
                 #     Thread(target=writer,args=(new, new_bg, os.path.join(args.output_dir, 'new', result_file_name + '.png'))).start()
 
-                if 'com' in args.output_types:
-                    com = torch.cat([fgr * pha.ne(0), pha], dim=1)
-                    Thread(target=writer, args=(com, os.path.join(args.output_dir, 'com', filester+'_com' + '.png'))).start()
+                # if 'com' in args.output_types:
+                #     com = torch.cat([fgr * pha.ne(0), pha], dim=1)
+                    #Thread(target=writer, args=(com, os.path.join(args.output_dir, 'com', filester_img+'_com' + '.png'))).start()
 
-                if 'pha' in args.output_types:
-                    Thread(target=writer, args=(pha, os.path.join(args.output_dir, 'pha', filester +'_pha'  + '.jpg'))).start()
+                # if 'pha' in args.output_types:
+                    #Thread(target=writer, args=(pha, os.path.join(args.output_dir, 'pha', filester_img +'_pha'  + '.jpg'))).start()
 
-                if 'fgr' in args.output_types:
-                    Thread(target=writer, args=(fgr, os.path.join(args.output_dir, 'fgr', filester +'_fgr' + '.jpg'))).start()
+                # if 'fgr' in args.output_types:
+                    #Thread(target=writer, args=(fgr, os.path.join(args.output_dir, 'fgr', filester_img +'_fgr' + '.jpg'))).start()
 
-                if 'err' in args.output_types:
-                    err = F.interpolate(err, src.shape[2:], mode='bilinear', align_corners=False)
-                    Thread(target=writer, args=(err, os.path.join(args.output_dir, 'err',  filester + '_err'+ '.jpg'))).start()
+                # if 'err' in args.output_types:
+                #     err = F.interpolate(err, src.shape[2:], mode='bilinear', align_corners=False)
+                #     Thread(target=writer, args=(err, os.path.join(args.output_dir, 'err',  filester_img + '_err'+ '.jpg'))).start()
 
-                if 'ref' in args.output_types:
-                    ref = F.interpolate(ref, src.shape[2:], mode='nearest')
-                    Thread(target=writer, args=(ref, os.path.join(args.output_dir, 'ref', pathname +filester + '.jpg'))).start()
-  
-#    #return os.path.join(args.output_dir, 'com', result_file_name + '.png')
+                # if 'ref' in args.output_types:
+                #     ref = F.interpolate(ref, src.shape[2:], mode='nearest')
+                #     Thread(target=writer, args=(ref, os.path.join(args.output_dir, 'ref', pathname +filester_img + '.jpg'))).start()
+            
 
- 
-    # # Create output directory
-    # if os.path.exists(args.output_dir):
-    #     if args.y or input(f'Directory {args.output_dir} already exists. Override? [Y/N]: ').lower() == 'y':
-    #         shutil.rmtree(args.output_dir)
-    #     else:
-    #         exit()
-  
-  
-    # Worker function
-    # def writer_hy(img, new_bg, path):
-    #     img = to_pil_image(img[0].cpu())
-    #     img_size = img.size
-    #     new_bg_img = Image.open(new_bg).convert('RGBA')
-    #     new_bg_img.resize(img_size, Image.ANTIALIAS)
-    #     out = Image.alpha_composite(new_bg_img, img)
-    #     out.save(path)
-  
-    # result_file_name = str(uuid.uuid4())
-  
-    # Conversion loop
+
     
+# --------------------------------------------------------------------------------------------------------#
+weights = "yolo_data/yolov4-obj_final.weights"
+config = "yolo_data/yolov4-obj.cfg"
+classes = "yolo_data/obj.names"
+data = "yolo_data/obj.data"
+thresh = 0.7
+show_coordinates = True
 
- 
+#original_img
+save_path_columnar = "/home/user/shape_detection/columnar/orig/"
+save_path_long = "/home/user/shape_detection/long/orig/"
+save_path_circle = "/home/user/shape_detection/circle/orig/"
+save_path_blade = "/home/user/shape_detection/blade/orig/"
+
+#matting
+save_mat_columnar = "/home/user/shape_detection/columnar/mat/"
+save_mat_long = "/home/user/shape_detection/long/mat/"
+save_mat_circle = "/home/user/shape_detection/circle/mat/"
+save_mat_blade = "/home/user/shape_detection/blade/mat/"
+
+save_bgr = "/home/user/shape_detection/bgr/"
+curr_time = datetime.datetime.now()
+
+dataset_root_path = r"/home/user/matting/imagedata"
+img_floder = os.path.join(dataset_root_path,"img")
+bgr_floder = os.path.join(dataset_root_path,"bgr")
+
+#first_bgr
+local_img_name=r'/home/user/shape_detection/bgr/1.jpg'
+
+#second_bgr
+bgrcircle_path = r'/home/user/shape_detection/bgr_circle/'
+bgrblade_path = r'/home/user/shape_detection/bgr_blade/'
+bgrlong_path = r'/home/user/shape_detection/bgr_long/'
+bgrcolumnar_path = r'/home/user/shape_detection/bgr_columnar/'
+
+
+
+
+
 if __name__ == '__main__':
-    dataset_root_path = r"/home/user/matting/imagedata"
-    img_floder = os.path.join(dataset_root_path,"img")
-    bgr_floder = os.path.join(dataset_root_path,"bgr")
+
+    network, class_names, class_colors = darknet.load_network(config,data,weights,batch_size=1)
+    cap = cv2.VideoCapture(0)
+    cap.set(3,1600)
+    cap.set(4,896)
+    fps = 60
+
+    i = 0
+    a = 0
+    b = 0
+    c = 0
+    d = 0
+    while(True):
     
-    handle(img_floder,bgr_floder)
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        if i == 0:
+            i += 1
+            cv2.imwrite(save_bgr + str(i) + '.jpg',frame)
+        
+        
+            
+
+        width = frame.shape[1]
+        height = frame.shape[0]
+
+        t_prev = time.time()
+
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame_resized = cv2.resize(frame_rgb, (width, height))
+
+        darknet_image = darknet.make_image(width, height, 3)
+        darknet.copy_image_from_bytes(darknet_image, frame_resized.tobytes()) 
+        detections = darknet.detect_image(network, class_names, darknet_image, thresh=thresh)
+        darknet.print_detections(detections, show_coordinates)
+        # label,confidence,x,y,w,h
+     
+        darknet.free_image(darknet_image)
+
+        #draw bounding box
+        image = darknet.draw_boxes(detections, frame_resized, class_colors)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    
+
+        fps = int(1/(time.time()-t_prev))
+
+        # cv2.rectangle(image, (5, 5), (75, 25), (0,0,0), -1)
+        # cv2.putText(image, f'FPS {fps}', (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+
+        # if len(imglist) > 1:
+        # for i in range(len(imglist)):
+        #     print(i)
+        #     new_obj_name = str(i+1) +'.jpg'
+        #     shutil.copy(local_img_name, bgrimg_path +new_obj_name)
+
+        key = cv2.waitKey(1)
+        if  len(detections) != 0:
+            if int(float(detections[0][1])) >= 90:
+                if detections[0][0] == "long":
+                    if key == 32:
+                        a += 1
+                        cv2.imwrite(save_path_long+str(a) +'.jpg',frame)
+                        new_obj_name = str(a) +'.jpg'
+                        shutil.copy(local_img_name, bgrlong_path +new_obj_name)
+                        matimg = handle(save_path_long,bgrlong_path)
+                        #cv2.imwrite(save_path_long+str(a) +'.jpg',frame)
+
+                elif detections[0][0] == "circle":
+                    if key == 32:
+                        b += 1
+                        cv2.imwrite(save_path_circle+str(b) +'.jpg',frame)
+                        new_obj_name = str(b) +'.jpg'
+                        shutil.copy(local_img_name, bgrcircle_path +new_obj_name)
+                        matimg = handle(save_path_circle,bgrcircle_path)
+                        writer(matimg[0],save_mat_circle+str(a)+"_com" +'.png')
+                        writer(matimg[1],save_mat_circle+str(a)+"_pha" +'.jpg')
+                        writer(matimg[2],save_mat_circle+str(a)+"_fgr" +'.jpg')
+                        # cv2.imwrite(save_mat_circle+str(a)+"_com" +'.png',matimg[0])
+                        # cv2.imwrite(save_mat_circle+str(a)+"_pha" +'.jpg',matimg[1])
+                        # cv2.imwrite(save_mat_circle+str(a)+"_fgr" +'.jpg',matimg[2])
+
+                elif detections[0][0] == "columnar":
+                    if key == 32:
+                        c += 1
+                        cv2.imwrite(save_path_columnar+str(c) +'.jpg',frame)
+                        new_obj_name = str(c) +'.jpg'
+                        shutil.copy(local_img_name, bgrcolumnar_path +new_obj_name)
+                        matimg = handle(save_path_columnar,bgrcolumnar_path)
+
+                elif detections[0][0] == "blade":
+                    if key == 32:
+                        d += 1
+                        cv2.imwrite(save_path_blade+str(d) +'.jpg',frame)
+                        new_obj_name = str(d) +'.jpg'
+                        shutil.copy(local_img_name, bgrblade_path +new_obj_name)
+                        matimg = handle(save_path_blade,bgrblade_path)
+                        
+        if key == 27:
+            break
+        cv2.imshow("win_title", image)
+
+        
+    cv2.destroyAllWindows()
+    cap.release()
+
+
+    # dataset_root_path = r"/home/user/matting/imagedata"
+    # img_floder = os.path.join(dataset_root_path,"img")
+    # bgr_floder = os.path.join(dataset_root_path,"bgr")
+    
+    # handle(img_floder,bgr_floder)
