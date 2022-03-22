@@ -3,6 +3,7 @@ import cv2
 import uuid
 import glob
 import time
+import math
 import shutil
 import random
 import torch
@@ -856,7 +857,7 @@ class NewImagesDataset(Dataset):
         self.transforms = transforms
         self.mode = mode
         self.filenames = [root]
-        print(self.filenames)
+        # print(self.filenames)
   
     def __len__(self):
         return len(self.filenames)
@@ -913,42 +914,8 @@ def get_filelist(path):
             Filelist.append(os.path.join(home, filename))
             # # 文件名列表，只包含文件名
             # Filelist.append( filename)
-  
-  
-# --------------- Arguments ---------------
-  
-parser = argparse.ArgumentParser(description='Inference images')
-  
-parser.add_argument('--model-type', type=str, required=False, choices=['mattingbase', 'mattingrefine'],
-                    default='mattingrefine')
-parser.add_argument('--model-backbone', type=str, required=False, choices=['resnet101', 'resnet50', 'mobilenetv2'],
-                    default='resnet101')
-parser.add_argument('--model-backbone-scale', type=float, default=0.25)
-parser.add_argument('--model-checkpoint', type=str, required=False, default='/home/user/matting/model_pth/pytorch_resnet101.pth')
-parser.add_argument('--model-refine-mode', type=str, default='full', choices=['full', 'sampling', 'thresholding'])
-parser.add_argument('--model-refine-sample-pixels', type=int, default=320_000)
-parser.add_argument('--model-refine-threshold', type=float, default=0.7)
-parser.add_argument('--model-refine-kernel-size', type=int, default=3)
-  
-parser.add_argument('--device', type=str, choices=['cpu', 'cuda'], default='cuda')
-parser.add_argument('--num-workers', type=int, default=0,
-                    help='number of worker threads used in DataLoader. Note that Windows need to use single thread (0).')
-parser.add_argument('--preprocess-alignment', action='store_true')
-  
-parser.add_argument('--output-dir', type=str, required=False, default='/home/user/matting/img_output')
-parser.add_argument('--output-types', type=str, required=False, nargs='+',
-                    choices=['com', 'pha', 'fgr', 'err', 'ref', 'new'])
-parser.add_argument('-y', action='store_true')
-args = parser.parse_args()
 
-def writer(img, path):
-        img = to_pil_image(img[0].cpu())
-        print(path)
-        img.save(path)
-
-
-  
-  
+# ---------------------------------------------------------Matting-------------------------------------------------------------------#
 def handle(image_path, bgr_path):
 
     # set device
@@ -968,27 +935,18 @@ def handle(image_path, bgr_path):
     model = model.to(device).eval()
     model.load_state_dict(torch.load(args.model_checkpoint, map_location=device), strict=False)
 
-    #set outputfile
-    # for output_type in args.output_types:
-    #     if os.path.exists(os.path.join(args.output_dir, output_type)) is False:
-    #         os.makedirs(os.path.join(args.output_dir, output_type))
-
     #load image
     imglist = sorted(os.listdir(image_path))
     bgrlist = sorted(os.listdir(bgr_path))
     count_img = len(imglist)
-    count_bgr = len(bgrlist)
-    print(count_img,count_bgr)
-    # 指定存放圖片的目錄
     
-   
+
     for i in range(count_img):
-        filester_img = imglist[i].split(".")[0]
-        filester_bgr = bgrlist[i].split(".")[0]
-        bground_path = bgr_path + filester_bgr +".jpg"
-        img_path = image_path + filester_img +".jpg"
-    
-        # print(img_path,bground_path)
+        filester = imglist[i].split(".")[0]
+        bground_path = bgr_path + filester +".jpg"
+        img_path = image_path + filester +".jpg"
+        print(img_path)
+        
         # print(bground_path)
 
         assert 'err' not in args.output_types or args.model_type in ['mattingbase', 'mattingrefine'], \
@@ -1016,12 +974,16 @@ def handle(image_path, bgr_path):
         
 
         # Worker function
+        def writer(img, path):
+            img = to_pil_image(img[0].cpu())
+            #print(path)
+            img.save(path)
      
 
-        print(dataloader)
+        # print(dataloader)
         
         with torch.no_grad():
-            for  (src, bgr) in dataloader:
+            for (src, bgr) in dataloader:
                 src = src.to(device, non_blocking=True)
                 bgr = bgr.to(device, non_blocking=True)
 
@@ -1031,8 +993,15 @@ def handle(image_path, bgr_path):
                     pha, fgr, _, _, err, ref = model(src, bgr)
                 
                 com = torch.cat([fgr * pha.ne(0), pha], dim=1)
+                # a = tensor_to_np(pha)
+                # cv2.imshow("1111",a)
+
+                
+                # for i in str(a):
+                #             
+                #             cv2.imwrite("/home/user/shape_detection/circle/"+"long_"+str(a)+'.jpg',img)
             
-            return com,pha,fgr
+            
                 
                 # print(dataset.datasets[0])
                 # pathname = dataset.datasets[0].filenames[i]
@@ -1050,13 +1019,13 @@ def handle(image_path, bgr_path):
 
                 # if 'com' in args.output_types:
                 #     com = torch.cat([fgr * pha.ne(0), pha], dim=1)
-                    #Thread(target=writer, args=(com, os.path.join(args.output_dir, 'com', filester_img+'_com' + '.png'))).start()
+                #     Thread(target=writer, args=(com, os.path.join(args.output_dir, filester+'_com' + '.png'))).start()
 
                 # if 'pha' in args.output_types:
-                    #Thread(target=writer, args=(pha, os.path.join(args.output_dir, 'pha', filester_img +'_pha'  + '.jpg'))).start()
+                #     Thread(target=writer, args=(pha, os.path.join(args.output_dir, filester +'_pha'  + '.jpg'))).start()
 
                 # if 'fgr' in args.output_types:
-                    #Thread(target=writer, args=(fgr, os.path.join(args.output_dir, 'fgr', filester_img +'_fgr' + '.jpg'))).start()
+                #     Thread(target=writer, args=(fgr, os.path.join(args.output_dir, filester +'_fgr' + '.jpg'))).start()
 
                 # if 'err' in args.output_types:
                 #     err = F.interpolate(err, src.shape[2:], mode='bilinear', align_corners=False)
@@ -1065,11 +1034,125 @@ def handle(image_path, bgr_path):
                 # if 'ref' in args.output_types:
                 #     ref = F.interpolate(ref, src.shape[2:], mode='nearest')
                 #     Thread(target=writer, args=(ref, os.path.join(args.output_dir, 'ref', pathname +filester_img + '.jpg'))).start()
-            
+    return com,fgr,pha,img_path
 
+#----------------------------------------------------Procseeing--------------------------------------------------------------------#
+#tensor to numpy
+def tensor_to_np(tensor):
+    img = tensor.mul(255).byte()
+    img = img.cpu().numpy().squeeze(0).transpose((1, 2, 0))
+    return img
+
+#after matting processing
+def post_processing(pha):
+    pha_img = tensor_to_np(pha)
 
     
-# --------------------------------------------------------------------------------------------------------#
+    imgBlur = cv2.GaussianBlur(pha_img, (5, 5), 0)
+    # gray_img = cv2.cvtColor(imgBlur,cv2.COLOR_BGR2GRAY)
+
+    # kernel = np.ones((5, 5),np.uint8)
+    # imgErode = cv2.erode(imgBlur, kernel, iterations = 5)
+    # imgDil = cv2.dilate(imgErode, kernel, iterations = 5)
+
+    ret,bin_img = cv2.threshold(imgBlur,110,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+
+    return bin_img
+
+#----------------------------------------------------Segment--------------------------------------------------------------------#
+
+def max2(x):
+    m1 = max(x)
+    x2 = x.copy()
+    x2.remove(m1)
+    m2 = max(x2)
+    return m1,m2  
+#line segment
+def line_Segment(mat,orig):
+    print(type(orig))
+
+    mat_img = cv2.imread(str(mat),0)
+    orig_img = cv2.imread(orig)
+    cv2.imshow("mat",mat_img)
+
+    # gray = cv2.cvtColor(mat,cv2.COLOR_BGR2GRAY)
+    lsd = cv2.createLineSegmentDetector(0)
+
+    dlines = lsd.detect(mat_img)
+    
+    ver_lines = []
+    coordinate = []
+
+    for dline in dlines[0]:
+        # print(dline[i])
+        x0 = int(round(dline[0][0]))
+        y0 = int(round(dline[0][1]))
+        x1 = int(round(dline[0][2]))
+        y1 = int(round(dline[0][3]))
+        distance = math.sqrt((x0-x1)**2+(y0-y1)**2)
+        ver_lines.append(distance)
+
+    maxIndex = max2(ver_lines)
+
+    for dline in dlines[0]:
+        x0 = int(round(dline[0][0]))
+        y0 = int(round(dline[0][1]))
+        x1 = int(round(dline[0][2]))
+        y1 = int(round(dline[0][3]))
+        distance = math.sqrt((x0-x1)**2+(y0-y1)**2)
+    
+        if(distance >= int(maxIndex[1])):
+            cv2.line(orig_img,(x0,y0),(x1,y1),(0,255,0),2,cv2.LINE_AA)
+            coordinate.append(((x0,y0),(x1,y1)))
+
+    line1 = math.sqrt((coordinate[0][1][0]-coordinate[1][1][0])**2+(coordinate[0][1][1]-coordinate[1][1][1])**2)
+    line2 = math.sqrt((coordinate[0][0][0]-coordinate[1][0][0])**2+(coordinate[0][0][1]-coordinate[1][0][1])**2)
+
+    if (line1 > line2):
+        cv2.line(orig_img,coordinate[0][1],coordinate[1][1],(255,0,0),2,cv2.LINE_AA)
+        circle_x = (coordinate[0][1][0] + coordinate[1][1][0])/2
+        circle_y = (coordinate[0][1][1] + coordinate[1][1][1])/2
+    
+    else:
+        cv2.line(orig_img,coordinate[0][0],coordinate[1][0],(255,0,0),2,cv2.LINE_AA)
+        circle_x = (coordinate[0][0][0] + coordinate[1][0][0])/2
+        circle_y = (coordinate[0][0][1] + coordinate[1][0][1])/2
+
+    cv2.circle(orig_img,(int(circle_x),int(circle_y)),2,(0,0,255),2)
+
+    cv2.imshow("orig",orig_img)
+
+    
+  
+  
+# ------------------------------------------------------- Matting Arguments -------------------------------------------------
+  
+parser = argparse.ArgumentParser(description='Inference images')
+  
+parser.add_argument('--model-type', type=str, required=False, choices=['mattingbase', 'mattingrefine'],
+                    default='mattingrefine')
+parser.add_argument('--model-backbone', type=str, required=False, choices=['resnet101', 'resnet50', 'mobilenetv2'],
+                    default='resnet101')
+parser.add_argument('--model-backbone-scale', type=float, default=0.25)
+parser.add_argument('--model-checkpoint', type=str, required=False, default='/home/user/matting/model_pth/pytorch_resnet101.pth')
+parser.add_argument('--model-refine-mode', type=str, default='sampling', choices=['full', 'sampling', 'thresholding'])
+parser.add_argument('--model-refine-sample-pixels', type=int, default=80_000)
+parser.add_argument('--model-refine-threshold', type=float, default=0.9)
+parser.add_argument('--model-refine-kernel-size', type=int, default=3)
+  
+parser.add_argument('--device', type=str, choices=['cpu', 'cuda'], default='cuda')
+parser.add_argument('--num-workers', type=int, default=0,
+                    help='number of worker threads used in DataLoader. Note that Windows need to use single thread (0).')
+parser.add_argument('--preprocess-alignment', action='store_true')
+  
+parser.add_argument('--output-dir', type=str, required=False, default='/home/user/shape_detection/circle/')
+parser.add_argument('--output-types', type=str, required=False, nargs='+',
+                    choices=['com', 'pha', 'fgr', 'err', 'ref', 'new'])
+parser.add_argument('-y', action='store_true')
+args = parser.parse_args()
+
+
+# --------------------------------------------------------------------Main--------------------------------------------------------#
 weights = "yolo_data/yolov4-obj_final.weights"
 config = "yolo_data/yolov4-obj.cfg"
 classes = "yolo_data/obj.names"
@@ -1107,8 +1190,6 @@ bgrcolumnar_path = r'/home/user/shape_detection/bgr_columnar/'
 
 
 
-
-
 if __name__ == '__main__':
 
     network, class_names, class_colors = darknet.load_network(config,data,weights,batch_size=1)
@@ -1130,7 +1211,10 @@ if __name__ == '__main__':
 
         if i == 0:
             i += 1
+            # print("1")
+            time.sleep(1.5)
             cv2.imwrite(save_bgr + str(i) + '.jpg',frame)
+            # print("2")
         
         
             
@@ -1157,15 +1241,8 @@ if __name__ == '__main__':
     
 
         fps = int(1/(time.time()-t_prev))
+        cv2.imshow("win_title", image)
 
-        # cv2.rectangle(image, (5, 5), (75, 25), (0,0,0), -1)
-        # cv2.putText(image, f'FPS {fps}', (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
-
-        # if len(imglist) > 1:
-        # for i in range(len(imglist)):
-        #     print(i)
-        #     new_obj_name = str(i+1) +'.jpg'
-        #     shutil.copy(local_img_name, bgrimg_path +new_obj_name)
 
         key = cv2.waitKey(1)
         if  len(detections) != 0:
@@ -1174,10 +1251,17 @@ if __name__ == '__main__':
                     if key == 32:
                         a += 1
                         cv2.imwrite(save_path_long+str(a) +'.jpg',frame)
-                        new_obj_name = str(a) +'.jpg'
-                        shutil.copy(local_img_name, bgrlong_path +new_obj_name)
+                        shutil.copy(local_img_name, bgrlong_path +str(a) +'.jpg')
+                        
                         matimg = handle(save_path_long,bgrlong_path)
-                        #cv2.imwrite(save_path_long+str(a) +'.jpg',frame)
+                        # img = tensor_to_np(matimg[2])
+
+                        process = post_processing(matimg[2])
+                        
+                        cv2.imwrite("/home/user/shape_detection/circle/"+"long_"+str(a)+'.jpg',process)
+                        line_Segment("/home/user/shape_detection/circle/"+"long_"+str(a)+'.jpg',"/home/user/shape_detection/long/orig/1.jpg")
+
+                        cv2.imwrite("/home/user/shape_detection/circle/"+"long_"+str(a)+'.jpg',process)
 
                 elif detections[0][0] == "circle":
                     if key == 32:
@@ -1186,40 +1270,48 @@ if __name__ == '__main__':
                         new_obj_name = str(b) +'.jpg'
                         shutil.copy(local_img_name, bgrcircle_path +new_obj_name)
                         matimg = handle(save_path_circle,bgrcircle_path)
-                        writer(matimg[0],save_mat_circle+str(a)+"_com" +'.png')
-                        writer(matimg[1],save_mat_circle+str(a)+"_pha" +'.jpg')
-                        writer(matimg[2],save_mat_circle+str(a)+"_fgr" +'.jpg')
-                        # cv2.imwrite(save_mat_circle+str(a)+"_com" +'.png',matimg[0])
-                        # cv2.imwrite(save_mat_circle+str(a)+"_pha" +'.jpg',matimg[1])
-                        # cv2.imwrite(save_mat_circle+str(a)+"_fgr" +'.jpg',matimg[2])
+                        # img = tensor_to_np(matimg[2])
+                        
+                        process = post_processing(matimg[2])
+                        
+                        cv2.imwrite("/home/user/shape_detection/circle/"+"circle_"+str(b)+'.jpg',process)
 
-                elif detections[0][0] == "columnar":
+                elif detections[0][0] == "columnar" or detections[0][0] == "grip":
                     if key == 32:
                         c += 1
                         cv2.imwrite(save_path_columnar+str(c) +'.jpg',frame)
                         new_obj_name = str(c) +'.jpg'
                         shutil.copy(local_img_name, bgrcolumnar_path +new_obj_name)
                         matimg = handle(save_path_columnar,bgrcolumnar_path)
+                        # img = tensor_to_np(matimg[2])
 
-                elif detections[0][0] == "blade":
+                        process = post_processing(matimg[2])
+                        cv2.imwrite("/home/user/shape_detection/circle/"+"columnar_"+str(c)+'.jpg',process)
+
+                elif detections[0][0] == "blade" or detections[0][0] == "grasp":
                     if key == 32:
                         d += 1
                         cv2.imwrite(save_path_blade+str(d) +'.jpg',frame)
                         new_obj_name = str(d) +'.jpg'
                         shutil.copy(local_img_name, bgrblade_path +new_obj_name)
                         matimg = handle(save_path_blade,bgrblade_path)
+                        # img = tensor_to_np(matimg[2])
+                    
+                        process = post_processing(matimg[2])
+                        cv2.imwrite("/home/user/shape_detection/circle/"+"blade_"+str(d)+'.jpg',process)
                         
         if key == 27:
             break
-        cv2.imshow("win_title", image)
-
-        
+                
     cv2.destroyAllWindows()
     cap.release()
 
 
-    # dataset_root_path = r"/home/user/matting/imagedata"
-    # img_floder = os.path.join(dataset_root_path,"img")
-    # bgr_floder = os.path.join(dataset_root_path,"bgr")
-    
-    # handle(img_floder,bgr_floder)
+
+
+	
+
+		
+
+	
+
