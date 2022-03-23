@@ -1119,11 +1119,44 @@ def line_Segment(mat,orig):
         circle_y = (coordinate[0][0][1] + coordinate[1][0][1])/2
 
     cv2.circle(orig_img,(int(circle_x),int(circle_y)),2,(0,0,255),2)
-
     cv2.imshow("orig",orig_img)
+    return orig_img
 
+#circle detection
+def circle_transform(mat,orig):
+    mat_img = cv2.imread(mat)
+    orig_img = cv2.imread(orig)
+
+    gray = cv2.cvtColor(mat_img,cv2.COLOR_BGR2GRAY)
+    edges = cv2.Canny(gray, 70, 210)
+
+    contours, hierarchy = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+    areas = []
+    for c in range(len(contours)):
+            areas.append(cv2.contourArea(contours[c]))
+
+    max_id = areas.index(max(areas))
+    cnt = contours[max_id] #max contours
+
+    M_point = cv2.moments(cnt)
+    cv2.drawContours(orig_img, cnt, -1, (0, 0, 255), 2)
+
+    center_x = int(M_point['m10']/M_point['m00'])
+    center_y = int(M_point['m01']/M_point['m00'])
+    drawCenter = cv2.circle(orig_img,(int(center_x),int(center_y)),2,(255,0,0),2)
+
+    cv2.imshow("circle",orig_img)
+    return orig_img
+
+#grip and columnar detection
+def calculate_center(left_x,left_y,right_x,right_y):
+    width = abs(right_x -left_x) 
+    height = abs(right_y - left_y)
+    center_x = left_x + (width/2.0)
+    center_y = left_y + (height/2.0)
+    return center_x,center_y
     
-  
   
 # ------------------------------------------------------- Matting Arguments -------------------------------------------------
   
@@ -1151,8 +1184,8 @@ parser.add_argument('--output-types', type=str, required=False, nargs='+',
 parser.add_argument('-y', action='store_true')
 args = parser.parse_args()
 
-
 # --------------------------------------------------------------------Main--------------------------------------------------------#
+#yolo
 weights = "yolo_data/yolov4-obj_final.weights"
 config = "yolo_data/yolov4-obj.cfg"
 classes = "yolo_data/obj.names"
@@ -1160,11 +1193,18 @@ data = "yolo_data/obj.data"
 thresh = 0.7
 show_coordinates = True
 
+
 #original_img
 save_path_columnar = "/home/user/shape_detection/columnar/orig/"
 save_path_long = "/home/user/shape_detection/long/orig/"
 save_path_circle = "/home/user/shape_detection/circle/orig/"
 save_path_blade = "/home/user/shape_detection/blade/orig/"
+
+#process
+save_process_columnar = "/home/user/shape_detection/columnar/process/" 
+save_process_circle = "/home/user/shape_detection/circle/process/"
+save_process_long = "/home/user/shape_detection/long/process/"
+save_process_blade = "/home/user/shape_detection/blade/process/"
 
 #matting
 save_mat_columnar = "/home/user/shape_detection/columnar/mat/"
@@ -1183,10 +1223,16 @@ bgr_floder = os.path.join(dataset_root_path,"bgr")
 local_img_name=r'/home/user/shape_detection/bgr/1.jpg'
 
 #second_bgr
-bgrcircle_path = r'/home/user/shape_detection/bgr_circle/'
-bgrblade_path = r'/home/user/shape_detection/bgr_blade/'
-bgrlong_path = r'/home/user/shape_detection/bgr_long/'
-bgrcolumnar_path = r'/home/user/shape_detection/bgr_columnar/'
+bgrcircle_path = "/home/user/shape_detection/circle/bgr/"
+bgrblade_path = "/home/user/shape_detection/blade/bgr/"
+bgrlong_path = "/home/user/shape_detection/long/bgr/"
+bgrcolumnar_path = "/home/user/shape_detection/columnar/bgr/"
+
+#find center
+center_circle = "/home/user/shape_detection/circle/center/"
+center_long = "/home/user/shape_detection/long/center/"
+center_blade = "/home/user/shape_detection/blade/center/"
+center_columnar = "/home/user/shape_detection/columnar/center/"
 
 
 
@@ -1204,21 +1250,17 @@ if __name__ == '__main__':
     c = 0
     d = 0
     while(True):
-    
         ret, frame = cap.read()
         if not ret:
             break
 
+        #first bgr
         if i == 0:
             i += 1
-            # print("1")
             time.sleep(1.5)
             cv2.imwrite(save_bgr + str(i) + '.jpg',frame)
-            # print("2")
         
-        
-            
-
+        #shape detection
         width = frame.shape[1]
         height = frame.shape[0]
 
@@ -1243,50 +1285,102 @@ if __name__ == '__main__':
         fps = int(1/(time.time()-t_prev))
         cv2.imshow("win_title", image)
 
-
         key = cv2.waitKey(1)
         if  len(detections) != 0:
             if int(float(detections[0][1])) >= 90:
                 if detections[0][0] == "long":
                     if key == 32:
                         a += 1
-                        cv2.imwrite(save_path_long+str(a) +'.jpg',frame)
+                        orig_long = save_path_long+str(a) +'.jpg'
+                        cv2.imwrite(orig_long,frame)
                         shutil.copy(local_img_name, bgrlong_path +str(a) +'.jpg')
                         
                         matimg = handle(save_path_long,bgrlong_path)
-                        # img = tensor_to_np(matimg[2])
 
                         process = post_processing(matimg[2])
-                        
-                        cv2.imwrite("/home/user/shape_detection/circle/"+"long_"+str(a)+'.jpg',process)
-                        line_Segment("/home/user/shape_detection/circle/"+"long_"+str(a)+'.jpg',"/home/user/shape_detection/long/orig/1.jpg")
+                        process_long = save_process_long+"long_"+str(a)+'.jpg'
+                        cv2.imwrite(process_long,process)
 
-                        cv2.imwrite("/home/user/shape_detection/circle/"+"long_"+str(a)+'.jpg',process)
+                        center = line_Segment(process_long,orig_long)
+                        cv2.imwrite(center_long+"long_"+str(a)+'.jpg',center)
 
                 elif detections[0][0] == "circle":
                     if key == 32:
                         b += 1
-                        cv2.imwrite(save_path_circle+str(b) +'.jpg',frame)
+                        orig_circle = save_path_circle+str(b) +'.jpg'
+                        cv2.imwrite(orig_circle,frame)
+
                         new_obj_name = str(b) +'.jpg'
-                        shutil.copy(local_img_name, bgrcircle_path +new_obj_name)
+                        shutil.copy(local_img_name, bgrcircle_path + new_obj_name)
                         matimg = handle(save_path_circle,bgrcircle_path)
-                        # img = tensor_to_np(matimg[2])
                         
                         process = post_processing(matimg[2])
-                        
-                        cv2.imwrite("/home/user/shape_detection/circle/"+"circle_"+str(b)+'.jpg',process)
+                        process_circle = save_process_circle + "circle_" + str(b) + '.jpg'
+                        cv2.imwrite(process_circle,process)
+
+                        center = circle_transform(process_circle,orig_circle)
+                        cv2.imwrite(center_circle+"circle_"+str(b)+'.jpg',center)
 
                 elif detections[0][0] == "columnar" or detections[0][0] == "grip":
                     if key == 32:
                         c += 1
-                        cv2.imwrite(save_path_columnar+str(c) +'.jpg',frame)
+                        orig_columnar = save_path_columnar+str(c) +'.jpg'
+                        cv2.imwrite(orig_columnar,frame)
+
                         new_obj_name = str(c) +'.jpg'
-                        shutil.copy(local_img_name, bgrcolumnar_path +new_obj_name)
-                        matimg = handle(save_path_columnar,bgrcolumnar_path)
-                        # img = tensor_to_np(matimg[2])
+                        shutil.copy(local_img_name, bgrcolumnar_path + new_obj_name)
+                        matimg = handle(save_path_columnar,bgrcolumnar_path)                        
 
                         process = post_processing(matimg[2])
-                        cv2.imwrite("/home/user/shape_detection/circle/"+"columnar_"+str(c)+'.jpg',process)
+                        process_columnar = save_process_columnar + "columnar_" + str(c) + '.jpg'
+                        cv2.imwrite(process_columnar,process)
+
+                        if detections[0][0] == "grip":
+
+                            grip_center_x = detections[0][2][0]
+                            grip_center_y = detections[0][2][1]
+                            grip_width = detections[0][2][2]
+                            grip_height = detections[0][2][3]
+
+                            columnar_center_x = detections[1][2][0]
+                            columnar_center_y = detections[1][2][1]
+                            columnar_width = detections[1][2][2]
+                            columnar_height = detections[1][2][3]
+                            # print(center_x,center_y)
+                            
+                            if(columnar_center_x > grip_center_x): #grip left
+                                left_up_x = int(grip_center_x - grip_width)
+                                left_up_y = int(grip_center_y - (grip_width/3.0/2.0))
+
+                                right_down_x = int(grip_center_x )
+                                right_down_y = int(left_up_y + (grip_width/3.0/2.0))
+
+                                img = cv2.imread(orig_columnar)
+                                cv2.rectangle(img,(left_up_x,left_up_y),(right_down_x,right_down_y),(255,0,255),2)
+                                center = calculate_center(left_up_x,left_up_y,right_down_x,right_down_y)             
+
+                                cv2.circle(img,(int(center[0]),int(center[1])),2,(0,0,255),2)
+                                cv2.imshow("img",img)
+                                cv2.imwrite(center_columnar+"columnar_grip_"+str(c)+'.jpg',img) 
+
+                            else: #grip right
+                                left_up_x = int(grip_center_x)
+                                left_up_y = int(grip_center_y - (grip_width/3.0/2.0))
+
+                                right_down_x = int(grip_center_x + grip_width)
+                                right_down_y = int(left_up_y + (grip_width/3.0/2.0))
+
+                                img = cv2.imread(orig_columnar)
+                                cv2.rectangle(img,(left_up_x,left_up_y),(right_down_x,right_down_y),(255,0,255),2)  
+                                center = calculate_center(left_up_x,left_up_y,right_down_x,right_down_y)             
+
+                                cv2.circle(img,(int(center[0]),int(center[1])),2,(0,0,255),2)
+                                cv2.imshow("img",img)
+                                cv2.imwrite(center_columnar+"columnar_grip_"+str(c)+'.jpg',img)    
+                        else:
+                            center = line_Segment(process_columnar,orig_columnar)
+
+                            cv2.imwrite(center_columnar+"columnar_"+str(c)+'.jpg',center)
 
                 elif detections[0][0] == "blade" or detections[0][0] == "grasp":
                     if key == 32:
@@ -1301,10 +1395,21 @@ if __name__ == '__main__':
                         cv2.imwrite("/home/user/shape_detection/circle/"+"blade_"+str(d)+'.jpg',process)
                         
         if key == 27:
-            break
-                
+            break            
     cv2.destroyAllWindows()
     cap.release()
+
+
+
+
+
+
+
+
+
+
+
+	
 
 
 

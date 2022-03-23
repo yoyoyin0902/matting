@@ -526,8 +526,6 @@ def max2(x):
     return m1,m2  
 
 def line_Segment(img,orig):
-	
-
 	if image_path is None:
 		print("no picture in there~~")
 		return -1 
