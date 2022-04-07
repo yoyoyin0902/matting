@@ -1,0 +1,26 @@
+<annotation>
+	<folder>img</folder>
+	<filename>199.jpg</filename>
+	<path>/home/user/matting/imagedata/img/199.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>1280</width>
+		<height>720</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>columnar</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>732</xmin>
+			<ymin>437</ymin>
+			<xmax>848</xmax>
+			<ymax>653</ymax>
+		</bndbox>
+	</object>
+</annotation>

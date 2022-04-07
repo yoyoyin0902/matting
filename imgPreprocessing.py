@@ -1,41 +1,83 @@
-import os
+#!/usr/bin/env python3
+
 import cv2
-import numpy as np
-from PIL import Image
-import matplotlib.pyplot as plt
-import glob 
-from os import listdir
-from os.path import isfile, join 
+import depthai as dai
 
+img_savefile = "/home/user/matting/imagedata/img/"
 
-# savefile_path = "/home/user/matting/preprocessingfile/"
-savefile_path = "/home/user/shape_detection/process/"
+# Create pipeline
+pipeline = dai.Pipeline()
 
-savefile_Left  = "/media/user/Extreme SSD/takeCam/yolo/imgL/"
-savefile_Right = "/media/user/Extreme SSD/takeCam/yolo/imgR/"
+# Define source and output
+camRgb = pipeline.create(dai.node.ColorCamera)
+xoutRgb = pipeline.create(dai.node.XLinkOut)
 
-pha_path = "/home/user/shape_detection/pha/long_2.jpg"
+xoutRgb.setStreamName("rgb")
 
-img = cv2.imread(pha_path,0)
-cv2.imshow("img",img)
-imgBlur = cv2.GaussianBlur(img, (5, 5), 0)
-# cv2.imshow("img1",imgBlur)
+# Properties
+camRgb.setPreviewSize(1280, 720)
+camRgb.setInterleaved(False)
+camRgb.setResolution(dai.ColorCameraProperties.SensorResolution.THE_12_MP)
+# camRgb.setColorOrder(dai.ColorCameraProperties.ColorOrder.RGB)
 
-# kernel = np.ones((3, 3),np.uint8)
-# imgDil= cv2.dilate(imgBlur, kernel, iterations = 2)
-# imgErode = cv2.erode(imgDil, kernel, iterations = 2)
-# imgDil= cv2.dilate(imgErode, kernel, iterations = 4)
+# Linking
+camRgb.preview.link(xoutRgb.input)
+
+# Connect to device and start pipeline
+with dai.Device(pipeline) as device:
+
+    # print('Connected cameras: ', device.qgetConnectedCameras())
+    # Print out usb speed
+    print('Usb speed: ', device.getUsbSpeed().name)
+
+    # Output queue will be used to get the rgb frames from the output defined above
+    qRgb = device.getOutputQueue(name="rgb", maxSize=4, blocking=False)
+
+    i = 0
+    while True:
+        inRgb = qRgb.get()  # blocking call, will wait until a new data has arrived
+        color_image = inRgb.getCvFrame()
+        # Retrieve 'bgr' (opencv format) frame
+        cv2.imshow("rgb", color_image)
+
+        print(color_image.shape)
+
+        if cv2.waitKey(1)==ord('s'):
+            i+=1
+            cv2.imwrite(img_savefile+str(i)+'.jpg',color_image)
+            
+
+        if cv2.waitKey(1) == ord('q'):
+            break
+
+# # savefile_path = "/home/user/matting/preprocessingfile/"
+# savefile_path = "/home/user/shape_detection/process/"
+
+# savefile_Left  = "/media/user/Extreme SSD/takeCam/yolo/imgL/"
+# savefile_Right = "/media/user/Extreme SSD/takeCam/yolo/imgR/"
+
+# pha_path = "/home/user/shape_detection/pha/long_2.jpg"
+
+# img = cv2.imread(pha_path,0)
+# cv2.imshow("img",img)
+# imgBlur = cv2.GaussianBlur(img, (5, 5), 0)
+# # cv2.imshow("img1",imgBlur)
+
+# # kernel = np.ones((3, 3),np.uint8)
+# # imgDil= cv2.dilate(imgBlur, kernel, iterations = 2)
+# # imgErode = cv2.erode(imgDil, kernel, iterations = 2)
+# # imgDil= cv2.dilate(imgErode, kernel, iterations = 4)
+# # # cv2.imshow("binary1",binary1)
+# # cv2.imshow("imgDil",imgDil)
+
+# # ret,binary1=cv2.threshold(imgDil,120,255,cv2.THRESH_BINARY) #二值化
+# ret,binary2=cv2.threshold(imgBlur,110,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU) #二值化
 # # cv2.imshow("binary1",binary1)
-# cv2.imshow("imgDil",imgDil)
-
-# ret,binary1=cv2.threshold(imgDil,120,255,cv2.THRESH_BINARY) #二值化
-ret,binary2=cv2.threshold(imgBlur,110,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU) #二值化
-# cv2.imshow("binary1",binary1)
-cv2.imshow("binary2",binary2)
+# cv2.imshow("binary2",binary2)
 
 
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
 
 
 # def TwoCamera():
@@ -80,28 +122,52 @@ cv2.destroyAllWindows()
 
 
 # def takePhoto():
-#     img_savefile = "/home/user/matting/imagedata/img_right/"
+#     img_savefile = "/home/user/matting/imagedata/img/"
 
-#     cam = cv2.VideoCapture(6)
-#     cam.set(3,1920)
-#     cam.set(4,1080)
-#     if not cam.isOpened() | cam.isOpened():
-#         print("Cannot open camera")
-#         exit()
-#     fps = 60
+#     pipeline = dai.Pipeline()
 
-#     i = 0
-#     while(True):
-#         ret,frame = cam.read()
-#         k = cv2.waitKey(1)
-#         if k == 27:
-#             break
-#         elif k==ord('s'):
-#             cv2.imwrite(img_savefile+str(i)+'.jpg',frame)
-#             i+=1
-#         cv2.imshow("capture",frame)
-#     cam.release()
-#     cam.destroyAllWindows()
+#     camRgb = pipeline.create(dai.node.ColorCamera) #cam
+
+#     xoutRgb = pipeline.create(dai.node.XLinkOut)
+
+#     xoutRgb.setStreamName("rgb")
+
+#     #cam參數調整
+#     camRgb.setPreviewSize(1280, 720)
+#     # camRgb.setIspScale(2,3)
+#     # camRgb.initialControl.setManualFocus(135)
+#     camRgb.setBoardSocket(dai.CameraBoardSocket.RGB) #要使用的相機
+#     camRgb.setResolution(dai.ColorCameraProperties.SensorResolution.THE_12_MP) #分辨率 1080p 12mp q
+#     camRgb.setFps(30)
+#     camRgb.setColorOrder(dai.ColorCameraProperties.ColorOrder.RGB) #输出图像的颜色顺序，RGB或BGR
+#     camRgb.setInterleaved(False) #设置输出图像是否交错数据
+
+#     camRgb.preview.link(xoutRgb.input)
+
+#     with dai.Device(pipeline) as device:
+#         device.startPipeline()
+#         qRgb = device.getOutputQueue(name="rgb", maxSize=4, blocking=False)
+#         imageIn = qRgb.get()
+
+#         color_image = imageIn.getCvFrame()
+#         print(color_image.shape)
+
+#         i = 0
+#         while(True):
+#             # ret,frame = cam.read()
+#             k = cv2.waitKey(1)
+#             if k == 27:
+#                 break
+#             elif k==ord('s'):
+#                 cv2.imwrite(img_savefile+str(i)+'.jpg',color_image)
+#                 i+=1
+#             elif k ==ord('q'):
+#                 break
+
+#             cv2.imshow("color_image",color_image)
+
+#     # cam.release()
+#     cv2.destroyAllWindows()
 
 # def calcAndDrawHist(image, color):
 #     hist = cv2.calcHist([image], [0], None, [256], [0.0, 255.0])
@@ -258,7 +324,7 @@ cv2.destroyAllWindows()
 
 
 # if __name__ == '__main__':
-#     # takePhoto() #takePhot
+#     takePhoto() #takePhot
 #     # TwoCamera()
 #     #dataset_root_path = r"/home/user/shape_detection/pha/"
 #     pha_path = r"/home/user/shape_detection/pha/"
