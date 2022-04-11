@@ -1,25 +1,437 @@
 
-import argparse
-import torch
-import os
+# import argparse
+# import torch
+# import os
  
-from torch.nn import functional as F
-from torch.utils.data import DataLoader
-from torchvision import transforms as T
-from torchvision.transforms.functional import to_pil_image
-from threading import Thread
-from tqdm import tqdm
-from torch.utils.data import Dataset
-from PIL import Image
-from typing import Callable, Optional, List, Tuple
-import glob
-from torch import nn
-from torchvision.models.resnet import ResNet, Bottleneck
-from torch import Tensor
-import torchvision
+# from torch.nn import functional as F
+# from torch.utils.data import DataLoader
+# from torchvision import transforms as T
+# from torchvision.transforms.functional import to_pil_image
+# from threading import Thread
+# from tqdm import tqdm
+# from torch.utils.data import Dataset
+# from PIL import Image
+# from typing import Callable, Optional, List, Tuple
+# import glob
+# from torch import nn
+# from torchvision.models.resnet import ResNet, Bottleneck
+# from torch import Tensor
+# import torchvision
+# import numpy as np
+
+from matplotlib.cm import register_cmap
+import matplotlib.pyplot as plt
+import cv2
 import numpy as np
+import imutils
+import time
+from scipy.spatial import distance as dist
+from PIL import  Image
+
+
 import cv2
 import uuid
+
+import numpy as np
+
+import cv2
+
+import math
+
+img = cv2.imread("circle_3.jpg",0)
+
+img = cv2.medianBlur(img,5)
+
+cimg = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
+
+circles =cv2.HoughCircles(img,cv2.HOUGH_GRADIENT,1,60,param1=50,param2=30,minRadius=0,maxRadius=0)
+
+circles = np.uint16(np.around(circles))
+
+counter=0
+
+correctC=[]
+
+xC=[]
+
+yC=[]
+
+for i in circles[0,:]:
+
+    #cv2.circle(cimg,(i[0],i[1]),i[2],(0,255,0),2)
+
+    #cv2.circle(cimg,(i[0],i[1]),2,(0,0,255),2)
+
+    cv2.putText(cimg,str(i[0])+","+str(i[1])+","+str(i[2]),(i[0],i[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.3,(255,0,0),1,cv2.LINE_AA)
+
+    correctC.append((i[0],i[1],i[2]))
+
+    xC.append(i[0])
+
+    yC.append(i[1])
+
+counter+=1
+
+print("Circle Count is : " + str(counter))
+
+xCS=sorted(xC)
+
+yCS=sorted(yC)
+
+xS=sorted(correctC, key=lambda correctC:correctC[0])
+
+q1=sorted(xS[:4],key=lambda correctC: correctC[1])
+
+q2=sorted(xS[4:8],key=lambda correctC: correctC[1])
+
+q3=sorted(xS[8:12],key=lambda correctC: correctC[1])
+
+q4=sorted(xS[12:16],key=lambda correctC: correctC[1])
+
+q5=sorted(xS[16:20],key=lambda correctC: correctC[1])
+
+q6=sorted(xS[20:24],key=lambda correctC: correctC[1])
+
+q7=sorted(xS[24:28],key=lambda correctC: correctC[1])
+
+q8=sorted(xS[28:32],key=lambda correctC: correctC[1])
+
+q9=sorted(xS[32:],key=lambda correctC: correctC[1])
+
+sortedTmp=[q1,q2,q3,q4,q5,q6,q7,q8,q9]
+
+sorted=[]
+
+for i in sortedTmp:
+
+    for j in i:
+
+        sorted.append(j)
+
+for i in range(36):
+
+    cv2.putText(cimg,str(i),(sorted[i][0],sorted[i][1]), cv2.FONT_HERSHEY_SIMPLEX, 1,(255,0,0),3,cv2.LINE_AA)
+
+    cv2.imshow('detected circles',cimg)
+
+cv2.waitKey(0)
+
+cv2.destroyAllWindows()
+
+# img = np.zeros((256, 256, 3), np.uint8)
+# img.fill(200)
+# cv2.line(img, (33, 33), (200, 200), (0, 0, 255), 2)
+# cv2.line(img, (9, 65), (158, 222), (0, 0, 255), 2)
+
+# x1 = float(306)
+# y1 = float(319)
+# x2 = float(205)
+# y2 = float(331)
+# print(x1,y1,x2,y2)
+
+# if x2 - x1 == 0:
+#     # print "直线是竖直的"
+#     result=90
+# elif y2 - y1 == 0 :
+#     # print("直线是水平的"
+#     result=0
+# else:
+#     k = (y2-y1)/(x2-x1)
+#     print(k)
+#     # 求反正切，再将得到的弧度转换为度
+#     result = np.arctan(k) * 57.29577
+#     print("直线倾斜角度为:" + str(result) + "度")
+
+# cv2.imshow('My Image', img)
+
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
+
+
+# import numpy as np
+ 
+# def angle(x1, y1, x2, y2):
+#     if x1 == x2:
+#         return 90
+#     if y1 == y2:
+#         return 180
+#     k = -(y2 - y1) / (x2 - x1)
+#     # 求反正切，再将得到的弧度转换为度
+#     result = np.arctan(k) * 57.29577
+#     # 234象限
+#     if x1 > x2 and y1 > y2:
+#         result += 180
+#     elif x1 > x2 and y1 < y2:
+#         result += 180
+#     elif x1 < x2 and y1 < y2:
+#         result += 360
+#     print("直线倾斜角度为：" + str(result) + "度")
+#     return result
+ 
+# if __name__ == '__main__':
+#     x1, y1 = (33, 33)
+#     x2, y2 = (200, 200)
+#     angle(x1, y1, x2, y2)
+
+
+
+# import math
+
+# class Point:
+#     """
+#     2D坐标点
+#     """
+#     def __init__(self, x, y):
+#         self.X = x
+#         self.Y = y
+
+
+# class Line:
+#     def __init__(self, point1, point2):
+#         """
+#         初始化包含两个端点
+#         :param point1:
+#         :param point2:
+#         """
+#         self.Point1 = point1
+#         self.Point2 = point2
+
+
+# def GetAngle(line1, line2):
+#     """
+#     计算两条线段之间的夹角
+#     :param line1:
+#     :param line2:
+#     :return:
+#     """
+#     dx1 = line1.Point1.X - line1.Point2.X
+#     dy1 = line1.Point1.Y - line1.Point2.Y
+#     dx2 = line2.Point1.X - line2.Point2.X
+#     dy2 = line2.Point1.Y - line2.Point2.Y
+#     angle1 = math.atan2(dy1, dx1)
+#     angle1 = int(angle1 * 180 / math.pi)
+#     print(angle1)
+#     angle2 = math.atan2(dy2, dx2)
+#     angle2 = int(angle2 * 180 / math.pi)
+#     # print(angle2)
+#     if angle1 * angle2 >= 0:
+#         insideAngle = abs(angle1 - angle2)
+#     else:
+#         insideAngle = abs(angle1) + abs(angle2)
+#         if insideAngle > 180:
+#             insideAngle = 360 - insideAngle
+#     insideAngle = insideAngle % 180
+#     return insideAngle
+
+# if __name__ == '__main__':
+#     L1 = Line(Point(33, 33), Point(200, 200))
+#     L2 = Line(Point(0, 0), Point(2, 0))
+#     res = GetAngle(L1, L2)
+#     print(res) # 结果为0°
+
+
+
+
+
+# global d#全局变量拿来判断是否按下d
+# d = 0
+# #调用摄像头 函数
+# def read_usb_capture():
+#     # 选择摄像头的编号
+#     cap = cv2.VideoCapture(0)# 0是笔记本自带摄像头
+#     # 添加这句是可以用鼠标拖动弹出的窗体
+#     cv2.namedWindow('video', cv2.WINDOW_AUTOSIZE)
+#     cv2.resizeWindow("video", 640, 480)  # 设置长和宽
+
+#     while (cap.isOpened()):#循环
+#         ret, frame = cap.read()#read放回2个值，第一个是True和False 是否打开 第二个是传入图像
+#         lunkuo(frame)#进行轮廓检测
+#         cv2.imshow('video', frame)#显示出来
+#         k = cv2.waitKey(1) & 0xFF  # 监听键盘
+#         if k == ord('s'):# 保存键
+#             cv2.imwrite("1.jpg", frame)
+#             img = cv2.imread('1.jpg')
+#             cv2.imshow('img',img)
+#         # 按下'q'就退出
+#         if k == ord('q'):#退出键
+#             break
+#         if k == ord('d'):
+#             global d
+#             d = 1#作为画图触发条件
+#     # 释放画面
+#     cap.release()
+#     cv2.destroyAllWindows()
+
+# def plot(tl,tr,bl,br):#画图并且展示函数
+#     # 得到坐标点在plot上进行绘画以及保存
+#     x = [tl[0], tr[0], br[0], bl[0], tl[0]]
+#     y = [640 - tl[1], 640 - tr[1], 640 - br[1], 640 - bl[1], 640 - tl[1]]
+#     plt.plot(x, y)
+#     plt.axhline(y=min(y), c="r", ls="--", lw=2)
+#     plt.title("rangel = {}".format(90 - rangle))
+#     plt.axis("equal")
+#     for a, b in zip(x, y):
+#         plt.text(a, b, (a, b), ha='center', va='bottom', fontsize=10)
+#     plt.savefig('zuobiao.png')#保存下来
+#     plt.clf()#清除
+#     plt.cla()
+#     fp = open('zuobiao.png', 'rb')
+#     img = Image.open(fp)#打开并且展示
+#     img.show()
+
+# def midpoint(ptA, ptB):#计算坐标中点函数
+#     return ((ptA[0] + ptB[0]) * 0.5, (ptA[1] + ptB[1]) * 0.5)
+# def lunkuo(img):#检测轮廓
+#     start = time.time()#计算检测时间
+#     img1_ = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # 转换为灰度
+#     img_ = cv2.GaussianBlur(img1_, (5, 5), 0)  # 高斯滤波去噪点
+#     img__ = cv2.Canny(img_, 75, 200)  # Canny边缘检测
+
+#     img__ = cv2.dilate(img__, None, iterations=1)#扩张
+#     img__ = cv2.erode(img__, None, iterations=1)#腐蚀
+#     # 轮廓检测
+#     cnts = cv2.findContours(img__.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)  # 检测出所有轮廓
+#     cnts = cnts[1] if imutils.is_cv3() else cnts[0]  # opencv4写法
+#     cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:]  # 排序得到前x个轮廓 可以根据图片自己设定
+
+#     #定义全局变量
+#     global screenCnt,box,rangle
+#     box = 0
+#     rangle = 0
+#     # 我的摄像头分辨率为640*480 在摄像头中框出最合适检测的地方
+#     cv2.line(img, (595, 45), (595, 435),
+#              (255, 0, 255), 1)
+#     cv2.line(img, (45, 435), (595, 435),
+#              (255, 0, 255), 1)
+#     cv2.line(img, (45, 45), (45, 435),
+#              (255, 0, 255), 1)
+#     cv2.line(img, (45, 45), (595, 45),
+#              (255, 0, 255), 1)
+#     cv2.line(img, (45, 45), (595, 45),
+#              (255, 0, 255), 1)
+#     cv2.circle(img, (45, 45), 2, (255, 0, 0), 1)#中心点
+#     cv2.putText(img, "(0,0)",
+#                 (45, 435), cv2.FONT_HERSHEY_SIMPLEX,
+#                 0.5, (0, 244, 245), 2)#摄像头的坐标轴原点是在左上角 自己设定坐标轴原点并显示
+#     #遍历轮廓
+#     for c in cnts:
+#         # 计算轮廓近似
+#         peri = cv2.arcLength(c, True)
+#         # C表示输入的点集
+#         # epsilon表示从原始轮廓到近似轮廓的最大距离，它是一个准确度参数
+#         # True表示封闭的
+#         approx = cv2.approxPolyDP(c, 0.02 * peri, True)
+
+#         # 4个点的时候就拿出来 因为物品是矩阵形状
+#         if len(approx) == 4:
+#             screenCnt = approx  # 保存下来
+#             rangle = cv2.minAreaRect(screenCnt)[2]  # minAreaRect()函数返回角度 是最低的边到x水平坐标轴的角度
+#             box = cv2.cv.BoxPoints(cv2.minAreaRect(screenCnt)) if imutils.is_cv2() else cv2.boxPoints(
+#                 cv2.minAreaRect(screenCnt))#得到四个最小矩阵的坐标点
+#             cv2.drawContours(img, [box.astype("int")], -1, (0, 255, 0), 2)#在图中画出来
+#             box = np.array(box, dtype="int")#转换类型
+#             (tl, tr, br, bl) = box#得到左上 右上 左下 右下的坐标点
+#             #计算中点
+#             (tltrX, tltrY) = midpoint(tl, tr)
+#             (blbrX, blbrY) = midpoint(bl, br)
+#             (tlblX, tlblY) = midpoint(tl, bl)
+#             (trbrX, trbrY) = midpoint(tr, br)
+#             #欧几里得度量
+#             dA = dist.euclidean((tltrX, tltrY), (blbrX, blbrY))
+#             dB = dist.euclidean((tlblX, tlblY), (trbrX, trbrY))
+
+
+#             #固定摄像头及分辨率时 要想测出所测物品的长度 需要参照物 先使用已知宽度的矩形进行测量 得到 像素宽/实际宽 = 每宽多少像素 并保存下来
+#             # print('DB:',dB)
+#             # i = 1
+#             # if i == 1:
+#             #     pixelsPerMetric = dB / 3.4
+#             # print(pixelsPerMetric)
+#             # i += 1
+
+
+#             pixelsPerMetric = 35.15#得到的比率
+
+
+#             #分辨率除以比率可以得到摄像头测的实际范围长度
+#             # print('H:',640/pixelsPerMetric)
+#             # print('w:',480/pixelsPerMetric)
+
+
+
+#             if pixelsPerMetric != 0:#防止出现检测中没有实物得不到比例而发生除以0的错误
+#                 #实际宽度
+#                 dimA = dA / pixelsPerMetric
+#                 dimB = dB / pixelsPerMetric
+#                 #显示宽度
+#                 cv2.putText(img, "{:.1f}cm".format(dimB),
+#                             (int(tltrX - 15), int(tltrY - 10)), cv2.FONT_HERSHEY_SIMPLEX,
+#                             0.65, (225, 190, 0), 2)
+#                 cv2.putText(img, "{:.1f}cm".format(dimA),
+#                             (int(trbrX + 10), int(trbrY)), cv2.FONT_HERSHEY_SIMPLEX,
+#                             0.65, (225, 190, 0), 2)
+#             #显示角度 此角度是经过变换后的 是我定义的坐标轴的矩形的最低点与x轴的夹角
+#             cv2.putText(img, "r:{:.1f}".format(90 - rangle),
+#                         (int(tltrX + 20), int(tltrY + 20)), cv2.FONT_HERSHEY_SIMPLEX,
+#                         0.65, (225, 190, 0), 2)
+
+#             #画出点的坐标的直线并显示坐标点数据 容易观察夹角的位置 并且可以利用坐标计算夹角
+#             cv2.line(img, (int(bl[0]), int(bl[1])), (int(bl[0]), 435),
+#                      (0, 244, 245), 1)
+#             cv2.putText(img, "({},{})".format(bl[0], 640 - bl[1]),
+#                         (int(bl[0] - 20), 415), cv2.FONT_HERSHEY_SIMPLEX,
+#                         0.4, (225, 190, 0), 1)
+
+#             cv2.line(img, (int(br[0]), int(br[1])), (int(br[0]), 435),
+#                      (0, 244, 245), 1)
+#             cv2.putText(img, "({},{})".format(br[0], 640 - br[1]),
+#                         (int(br[0]), 435), cv2.FONT_HERSHEY_SIMPLEX,
+#                         0.4, (225, 190, 0), 1)
+
+#             cv2.line(img, (int(bl[0]), int(bl[1])), (int(595), int(bl[1])),
+#                      (0, 244, 245), 1)
+
+#             end = time.time()#时间
+#             print("轮廓检测所用时间：{:.3f}ms".format((end - start) * 1000))
+#             global d
+#             if d == 1:#触发条件
+#                 plot(tl, tr, bl, br)#画图
+#                 d = 0#清除标志
+
+#             return  img
+
+# read_usb_capture()#开始
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # def sharpen(img, sigma=100):    
 #     # sigma = 5、15、25
@@ -29,29 +441,29 @@ import uuid
 #     return usm
 
 
-img = cv2.imread("/home/user/matting/preprocessingfile/10_old.jpg")
-# imgBlur = cv2.GaussianBlur(img, (0, 0), 2**(1/4))
+# img = cv2.imread("/home/user/matting/preprocessingfile/10_old.jpg")
+# # imgBlur = cv2.GaussianBlur(img, (0, 0), 2**(1/4))
+# # gray_img = cv2.cvtColor(imgBlur,cv2.COLOR_BGR2GRAY)
+
+# imgBlur = cv2.GaussianBlur(img, (3, 3),0)
 # gray_img = cv2.cvtColor(imgBlur,cv2.COLOR_BGR2GRAY)
 
-imgBlur = cv2.GaussianBlur(img, (3, 3),0)
-gray_img = cv2.cvtColor(imgBlur,cv2.COLOR_BGR2GRAY)
+# ret,bin_img = cv2.threshold(gray_img,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
 
-ret,bin_img = cv2.threshold(gray_img,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
-
-kernel = np.ones((3, 3),np.uint8)
-imgErode = cv2.erode(bin_img, kernel, iterations = 1)
-imgDil = cv2.dilate(imgErode, kernel, iterations = 2)
+# kernel = np.ones((3, 3),np.uint8)
+# imgErode = cv2.erode(bin_img, kernel, iterations = 1)
+# imgDil = cv2.dilate(imgErode, kernel, iterations = 2)
 
 
 
-contours, hierarchy = cv2.findContours(bin_img,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-# ext = cv2.drawContours(img,contours,-1,(255,255,255),3)
+# contours, hierarchy = cv2.findContours(bin_img,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+# # ext = cv2.drawContours(img,contours,-1,(255,255,255),3)
 
 
-cv2.imshow("111",img)
-cv2.imshow("2222",imgDil)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+# cv2.imshow("111",img)
+# cv2.imshow("2222",imgDil)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
  
  
 # # --------------- hy ---------------

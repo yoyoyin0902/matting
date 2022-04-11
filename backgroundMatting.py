@@ -15,7 +15,6 @@ import torchvision
 import numpy as np
 import depthai as dai
 
-
 from tqdm import tqdm
 from PIL import Image
 from queue import Queue
@@ -28,18 +27,11 @@ from torchvision.transforms.functional import to_pil_image
 from threading import Thread
 
 from torch.utils.data import Dataset
-
 from typing import Callable, Optional, List, Tuple
-
 from torch import nn
 from torchvision.models.resnet import ResNet, Bottleneck
 from torch import Tensor
 
-
-
-
-  
-  
 # --------------- hy ---------------
 class HomographicAlignment:
     """
@@ -974,14 +966,12 @@ def handle(image_path, bgr_path):
         
         dataloader = DataLoader(dataset, batch_size=1, num_workers=args.num_workers, pin_memory=True)
         
-
         # Worker function
         def writer(img, path):
             img = to_pil_image(img[0].cpu())
             #print(path)
             img.save(path)
      
-
         # print(dataloader)
         
         with torch.no_grad():
@@ -998,13 +988,11 @@ def handle(image_path, bgr_path):
                 # a = tensor_to_np(pha)
                 # cv2.imshow("1111",a)
 
-                
                 # for i in str(a):
                 #             
                 #             cv2.imwrite("/home/user/shape_detection/circle/"+"long_"+str(a)+'.jpg',img)
             
-            
-                
+
                 # print(dataset.datasets[0])
                 # pathname = dataset.datasets[0].filenames[i]
                 # print(pathname)
@@ -1062,7 +1050,6 @@ def post_processing(pha):
     return bin_img
 
 #----------------------------------------------------Segment--------------------------------------------------------------------#
-
 def max2(x):
     m1 = max(x)
     x2 = x.copy()
@@ -1073,6 +1060,39 @@ def max2(x):
     m3 = max(x3)
     return m1,m2,m3 
 #line segment
+def angle(x1, y1, x2, y2):
+    if x1 == x2:
+        return 90
+    if y1 == y2:
+        return 180
+    k = -(y2 - y1) / (x2 - x1)
+    result = np.arctan(k) * 180 / np.pi 
+    # if x1 > x2 and y1 > y2:
+    #     result += 180
+    # elif x1 > x2 and y1 < y2:
+    #     result += 180
+    # elif x1 < x2 and y1 < y2:
+    #     result += 360
+    print("angle: " + str(result) + "度")
+    return result
+
+def rota_rect(box, theta, x, y):
+    """
+    :param box: 正矩形的四个顶点
+    :param theta: 旋转角度
+    :param x: 旋转中心(x,y)
+    :param y: 旋转中心(x,y)
+    :return: 旋转矩形的四个顶点坐标
+    """
+    # 旋转矩形
+    box_matrix = np.array(box) - np.repeat(np.array([[x, y]]), len(box), 0)
+    theta = theta / 180. * np.pi
+    rota_matrix = np.array([[np.cos(theta), -np.sin(theta)],
+                            [np.sin(theta), np.cos(theta)]], np.float)
+
+    new_box = box_matrix.dot(rota_matrix) + np.repeat(np.array([[x, y]]), len(box), 0)
+    return new_box
+
 def line_Segment(mat,orig):
     print(type(orig))
 
@@ -1087,6 +1107,7 @@ def line_Segment(mat,orig):
     
     ver_lines = []
     coordinate = []
+    angle1 = []
 
     for dline in dlines[0]:
         # print(dline[i])
@@ -1110,9 +1131,13 @@ def line_Segment(mat,orig):
             cv2.line(orig_img,(x0,y0),(x1,y1),(0,255,0),2,cv2.LINE_AA)
             coordinate.append(((x0,y0),(x1,y1)))
 
+            result = angle(x0,y0,x1,y1)
+            angle1.append(result)
+
     line1 = math.sqrt((coordinate[0][1][0]-coordinate[1][1][0])**2+(coordinate[0][1][1]-coordinate[1][1][1])**2)
     line2 = math.sqrt((coordinate[0][0][0]-coordinate[1][0][0])**2+(coordinate[0][0][1]-coordinate[1][0][1])**2)
-
+    # cv2.line(orig_img,(coordinate[0][0][0],coordinate[0][0][1]),(coordinate[1][1][0],coordinate[1][1][1]),(255,0,0),2,cv2.LINE_AA)
+    # cv2.line(orig_img,(coordinate[0][1][0],coordinate[0][1][1]),(coordinate[1][0][0],coordinate[1][1][1]),(255,0,0),2,cv2.LINE_AA)
     if (line1 > line2):
         cv2.line(orig_img,coordinate[0][1],coordinate[1][1],(255,0,0),2,cv2.LINE_AA)
         circle_x = (coordinate[0][1][0] + coordinate[1][1][0])/2
@@ -1125,8 +1150,30 @@ def line_Segment(mat,orig):
 
     cv2.circle(orig_img,(int(circle_x),int(circle_y)),2,(0,0,255),2)
 
-    # cv2.imshow("orig",orig_img)
-    return orig_img ,circle_x,circle_y
+    width = 40
+    height = 100
+    grasp_left_x = int(circle_x - (width/2.0))
+    grasp_left_y = int(circle_y - (height/2.0))
+    grasp_right_x = int(circle_x + (width/2.0))
+    grasp_right_y = int(circle_y + (height/2.0))
+    
+    cv2.rectangle(orig_img,(grasp_left_x,grasp_left_y),(grasp_right_x,grasp_right_y),(255,255,0),2)
+
+    box = [(grasp_left_x,grasp_left_y),(grasp_right_x,grasp_left_y),(grasp_left_x,grasp_right_y),(grasp_right_x,grasp_right_y)]
+    real_angle = (angle1[0] + angle1[1])/2.0
+    
+    aa = rota_rect(box,real_angle,circle_x,circle_y)
+    # print(aa)
+    # cv2.rectangle(orig_img,(int(aa[0][0]),int(aa[0][1])),(int(aa[3][0]),int(aa[3][1])),(255, 0, 255),2)
+
+    cv2.line(orig_img,(int(aa[0][0]),int(aa[0][1])),(int(aa[2][0]),int(aa[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+    cv2.line(orig_img,(int(aa[1][0]),int(aa[1][1])),(int(aa[3][0]),int(aa[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+    cv2.line(orig_img,(int(aa[0][0]),int(aa[0][1])),(int(aa[1][0]),int(aa[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+    cv2.line(orig_img,(int(aa[2][0]),int(aa[2][1])),(int(aa[3][0]),int(aa[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+    cv2.imshow("rectangle",orig_img)
+    return orig_img ,circle_x,circle_y,real_angle
 
 #circle detection
 def circle_transform(mat,orig):
@@ -1146,13 +1193,33 @@ def circle_transform(mat,orig):
     cnt = contours[max_id] #max contours
 
     M_point = cv2.moments(cnt)
-    cv2.drawContours(orig_img, contours, -1, (0, 0, 255), 2)
+    cv2.drawContours(orig_img, cnt, -1, (0, 0, 255), 2)
 
     center_x = int(M_point['m10']/M_point['m00'])
     center_y = int(M_point['m01']/M_point['m00'])
     drawCenter = cv2.circle(orig_img,(int(center_x),int(center_y)),2,(255,0,0),2)
 
-    # cv2.imshow("circle",orig_img)
+    contours, hierarchy = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    print(len(contours))
+    
+    cv2.drawContours(orig_img, contours, -1, (255, 0, 255), 2)
+    if len(contours)>2:
+        print("空心")
+        cv2.imshow("11111",orig_img)
+
+    else:
+        print("實心")
+        width = 40
+        height = 100
+        grasp_left_x = int(center_x - (width/2.0))
+        grasp_left_y = int(center_y - (height/2.0))
+        grasp_right_x = int(center_x + (width/2.0))
+        grasp_right_y = int(center_y + (height/2.0))
+    
+        cv2.rectangle(orig_img,(grasp_left_x,grasp_left_y),(grasp_right_x,grasp_right_y),(255,255,0),2)
+        cv2.imshow("2222",orig_img)
+
+    
     return orig_img,center_x,center_y
 
 #grip and columnar detection
@@ -1333,7 +1400,7 @@ if __name__ == '__main__':
             depth_image_show = (depth_image  * (255.0 / maxDisp)).astype(np.uint8)
             depth_image_show = cv2.applyColorMap(depth_image_show, cv2.COLORMAP_JET)
 
-            cv2.imshow("video", color_image)
+            # cv2.imshow("video", color_image)
             cv2.imshow("depth_image", depth_image_show)
 
             i += 1
@@ -1370,6 +1437,18 @@ if __name__ == '__main__':
                 if int(float(detections[0][1])) >= 90:
                     if detections[0][0] == "long":
                         if key == 32:
+                            
+                            long_center_x = detections[0][2][0]
+                            long_center_y = detections[0][2][1]
+                            long_width = detections[0][2][2]
+                            long_height = detections[0][2][3]
+
+                            left_up_x = int(round((long_center_x - (long_width/2.0)),3))
+                            left_up_y = int(round((long_center_y - (long_height/2.0)),3))
+
+                            right_down_x = int(round((long_center_x + long_width/2.0),3))
+                            right_down_y = int(round((long_center_y + (long_height/2.0)),3))
+
                             a += 1
                             orig_long = save_path_long+str(a) +'.jpg'
                             cv2.imwrite(orig_long,color_image)
@@ -1381,18 +1460,25 @@ if __name__ == '__main__':
                             process_long = save_process_long+"long_"+str(a)+'.jpg'
                             cv2.imwrite(process_long,process)
 
-                            center = line_Segment(process_long,orig_long)
+                            # img = cv2.imread(process_long)
 
-                            # 求取深度
+                            # cv2.rectangle(img,(left_up_x,left_up_y),(right_down_x,right_down_y),(50,205,50),2)
+                            # crop_img = img[left_up_y:left_up_y + (right_down_y - left_up_y), left_up_x:left_up_x + (right_down_x - left_up_x)]
+                            # cv2.imshow("crop_img",crop_img)
+                            # process_long = save_process_long+"long_"+str(a)+'.jpg'
+                            # cv2.imwrite(process_long,crop_img)
+                            
+                            center = line_Segment(process_long,orig_long)
+                            # # 求取深度
                             z_value = depth_image[int(center[2]),int(center[1])]
                             depth_value = resized_intrinsics * left_to_right_distance_cm / z_value
 
-                            cv2.putText(center[0], "depth: " + str(depth_value), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                            cv2.putText(center[0], "center: " + str(center[1]) +","+ str(center[2]), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                            cv2.putText(center[0], "depth: " + str(round(depth_value,3)), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                            cv2.putText(center[0], "center: " + str(round(center[1],3)) +","+ str(round(center[2],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                            cv2.putText(center[0], "angle: " + str(round(center[3],3)) , (10, 98), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                             cv2.imwrite(center_long+"long_"+str(a)+'.jpg',center[0])
 
                             cv2.imshow("orig",center[0])
-                        
                     elif detections[0][0] == "circle":
                         if key == 32:
                             b += 1
@@ -1414,8 +1500,9 @@ if __name__ == '__main__':
                             depth_value = resized_intrinsics * left_to_right_distance_cm / z_value
                             # print(real_depth)
 
-                            cv2.putText(center[0], "depth: " + str(depth_value), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                            cv2.putText(center[0], "center: " + str(center[1]) +","+ str(center[2]), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                            cv2.putText(center[0], "depth: " + str(round(depth_value,3)), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                            cv2.putText(center[0], "center: " + str(round(center[1],3)) +","+ str(round(center[2],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                            # cv2.putText(center[0], "angle: " + str(round(center[3],3)) , (10, 98), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                             cv2.imwrite(center_circle+"circle_"+str(b)+'.jpg',center[0])
 
                             cv2.imshow("orig",center[0])
@@ -1435,20 +1522,17 @@ if __name__ == '__main__':
                             cv2.imwrite(process_columnar,process)
                             if(len(detections) == 1):
                                 center = line_Segment(process_columnar,orig_columnar)
-
+                                
+                                #depth
                                 z_value = depth_image[int(center[2]),int(center[1])]
                                 depth_value = resized_intrinsics * left_to_right_distance_cm / z_value
-                                # print(real_depth)
-
                                 cv2.putText(center[0], "depth: " + str(depth_value), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                 cv2.putText(center[0], "center: " + str(center[1]) +","+ str(center[2]), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                
                                 cv2.imwrite(center_columnar+"columnar_"+str(c)+'.jpg',center[0])
 
                                 cv2.imshow("orig",center[0])
                             else:
                                 if detections[0][0] == "grip" and detections[1][0]== "columnar":
-
                                     grip_center_x = detections[0][2][0]
                                     grip_center_y = detections[0][2][1]
                                     grip_width = detections[0][2][2]
@@ -1461,10 +1545,10 @@ if __name__ == '__main__':
                                     
                                     if(columnar_center_x > grip_center_x): #grip left
                                         left_up_x = int(grip_center_x - grip_width)
-                                        left_up_y = int(grip_center_y - (grip_width/3.0/2.0))
+                                        left_up_y = int(grip_center_y - (grip_width/3.0))
 
                                         right_down_x = int(grip_center_x )
-                                        right_down_y = int(left_up_y + (grip_width/3.0/2.0))
+                                        right_down_y = int(left_up_y + (grip_width/3.0))
 
                                         img = cv2.imread(orig_columnar)
                                         cv2.rectangle(img,(left_up_x,left_up_y),(right_down_x,right_down_y),(255,0,255),2)
@@ -1482,10 +1566,10 @@ if __name__ == '__main__':
 
                                     else: #grip right
                                         left_up_x = int(grip_center_x)
-                                        left_up_y = int(grip_center_y - (grip_height/3.0/2.0))
+                                        left_up_y = int(grip_center_y - (grip_height/3.0))
 
                                         right_down_x = int(grip_center_x + grip_width)
-                                        right_down_y = int(left_up_y + (grip_height/3.0/2.0))
+                                        right_down_y = int(left_up_y + (grip_height/3.0))
 
                                         img = cv2.imread(orig_columnar)
                                         cv2.rectangle(img,(left_up_x,left_up_y),(right_down_x,right_down_y),(255,0,255),2)  
@@ -1512,40 +1596,52 @@ if __name__ == '__main__':
                                     columnar_center_y = detections[0][2][1]
                                     columnar_width = detections[0][2][2]
                                     columnar_height = detections[0][2][3]
-                                    # print(center_x,center_y)
-                                    
+
                                     if(columnar_center_x > grip_center_x): #grip left
                                         left_up_x = int(grip_center_x - grip_width)
-                                        left_up_y = int(grip_center_y - (grip_width/3.0/2.0))
+                                        left_up_y = int(grip_center_y - (grip_width/3.0))
 
                                         right_down_x = int(grip_center_x )
-                                        right_down_y = int(left_up_y + (grip_width/3.0/2.0))
+                                        right_down_y = int(left_up_y + (grip_width/3.0))
 
                                         img = cv2.imread(orig_columnar)
                                         cv2.rectangle(img,(left_up_x,left_up_y),(right_down_x,right_down_y),(255,0,255),2)
-                                        center = calculate_center(left_up_x,left_up_y,right_down_x,right_down_y)             
-
+                                        center = calculate_center(left_up_x,left_up_y,right_down_x,right_down_y)
                                         cv2.circle(img,(int(center[0]),int(center[1])),2,(0,0,255),2)
-                                        cv2.imshow("img",img)
+                                        #depth
+                                        z_value = depth_image[int(center[1]),int(center[0])]
+                                        depth_value = resized_intrinsics * left_to_right_distance_cm / z_value
+
+                                        cv2.putText(img, "depth: " + str(depth_value), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(img, "center: " + str(center[0]) +","+ str(center[1]), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    
                                         cv2.imwrite(center_columnar+"columnar_grip_"+str(c)+'.jpg',img) 
+                                        cv2.imshow("img",img)
 
                                     else: #grip eft_up_y = int(grip_center_y - (grip_height/3.0/2.0))
 
                                         right_down_x = int(grip_center_x + grip_width)
-                                        right_down_y = int(left_up_y + (grip_height/3.0/2.0))
+                                        right_down_y = int(left_up_y + (grip_height/3.0))
 
                                         img = cv2.imread(orig_columnar)
                                         cv2.rectangle(img,(left_up_x,left_up_y),(right_down_x,right_down_y),(255,0,255),2)  
                                         center = calculate_center(left_up_x,left_up_y,right_down_x,right_down_y)             
 
                                         cv2.circle(img,(int(center[0]),int(center[1])),2,(0,0,255),2)
-                                        cv2.imshow("img",img)
+                                        #depth
+                                        z_value = depth_image[int(center[1]),int(center[0])]
+                                        depth_value = resized_intrinsics * left_to_right_distance_cm / z_value
+
+                                        cv2.putText(img, "depth: " + str(depth_value), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(img, "center: " + str(center[0]) +","+ str(center[1]), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    
                                         cv2.imwrite(center_columnar+"columnar_grip_"+str(c)+'.jpg',img) 
+                                        cv2.imshow("img",img)
                                 #人生好難阿 看不到眼前的希望  am1:47
                     elif detections[0][0] == "blade" or detections[0][0] == "grasp": #detections[0][0]= blade,detections[1][0]= grasp
                         if key == 32:
                             d += 1
-                            orig_blade = save_pat_blade+str(d) +'.jpg'
+                            orig_blade = save_path_blade+str(d) +'.jpg'
                             cv2.imwrite(orig_blade,color_image)
                             new_obj_name = str(d) +'.jpg'
                             shutil.copy(local_img_name, bgrblade_path + new_obj_name)
@@ -1554,7 +1650,7 @@ if __name__ == '__main__':
                             process = post_processing(matimg[2])
                             process_blade = save_process_blade + "blade_" + str(d) + ".jpg"
                             cv2.imwrite(process_blade,process)  
-                            if detections[1][0] == "grasp":
+                            if detections[1][0] == "grasp" and detections[0][0] == "blade":
                                 
                                 grasp_center_x = round(detections[1][2][0])
                                 grasp_center_y = round(detections[1][2][1])
@@ -1575,7 +1671,6 @@ if __name__ == '__main__':
                                 img = cv2.imread(process_blade)
                                 img_org = cv2.imread(orig_blade)
                                 cv2.rectangle(img,(left_up_x,left_up_y),(right_down_x,right_down_y),(50,205,50),2)
-                                cv2.imshow("img",img)
                                 
                                 #just look rectangle
                                 crop_img = img[left_up_y:left_up_y + (right_down_y - left_up_y), left_up_x:left_up_x + (right_down_x - left_up_x)]
@@ -1587,13 +1682,8 @@ if __name__ == '__main__':
                                     areas = []
                                     for c in range(len(contours)):
                                         areas.append(cv2.contourArea(contours[c]))
-
-                                    # print(len(contours))
-                                    # print(areas)
-
                                     id = max2(areas)
-                                
-                                
+
                                     max_id2 = areas.index(id[2])
                                 
                                     cnt = contours[max_id2] #max contours
@@ -1606,52 +1696,73 @@ if __name__ == '__main__':
                                     cv2.drawContours(crop_img, cnt, -1, (0, 0, 255), 2)
                                     cv2.imshow("crop_img1",crop_img)
 
-                                    center_x = int(M_point['m10']/M_point['m00'])
-                                    center_y = int(M_point['m01']/M_point['m00'])
-                                    drawCenter = cv2.circle(img_org,(int(center_x+left_up_x),int(center_y+left_up_y)),2,(255,0,0),2)
-                                    cv2.imshow("crop_img111",img_org)
-                                else: 
-                                    areas = []
-                                    for c in range(len(contours)):
-                                        areas.append(cv2.contourArea(contours[c]))
+                                    center_x = M_point['m10']/M_point['m00']
+                                    center_y = M_point['m01']/M_point['m00']
+                                    drawCenter = cv2.circle(img_org,(int(center_x + left_up_x),int(center_y + left_up_y)),2,(255,0,0),2)
 
-                                    max_id = areas.index(max(areas))
+                                    #depth
+                                    z_value = depth_image[int(center_y + left_up_y),int(center_x + left_up_x)]
+                                    depth_value = resized_intrinsics * left_to_right_distance_cm / z_value
 
-                                    print(len(contours))
-                                    cv2.drawContours(img_org, out, -1, (0, 0, 255), 2)
-                                    cv2.drawContours(crop_img, cnt, -1, (0, 0, 255), 2)
-                                    print(areas)
+                                    cv2.putText(img_org, "depth: " + str(depth_value), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(img_org, "center: " + str(center_x + left_up_x) +","+ str(center_y + left_up_y), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                
+                                    cv2.imwrite(center_blade + "_grip_"+str(c)+'.jpg',img_org) 
+                                    cv2.imshow("img",img_org)
+                                    
+                                else:  #鉗子
+                                    # areas = []
+                                    # for c in range(len(contours)):
+                                    #     areas.append(cv2.contourArea(contours[c]))
 
-                                    cnt = contours[max_id] #max contours
+                                    # max_id = areas.index(max(areas))
 
-                                    list1 = np.array([left_up_x,left_up_y])
-                                    out = list1 + cnt
+                                    # print(len(contours))
+                                    
+                                    # print(areas)
+
+                                    # cnt = contours[max_id] #max contours
+
+                                    # list1 = np.array([left_up_x,left_up_y])
+                                    # out = list1 + cnt
 
 
-                                    M_point = cv2.moments(cnt)
+                                    # M_point = cv2.moments(cnt)
+                                    # cv2.drawContours(img_org, out, -1, (0, 0, 255), 2)
+                                    # cv2.drawContours(crop_img, cnt, -1, (0, 0, 255), 2)
 
-                                    center_x = int(M_point['m10']/M_point['m00'])
-                                    center_y = int(M_point['m01']/M_point['m00'])
-                                    drawCenter = cv2.circle(img_org,(int(center_x+left_up_x),int(center_y+left_up_y)),2,(255,0,0),2)    
+                                    # center_x = M_point['m10']/M_point['m00']
+                                    # center_y = M_point['m01']/M_point['m00']
+                                    drawCenter = cv2.circle(img_org,(int(grasp_center_x),int(grasp_center_y)),2,(255,0,0),2)
+                                    # drawCenter = cv2.circle(img_org,(int(center_x +left_up_x),int(center_y + left_up_y)),2,(255,0,0),2)    
                                     # rect_center_x = left_up_x + (right_down_x - left_up_x)/2.0
                                     # rect_center_y = left_up_y + (right_down_y - left_up_y)/2.0             
                                     # drawCenter = cv2.circle(crop_img,(int(rect_center_x),int(rect_center_y)),2,(255,0,0),2)
-                                    cv2.imshow("crop_img222",img_org)
-                                    cv2.imshow("crop_img222111",crop_img)
+
+                                    #depth
+                                    z_value = depth_image[int(grasp_center_y),int(grasp_center_x)]
+                                    depth_value = resized_intrinsics * left_to_right_distance_cm / z_value
+
+                                    cv2.putText(img_org, "depth: " + str(depth_value), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(img_org, "center: " + str(grasp_center_x) +","+ str(grasp_center_y), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                
+                                    cv2.imwrite(center_blade + "_grip_"+str(c)+'.jpg',img_org) 
+                                    cv2.imshow("img",img_org)
+                                    cv2.imshow("crop_img",crop_img)
+                                    print("12345")
                                     
 
                                 
                                 # center = calculate_center(left_up_x,left_up_y,right_down_x,right_down_y)
                                 #cv2.circle(img,(int(center[2]),int(center[1])),2,(0,0,255),2)
 
-                            elif detections[0][0] == "grasp":
+                            elif detections[0][0] == "grasp" and detections[1][0] == "blade":
 
                                 grasp_center_x = detections[0][2][0]
                                 grasp_center_y = detections[0][2][1]
                                 grasp_width = detections[0][2][2]
                                 grasp_height = detections[0][2][3]
-                                
-                            
+
                                 blade_center_x = detections[1][2][0]
                                 blade_center_y = detections[1][2][1]
                                 blade_width = detections[1][2][2]
@@ -1699,39 +1810,57 @@ if __name__ == '__main__':
                                     cv2.drawContours(crop_img, cnt, -1, (0, 0, 255), 2)
 
 
-                                    center_x = int(M_point['m10']/M_point['m00'])
-                                    center_y = int(M_point['m01']/M_point['m00'])
+                                    center_x = M_point['m10']/M_point['m00']
+                                    center_y = M_point['m01']/M_point['m00']
                                     drawCenter = cv2.circle(img_org,(int(center_x+left_up_x),int(center_y+left_up_y)),2,(255,0,0),2)
-                                    cv2.imshow("crop_img111",img_org)
+                                    #depth
+                                    z_value = depth_image[int(center_y + left_up_y),int(center_x + left_up_x)]
+                                    depth_value = resized_intrinsics * left_to_right_distance_cm / z_value
+
+                                    cv2.putText(img_org, "depth: " + str(depth_value), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(img_org, "center: " + str(center_x + left_up_x) +","+ str(center_y + left_up_y), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+
+                                    cv2.imwrite(center_blade + "_grip_"+str(c)+'.jpg',img_org) 
+                                    cv2.imshow("img",img_org)
                                     cv2.imshow("crop_img",crop_img)
                                 else:  
-                                    
-                                    areas = []
-                                    for c in range(len(contours)):
-                                        areas.append(cv2.contourArea(contours[c]))
+                                    # areas = []
+                                    # for c in range(len(contours)):
+                                    #     areas.append(cv2.contourArea(contours[c]))
 
-                                    max_id = areas.index(max(areas))
+                                    # max_id = areas.index(max(areas))
 
-                                    print(len(contours))
-                                    print(areas)
+                                    # print(len(contours))
+                                    # print(areas)
 
-                                    cnt = contours[max_id] #max contours
+                                    # cnt = contours[max_id] #max contours
 
-                                    list1 = np.array([left_up_x,left_up_y])
-                                    out = list1 + cnt
+                                    # list1 = np.array([left_up_x,left_up_y])
+                                    # out = list1 + cnt
 
-                                    M_point = cv2.moments(cnt)
-                                    cv2.drawContours(img_org, out, -1, (0, 0, 255), 2)
-                                    cv2.drawContours(crop_img, cnt, -1, (0, 0, 255), 2)
-                                    cv2.imshow("crop_img2",crop_img)
+                                    # M_point = cv2.moments(cnt)
+                                    # cv2.drawContours(img_org, out, -1, (0, 0, 255), 2)
+                                    # cv2.drawContours(crop_img, cnt, -1, (0, 0, 255), 2)
+                                    # cv2.imshow("crop_img2",crop_img)
 
-                                    center_x = int(M_point['m10']/M_point['m00'])
-                                    center_y = int(M_point['m01']/M_point['m00'])
-                                    drawCenter = cv2.circle(img_org,(int(center_x+left_up_x),int(center_y+left_up_y)),2,(255,0,0),2)
+                                    # center_x = M_point['m10']/M_point['m00']
+                                    # center_y = M_point['m01']/M_point['m00']
+                                    drawCenter = cv2.circle(img_org,(int(grasp_center_x),int(grasp_center_y)),2,(255,0,0),2)
+                                    # drawCenter = cv2.circle(img_org,(int(center_x+left_up_x),int(center_y+left_up_y)),2,(255,0,0),2)
                                     # rect_center_x = left_up_x + (right_down_x - left_up_x)/2.0
                                     # rect_center_y = left_up_y + (right_down_y - left_up_y)/2.0             
-                                    # drawCenter = cv2.circle(crop_img,(int(rect_center_x),int(rect_center_y)),2,(255,0,0),2)                     
+                                    # drawCenter = cv2.circle(crop_img,(int(rect_center_x),int(rect_center_y)),2,(255,0,0),2)  
+                                    #depth
+                                    z_value = depth_image[int(grasp_center_y),int(grasp_center_x)]
+                                    depth_value = resized_intrinsics * left_to_right_distance_cm / z_value
+
+                                    cv2.putText(img_org, "depth: " + str(depth_value), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(img_org, "center: " + str(grasp_center_x) +","+ str(grasp_center_y), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                
+                                    cv2.imwrite(center_blade + "_grip_"+str(c)+'.jpg',img_org) 
+                                    cv2.imshow("img",img_org)                   
                                     cv2.imshow("crop_img222",img_org)
+                                    print("6789")
                             
                             else:
                                 print("no")
