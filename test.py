@@ -28,91 +28,100 @@ import time
 from scipy.spatial import distance as dist
 from PIL import  Image
 
-
+import os
 import cv2
 import uuid
-
-import numpy as np
-
-import cv2
-
+import glob
+import time
 import math
+import shutil
+import random
+import torch
 
-img = cv2.imread("circle_3.jpg",0)
+import shutil
+import datetime
+import argparse
+import torchvision
+import numpy as np
+import depthai as dai
 
-img = cv2.medianBlur(img,5)
+from tqdm import tqdm
+from PIL import Image
 
-cimg = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
+# img= cv2.imread("circle_2.jpg",0)
+# img1= cv2.imread("circle_2.jpg")
 
-circles =cv2.HoughCircles(img,cv2.HOUGH_GRADIENT,1,60,param1=50,param2=30,minRadius=0,maxRadius=0)
+mat_img = cv2.imread("circle_5.jpg",0)
+height = mat_img.shape[0]
+weight = mat_img.shape[1]
+orig_img = cv2.imread("circle_5.jpg")
 
-circles = np.uint16(np.around(circles))
+# gray = cv2.cvtColor(mat_img,cv2.COLOR_BGR2GRAY)
+edges = cv2.Canny(mat_img, 70, 210)
 
-counter=0
+contours, hierarchy = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-correctC=[]
+areas = []
+print(len(contours))
+for c in range(len(contours)):
+    areas.append(cv2.contourArea(contours[c]))
 
-xC=[]
+max_id = areas.index(max(areas))
+cnt = contours[max_id] #max contours
 
-yC=[]
+M_point = cv2.moments(contours[0])
+# cv2.drawContours(orig_img, contours, -1, (0, 0, 255), 2)
+list1 = np.array(contours[0])
 
-for i in circles[0,:]:
+center_x = int(M_point['m10']/M_point['m00'])
+center_y = int(M_point['m01']/M_point['m00'])
+# print(list1)
 
-    #cv2.circle(cimg,(i[0],i[1]),i[2],(0,255,0),2)
+rect = cv2.minAreaRect(contours[0])
+box = cv2.cv.Boxpoints() if imutils.is_cv2()else cv2.boxPoints(rect)
+box = np.int0(box)
+cv2.drawContours(orig_img, [box], 0, (0, 0, 255), 2)
 
-    #cv2.circle(cimg,(i[0],i[1]),2,(0,0,255),2)
 
-    cv2.putText(cimg,str(i[0])+","+str(i[1])+","+str(i[2]),(i[0],i[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.3,(255,0,0),1,cv2.LINE_AA)
+    
 
-    correctC.append((i[0],i[1],i[2]))
+# for i in range(height):
+#     for j in range(weight):
+#         if mat_img[center_x,center_y]:
+#             cv2.circle(orig_img,(center_x,center_y),2,(255,0,0),2)
+#             cv2.line(orig_img,(int(center_x),int(center_y)),(int(center_x),int(center_y + j)),(255, 0, 255),2,cv2.LINE_AA)
+#         else:
+#             print("1111")
+# for i in contours[0]:
+#     if contours[0]
 
-    xC.append(i[0])
+center_x = int(M_point['m10']/M_point['m00'])
+center_y = int(M_point['m01']/M_point['m00'])
+# drawCenter = cv2.circle(orig_img,(int(center_x),int(center_y)),2,(255,0,0),2)
 
-    yC.append(i[1])
+cv2.imshow("1111",orig_img)
 
-counter+=1
 
-print("Circle Count is : " + str(counter))
 
-xCS=sorted(xC)
 
-yCS=sorted(yC)
+# ret,egg_thresh=cv2.threshold(egg,100,255,cv2.THRESH_BINARY_INV)
 
-xS=sorted(correctC, key=lambda correctC:correctC[0])
+# # thre,bw=cv2.threshold(egg,30,255,cv2.THRESH_BINARY)
+# kernel=np.ones((3,3),np.uint8)
+# opening=cv2.morphologyEx(egg,cv2.MORPH_OPEN,kernel)
+# #遍歷圖片每一個畫素點，由於是灰度圖，所以不需要遍歷通道，只需要遍歷畫素值的每一個位置
+# height = opening.shape[0]
+# weight = opening.shape[1]
+# for i in range(height):
+#     for j in range(weight):
+#         if egg[i,j]!=0:
+#             opening[i,j]=egg[i,j]
+# cv2.imshow('egg_thresh',egg)
+# cv2.imshow('opening',opening)
+# print(egg)
+cv2.waitKey(0)
 
-q1=sorted(xS[:4],key=lambda correctC: correctC[1])
 
-q2=sorted(xS[4:8],key=lambda correctC: correctC[1])
-
-q3=sorted(xS[8:12],key=lambda correctC: correctC[1])
-
-q4=sorted(xS[12:16],key=lambda correctC: correctC[1])
-
-q5=sorted(xS[16:20],key=lambda correctC: correctC[1])
-
-q6=sorted(xS[20:24],key=lambda correctC: correctC[1])
-
-q7=sorted(xS[24:28],key=lambda correctC: correctC[1])
-
-q8=sorted(xS[28:32],key=lambda correctC: correctC[1])
-
-q9=sorted(xS[32:],key=lambda correctC: correctC[1])
-
-sortedTmp=[q1,q2,q3,q4,q5,q6,q7,q8,q9]
-
-sorted=[]
-
-for i in sortedTmp:
-
-    for j in i:
-
-        sorted.append(j)
-
-for i in range(36):
-
-    cv2.putText(cimg,str(i),(sorted[i][0],sorted[i][1]), cv2.FONT_HERSHEY_SIMPLEX, 1,(255,0,0),3,cv2.LINE_AA)
-
-    cv2.imshow('detected circles',cimg)
 
 cv2.waitKey(0)
 

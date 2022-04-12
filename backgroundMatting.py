@@ -1050,6 +1050,10 @@ def post_processing(pha):
     return bin_img
 
 #----------------------------------------------------Segment--------------------------------------------------------------------#
+def distance(x0,y0,x1,y1):
+    result = math.sqrt((x0-x1)**2+(y0-y1)**2)
+    return result
+
 def max2(x):
     m1 = max(x)
     x2 = x.copy()
@@ -1059,7 +1063,7 @@ def max2(x):
     x3.remove(m2)
     m3 = max(x3)
     return m1,m2,m3 
-#line segment
+
 def angle(x1, y1, x2, y2):
     if x1 == x2:
         return 90
@@ -1075,7 +1079,7 @@ def angle(x1, y1, x2, y2):
     #     result += 360
     print("angle: " + str(result) + "度")
     return result
-
+#line segment
 def rota_rect(box, theta, x, y):
     """
     :param box: 正矩形的四个顶点
@@ -1098,7 +1102,7 @@ def line_Segment(mat,orig):
 
     mat_img = cv2.imread(str(mat),0)
     orig_img = cv2.imread(orig)
-    cv2.imshow("mat",mat_img)
+    # cv2.imshow("mat",mat_img)
 
     # gray = cv2.cvtColor(mat,cv2.COLOR_BGR2GRAY)
     lsd = cv2.createLineSegmentDetector(0)
@@ -1157,6 +1161,88 @@ def line_Segment(mat,orig):
     grasp_right_x = int(circle_x + (width/2.0))
     grasp_right_y = int(circle_y + (height/2.0))
     
+    # cv2.rectangle(orig_img,(grasp_left_x,grasp_left_y),(grasp_right_x,grasp_right_y),(255,255,0),2)
+
+    box = [(grasp_left_x,grasp_left_y),(grasp_right_x,grasp_left_y),(grasp_left_x,grasp_right_y),(grasp_right_x,grasp_right_y)]
+    real_angle = (angle1[0] + angle1[1])/2.0
+    
+    aa = rota_rect(box,real_angle,circle_x,circle_y)
+    # print(aa)
+    # cv2.rectangle(orig_img,(int(aa[0][0]),int(aa[0][1])),(int(aa[3][0]),int(aa[3][1])),(255, 0, 255),2)
+
+    cv2.line(orig_img,(int(aa[0][0]),int(aa[0][1])),(int(aa[2][0]),int(aa[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+    cv2.line(orig_img,(int(aa[1][0]),int(aa[1][1])),(int(aa[3][0]),int(aa[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+    cv2.line(orig_img,(int(aa[0][0]),int(aa[0][1])),(int(aa[1][0]),int(aa[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+    cv2.line(orig_img,(int(aa[2][0]),int(aa[2][1])),(int(aa[3][0]),int(aa[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+    # cv2.imshow("rectangle",orig_img)
+    return orig_img ,circle_x,circle_y,real_angle
+
+def line_Segment_cup(mat,orig):
+    print(type(orig))
+
+    mat_img = cv2.imread(str(mat),0)
+    orig_img = cv2.imread(orig)
+    # cv2.imshow("mat",mat_img)
+
+    # gray = cv2.cvtColor(mat,cv2.COLOR_BGR2GRAY)
+    lsd = cv2.createLineSegmentDetector(0)
+
+    dlines = lsd.detect(mat_img)
+    
+    ver_lines = []
+    coordinate = []
+    angle1 = []
+
+    for dline in dlines[0]:
+        # print(dline[i])
+        x0 = int(round(dline[0][0]))
+        y0 = int(round(dline[0][1]))
+        x1 = int(round(dline[0][2]))
+        y1 = int(round(dline[0][3]))
+        distance = math.sqrt((x0-x1)**2+(y0-y1)**2)
+        ver_lines.append(distance)
+
+    maxIndex = max2(ver_lines)
+
+    for dline in dlines[0]:
+        x0 = int(round(dline[0][0]))
+        y0 = int(round(dline[0][1]))
+        x1 = int(round(dline[0][2]))
+        y1 = int(round(dline[0][3]))
+        distance = math.sqrt((x0-x1)**2+(y0-y1)**2)
+    
+        if(distance >= int(maxIndex[1])):
+            cv2.line(orig_img,(x0,y0),(x1,y1),(0,255,0),2,cv2.LINE_AA)
+            coordinate.append(((x0,y0),(x1,y1)))
+
+            result = angle(x0,y0,x1,y1)
+            angle1.append(result)
+
+    line1 = math.sqrt((coordinate[0][1][0]-coordinate[1][1][0])**2+(coordinate[0][1][1]-coordinate[1][1][1])**2)
+    line2 = math.sqrt((coordinate[0][0][0]-coordinate[1][0][0])**2+(coordinate[0][0][1]-coordinate[1][0][1])**2)
+    # cv2.line(orig_img,(coordinate[0][0][0],coordinate[0][0][1]),(coordinate[1][1][0],coordinate[1][1][1]),(255,0,0),2,cv2.LINE_AA)
+    # cv2.line(orig_img,(coordinate[0][1][0],coordinate[0][1][1]),(coordinate[1][0][0],coordinate[1][1][1]),(255,0,0),2,cv2.LINE_AA)
+    if (line1 > line2):
+        cv2.line(orig_img,coordinate[0][1],coordinate[1][1],(255,0,0),2,cv2.LINE_AA)
+        circle_x = (coordinate[0][1][0] + coordinate[1][1][0])/2
+        circle_y = (coordinate[0][1][1] + coordinate[1][1][1])/2
+    
+    else:
+        cv2.line(orig_img,coordinate[0][0],coordinate[1][0],(255,0,0),2,cv2.LINE_AA)
+        circle_x = (coordinate[0][0][0] + coordinate[1][0][0])/2
+        circle_y = (coordinate[0][0][1] + coordinate[1][0][1])/2
+
+    cv2.circle(orig_img,(int(circle_x),int(circle_y)),2,(0,0,255),2)
+
+    width = 140
+    height = 40
+    grasp_left_x = int(circle_x - (width/2.0))
+    grasp_left_y = int(circle_y - (height/2.0))
+    grasp_right_x = int(circle_x + (width/2.0))
+    grasp_right_y = int(circle_y + (height/2.0))
+    
     cv2.rectangle(orig_img,(grasp_left_x,grasp_left_y),(grasp_right_x,grasp_right_y),(255,255,0),2)
 
     box = [(grasp_left_x,grasp_left_y),(grasp_right_x,grasp_left_y),(grasp_left_x,grasp_right_y),(grasp_right_x,grasp_right_y)]
@@ -1172,7 +1258,7 @@ def line_Segment(mat,orig):
     cv2.line(orig_img,(int(aa[0][0]),int(aa[0][1])),(int(aa[1][0]),int(aa[1][1])),(255, 0, 255),2,cv2.LINE_AA)
     cv2.line(orig_img,(int(aa[2][0]),int(aa[2][1])),(int(aa[3][0]),int(aa[3][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-    cv2.imshow("rectangle",orig_img)
+    # cv2.imshow("rectangle",orig_img)
     return orig_img ,circle_x,circle_y,real_angle
 
 #circle detection
@@ -1183,7 +1269,7 @@ def circle_transform(mat,orig):
     gray = cv2.cvtColor(mat_img,cv2.COLOR_BGR2GRAY)
     edges = cv2.Canny(gray, 70, 210)
 
-    contours, hierarchy = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours, hierarchy = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
     areas = []
     for c in range(len(contours)):
@@ -1193,7 +1279,7 @@ def circle_transform(mat,orig):
     cnt = contours[max_id] #max contours
 
     M_point = cv2.moments(cnt)
-    cv2.drawContours(orig_img, cnt, -1, (0, 0, 255), 2)
+    # cv2.drawContours(orig_img, cnt, -1, (0, 0, 255), 2)
 
     center_x = int(M_point['m10']/M_point['m00'])
     center_y = int(M_point['m01']/M_point['m00'])
@@ -1201,26 +1287,84 @@ def circle_transform(mat,orig):
 
     contours, hierarchy = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
     print(len(contours))
+    center_distance = []
     
-    cv2.drawContours(orig_img, contours, -1, (255, 0, 255), 2)
+    # cv2.drawContours(orig_img, contours, -1, (255, 0, 255), 2)
     if len(contours)>2:
-        print("空心")
+        print("Hollow")
         cv2.imshow("11111",orig_img)
 
+        # for cont in contours:
+        lx, ly, w, h = cv2.boundingRect(cnt)
+        cv2.rectangle(orig_img, (lx, ly), (lx+w, ly+h), (0, 0, 255), 2)
+
+        leftdistance = distance(lx,center_y,center_x,center_y)
+        downdistance = distance(center_x,ly+h,center_x,center_y)
+        rightdistance = distance(center_x,center_y,lx+w,center_y)
+        updistance = distance(center_x,ly,center_x,center_y)
+        # center_distance.append([leftdistance,downdistance,rightdistance,updistance])
+
+        center_distance.extend([leftdistance,downdistance,rightdistance])
+        print(center_distance)
+
+        best_area = center_distance.index(min(center_distance))
+        print(best_area)
+        if (best_area == 0):
+            print("left")
+            cv2.rectangle(orig_img,(int(center_x-20-enter_distance[0]),int(center_y-20)),(int(center_x),int(center_y+20)),(255,255,0),2)
+            result = angle(lx,center_y,center_x,center_y)
+            cv2.imshow("left",orig_img)
+        elif (best_area == 1):
+            print("down")
+            cv2.rectangle(orig_img,(int(center_x-20),int(center_y)),(int(center_x+20),int(center_y+20+center_distance[1])),(255,255,0),2)
+            result = angle(center_x,ly+h,center_x,center_y)
+            cv2.imshow("down",orig_img)
+        elif (best_area == 2):
+            print("right")
+            cv2.rectangle(orig_img,(int(center_x),int(center_y-20)),(int(center_x+20+center_distance[2]),int(center_y+20)),(255,255,0),2)
+            result = angle(center_x,center_y,lx+w,center_y)
+            cv2.imshow("right",orig_img)
+        # elif (best_area == 3):
+        #     print("up")
+        #     cv2.rectangle(orig_img,(int(center_x-20),int(center_y-20-center_distance[3])),(int(center_x+20),int(center_y)),(255,255,0),2)
+        #     cv2.imshow("up",orig_img)
+        else:
+            print("no")
+        
+        # width = 30
+        # height = 80
+        # grasp_left_x = int(center_x - (width/2.0))
+        # grasp_left_y = int(center_y - 15)
+        # grasp_right_x = int(center_x + (width/2.0))
+        # grasp_right_y = int(center_y + height)
+
+
+        # cv2.rectangle(orig_img,(grasp_left_x,grasp_left_y),(grasp_right_x,grasp_right_y),(255,255,0),2)
+        # result = angle(grasp_left_x,grasp_left_y,grasp_left_x,grasp_left_y + height)
+        # cv2.imshow("2222",orig_img)
+        # result = 90
+        print(result)
+        # cv2.imshow("1",orig_img)
+
     else:
-        print("實心")
-        width = 40
-        height = 100
+        print("Solid")
+        width = 120
+        height = 30
         grasp_left_x = int(center_x - (width/2.0))
         grasp_left_y = int(center_y - (height/2.0))
         grasp_right_x = int(center_x + (width/2.0))
         grasp_right_y = int(center_y + (height/2.0))
+
+        # ellipse= cv2.fitEllipse(contours[])
+        # cv2.ellipse(orig_img,ellipse,(0,235,0),2)
+        # cv2.imshow("ellipse",orig_img)
     
         cv2.rectangle(orig_img,(grasp_left_x,grasp_left_y),(grasp_right_x,grasp_right_y),(255,255,0),2)
+        result = angle(grasp_left_x,grasp_left_y,grasp_left_x,grasp_left_y + height)
         cv2.imshow("2222",orig_img)
+        print(result)
 
-    
-    return orig_img,center_x,center_y
+    return orig_img,center_x,center_y,result
 
 #grip and columnar detection
 def calculate_center(left_x,left_y,right_x,right_y):
@@ -1502,7 +1646,7 @@ if __name__ == '__main__':
 
                             cv2.putText(center[0], "depth: " + str(round(depth_value,3)), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                             cv2.putText(center[0], "center: " + str(round(center[1],3)) +","+ str(round(center[2],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                            # cv2.putText(center[0], "angle: " + str(round(center[3],3)) , (10, 98), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                            cv2.putText(center[0], "angle: " + str(round(center[3],3)) , (10, 98), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                             cv2.imwrite(center_circle+"circle_"+str(b)+'.jpg',center[0])
 
                             cv2.imshow("orig",center[0])
@@ -1521,13 +1665,15 @@ if __name__ == '__main__':
                             process_columnar = save_process_columnar + "columnar_" + str(c) + '.jpg'
                             cv2.imwrite(process_columnar,process)
                             if(len(detections) == 1):
-                                center = line_Segment(process_columnar,orig_columnar)
+
+                                center = line_Segment_cup(process_columnar,orig_columnar)
                                 
                                 #depth
                                 z_value = depth_image[int(center[2]),int(center[1])]
                                 depth_value = resized_intrinsics * left_to_right_distance_cm / z_value
-                                cv2.putText(center[0], "depth: " + str(depth_value), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                cv2.putText(center[0], "center: " + str(center[1]) +","+ str(center[2]), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                cv2.putText(center[0], "depth: " + str(round(depth_value,3)), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                cv2.putText(center[0], "center: " + str(round(center[1],3)) +","+ str(round(center[2],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                cv2.putText(center[0], "angle: " + str(round(center[3],3)) , (10, 98), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                 cv2.imwrite(center_columnar+"columnar_"+str(c)+'.jpg',center[0])
 
                                 cv2.imshow("orig",center[0])
