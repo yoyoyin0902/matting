@@ -1068,7 +1068,7 @@ def angle(x1, y1, x2, y2):
     if x1 == x2:
         return 90
     if y1 == y2:
-        return 180
+        return 0
     k = -(y2 - y1) / (x2 - x1)
     result = np.arctan(k) * 180 / np.pi 
     # if x1 > x2 and y1 > y2:
@@ -1236,17 +1236,19 @@ def line_Segment_cup(mat,orig):
 
     cv2.circle(orig_img,(int(circle_x),int(circle_y)),2,(0,0,255),2)
 
-    width = 140
-    height = 40
+    width = 40
+    height = 140
     grasp_left_x = int(circle_x - (width/2.0))
     grasp_left_y = int(circle_y - (height/2.0))
     grasp_right_x = int(circle_x + (width/2.0))
     grasp_right_y = int(circle_y + (height/2.0))
     
-    cv2.rectangle(orig_img,(grasp_left_x,grasp_left_y),(grasp_right_x,grasp_right_y),(255,255,0),2)
+    # cv2.rectangle(orig_img,(grasp_left_x,grasp_left_y),(grasp_right_x,grasp_right_y),(255,255,0),2)
 
     box = [(grasp_left_x,grasp_left_y),(grasp_right_x,grasp_left_y),(grasp_left_x,grasp_right_y),(grasp_right_x,grasp_right_y)]
-    real_angle = (angle1[0] + angle1[1])/2.0
+    
+    real_angle =angle1[0]
+    # real_angle = angle1[0]-90
     
     aa = rota_rect(box,real_angle,circle_x,circle_y)
     # print(aa)
@@ -1311,7 +1313,7 @@ def circle_transform(mat,orig):
         print(best_area)
         if (best_area == 0):
             print("left")
-            cv2.rectangle(orig_img,(int(center_x-20-enter_distance[0]),int(center_y-20)),(int(center_x),int(center_y+20)),(255,255,0),2)
+            cv2.rectangle(orig_img,(int(center_x-20-center_distance[0]),int(center_y-20)),(int(center_x),int(center_y+20)),(255,255,0),2)
             result = angle(lx,center_y,center_x,center_y)
             cv2.imshow("left",orig_img)
         elif (best_area == 1):
@@ -1348,7 +1350,7 @@ def circle_transform(mat,orig):
 
     else:
         print("Solid")
-        width = 120
+        width = 140
         height = 30
         grasp_left_x = int(center_x - (width/2.0))
         grasp_left_y = int(center_y - (height/2.0))
@@ -1360,7 +1362,8 @@ def circle_transform(mat,orig):
         # cv2.imshow("ellipse",orig_img)
     
         cv2.rectangle(orig_img,(grasp_left_x,grasp_left_y),(grasp_right_x,grasp_right_y),(255,255,0),2)
-        result = angle(grasp_left_x,grasp_left_y,grasp_left_x,grasp_left_y + height)
+        result = 0
+        # result = angle(grasp_left_x,grasp_left_y,grasp_left_x,grasp_left_y + height)
         cv2.imshow("2222",orig_img)
         print(result)
 
@@ -1373,12 +1376,9 @@ def calculate_center(left_x,left_y,right_x,right_y):
     center_x = left_x + (width/2.0)
     center_y = left_y + (height/2.0)
     return center_x,center_y
-    
-  
+
 # ------------------------------------------------------- Matting Arguments -------------------------------------------------
-  
 parser = argparse.ArgumentParser(description='Inference images')
-  
 parser.add_argument('--model-type', type=str, required=False, choices=['mattingbase', 'mattingrefine'],
                     default='mattingrefine')
 parser.add_argument('--model-backbone', type=str, required=False, choices=['resnet101', 'resnet50', 'mobilenetv2'],
@@ -1389,18 +1389,15 @@ parser.add_argument('--model-refine-mode', type=str, default='sampling', choices
 parser.add_argument('--model-refine-sample-pixels', type=int, default=80_000)
 parser.add_argument('--model-refine-threshold', type=float, default=0.9)
 parser.add_argument('--model-refine-kernel-size', type=int, default=3)
-  
 parser.add_argument('--device', type=str, choices=['cpu', 'cuda'], default='cuda')
 parser.add_argument('--num-workers', type=int, default=0,
                     help='number of worker threads used in DataLoader. Note that Windows need to use single thread (0).')
 parser.add_argument('--preprocess-alignment', action='store_true')
-  
 parser.add_argument('--output-dir', type=str, required=False, default='/home/user/shape_detection/circle/')
 parser.add_argument('--output-types', type=str, required=False, nargs='+',
                     choices=['com', 'pha', 'fgr', 'err', 'ref', 'new'])
 parser.add_argument('-y', action='store_true')
 args = parser.parse_args()
-
 # --------------------------------------------------------------------Main--------------------------------------------------------#
 #yolo
 weights = "yolo_data/yolov4-obj_best.weights"
@@ -1453,7 +1450,6 @@ center_columnar = "/home/user/shape_detection/columnar/center/"
 resized_intrinsics = 431.74859619
 left_to_right_distance_cm = 7.5
 
-
 if __name__ == '__main__':
     #yolo
     network, class_names, class_colors = darknet.load_network(config,data,weights,batch_size=1)
@@ -1466,7 +1462,6 @@ if __name__ == '__main__':
     leftCam = pipeline.create(dai.node.MonoCamera) #單聲道相機
     rightCam = pipeline.create(dai.node.MonoCamera) #單聲道相機
     depth = pipeline.create(dai.node.StereoDepth) #雙聲道
-    
 
     #創建輸出流
     xoutRgb = pipeline.create(dai.node.XLinkOut)
@@ -1493,7 +1488,6 @@ if __name__ == '__main__':
     rightCam.setResolution(dai.MonoCameraProperties.SensorResolution.THE_400_P)
     rightCam.setBoardSocket(dai.CameraBoardSocket.RIGHT) #要使用的相機
     rightCam.setFps(10)
-
 
     # 雙聲道參數調整
     depth.initialConfig.setConfidenceThreshold(200)
@@ -1665,9 +1659,7 @@ if __name__ == '__main__':
                             process_columnar = save_process_columnar + "columnar_" + str(c) + '.jpg'
                             cv2.imwrite(process_columnar,process)
                             if(len(detections) == 1):
-
                                 center = line_Segment_cup(process_columnar,orig_columnar)
-                                
                                 #depth
                                 z_value = depth_image[int(center[2]),int(center[1])]
                                 depth_value = resized_intrinsics * left_to_right_distance_cm / z_value
@@ -1689,17 +1681,29 @@ if __name__ == '__main__':
                                     columnar_width = detections[1][2][2]
                                     columnar_height = detections[1][2][3]
                                     
+                                    print(columnar_center_x,grip_center_x)
+                                    print("1111111111")
+                                    
                                     if(columnar_center_x > grip_center_x): #grip left
-                                        left_up_x = int(grip_center_x - grip_width)
-                                        left_up_y = int(grip_center_y - (grip_width/3.0))
-
-                                        right_down_x = int(grip_center_x )
-                                        right_down_y = int(left_up_y + (grip_width/3.0))
-
                                         img = cv2.imread(orig_columnar)
-                                        cv2.rectangle(img,(left_up_x,left_up_y),(right_down_x,right_down_y),(255,0,255),2)
-                                        center = calculate_center(left_up_x,left_up_y,right_down_x,right_down_y)             
-
+                                        if((columnar_center_x - grip_center_x) >= 70):
+                                            left_up_x = int(grip_center_x - grip_width)
+                                            left_up_y = int(grip_center_y - (grip_width/3.0))
+                                            right_down_x = int(grip_center_x)
+                                            right_down_y = int(left_up_y + (grip_width/3.0))
+                                            cv2.rectangle(img,(left_up_x,left_up_y),(right_down_x,right_down_y),(255,0,255),2)
+                                            center = calculate_center(left_up_x,left_up_y,right_down_x,right_down_y)
+                                            real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            
+                                        elif((columnar_center_x - grip_center_x) < 70 and (columnar_center_x - grip_center_x) >= 1 ):
+                                            left_up_x = int(grip_center_x - (grip_height/2.0))
+                                            left_up_y = int(grip_center_y - (grip_width/3.0))
+                                            right_down_x = int(grip_center_x + (grip_height/2.0))
+                                            right_down_y = int(grip_center_y + (grip_width/3.0))
+                                            cv2.rectangle(img,(left_up_x,left_up_y),(right_down_x,right_down_y),(255,0,255),2)
+                                            center = calculate_center(left_up_x,left_up_y,right_down_x,right_down_y)
+                                            real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+            
                                         cv2.circle(img,(int(center[0]),int(center[1])),2,(0,0,255),2)
 
                                         z_value = depth_image[int(center[1]),int(center[0])]
@@ -1707,20 +1711,33 @@ if __name__ == '__main__':
 
                                         cv2.putText(img, "depth: " + str(depth_value), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(img, "center: " + str(center[0]) +","+ str(center[1]), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(img, "angle: "+ str(real_angle), (10, 98), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        
                                         cv2.imwrite(center_columnar+"columnar_grip_"+str(c)+'.jpg',img)  
                                         cv2.imshow("img",img)
 
                                     else: #grip right
-                                        left_up_x = int(grip_center_x)
-                                        left_up_y = int(grip_center_y - (grip_height/3.0))
-
-                                        right_down_x = int(grip_center_x + grip_width)
-                                        right_down_y = int(left_up_y + (grip_height/3.0))
-
                                         img = cv2.imread(orig_columnar)
-                                        cv2.rectangle(img,(left_up_x,left_up_y),(right_down_x,right_down_y),(255,0,255),2)  
-                                        center = calculate_center(left_up_x,left_up_y,right_down_x,right_down_y)             
+                                        if((grip_center_x - columnar_center_x) >=70):
+                                            left_up_x = int(grip_center_x)
+                                            left_up_y = int(grip_center_y - (grip_width/3.0))
+                                            right_down_x = int(grip_center_x + grip_width)
+                                            right_down_y = int(left_up_y + (grip_width/3.0))
 
+                                            cv2.rectangle(img,(left_up_x,left_up_y),(right_down_x,right_down_y),(255,0,255),2)  
+                                            center = calculate_center(left_up_x,left_up_y,right_down_x,right_down_y) 
+                                            real_angle = angle(left_up_x,left_up_y,left_up_x + grip_width,left_up_y)
+
+                                        elif((grip_center_x - columnar_center_x) < 70 and (grip_center_x - columnar_center_x) >= 1):
+                                            left_up_x = int(grip_center_x - (grip_height/2.0))
+                                            left_up_y = int(grip_center_y - (grip_width/3.0))
+                                            right_down_x = int(grip_center_x + (grip_height/2.0))
+                                            right_down_y = int(grip_center_y + (grip_width/3.0))
+
+                                            cv2.rectangle(img,(left_up_x,left_up_y),(right_down_x,right_down_y),(255,0,255),2)
+                                            center = calculate_center(left_up_x,left_up_y,right_down_x,right_down_y)
+                                            real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            
                                         cv2.circle(img,(int(center[0]),int(center[1])),2,(0,0,255),2)
 
                                         z_value = depth_image[int(center[1]),int(center[0])]
@@ -1728,9 +1745,11 @@ if __name__ == '__main__':
 
                                         cv2.putText(img, "depth: " + str(depth_value), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(img, "center: " + str(center[0]) +","+ str(center[1]), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    
+                                        cv2.putText(img, "angle: "+ str(real_angle), (10, 98), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.imwrite(center_columnar+"columnar_"+str(c)+'.jpg',img)
                                         cv2.imshow("img",img) 
+
+
                                 
                                 elif detections[1][0] == "grip" and detections[0][0]== "columnar":
                                     grip_center_x = detections[1][2][0]
@@ -1751,7 +1770,7 @@ if __name__ == '__main__':
                                         right_down_y = int(left_up_y + (grip_width/3.0))
 
                                         img = cv2.imread(orig_columnar)
-                                        cv2.rectangle(img,(left_up_x,left_up_y),(right_down_x,right_down_y),(255,0,255),2)
+                                        cv2.rectangle(img,(left_up_x-10,left_up_y),(right_down_x+10,right_down_y),(255,0,255),2)
                                         center = calculate_center(left_up_x,left_up_y,right_down_x,right_down_y)
                                         cv2.circle(img,(int(center[0]),int(center[1])),2,(0,0,255),2)
                                         #depth
@@ -1770,7 +1789,7 @@ if __name__ == '__main__':
                                         right_down_y = int(left_up_y + (grip_height/3.0))
 
                                         img = cv2.imread(orig_columnar)
-                                        cv2.rectangle(img,(left_up_x,left_up_y),(right_down_x,right_down_y),(255,0,255),2)  
+                                        cv2.rectangle(img,(left_up_x-10,left_up_y),(right_down_x+10,right_down_y),(255,0,255),2)  
                                         center = calculate_center(left_up_x,left_up_y,right_down_x,right_down_y)             
 
                                         cv2.circle(img,(int(center[0]),int(center[1])),2,(0,0,255),2)
@@ -1817,6 +1836,7 @@ if __name__ == '__main__':
                                 img = cv2.imread(process_blade)
                                 img_org = cv2.imread(orig_blade)
                                 cv2.rectangle(img,(left_up_x,left_up_y),(right_down_x,right_down_y),(50,205,50),2)
+
                                 
                                 #just look rectangle
                                 crop_img = img[left_up_y:left_up_y + (right_down_y - left_up_y), left_up_x:left_up_x + (right_down_x - left_up_x)]
@@ -1845,6 +1865,8 @@ if __name__ == '__main__':
                                     center_x = M_point['m10']/M_point['m00']
                                     center_y = M_point['m01']/M_point['m00']
                                     drawCenter = cv2.circle(img_org,(int(center_x + left_up_x),int(center_y + left_up_y)),2,(255,0,0),2)
+                                    
+                                    cv2.rectangle(img_org,(left_up_x,left_up_y),(right_down_x,right_down_y),(50,205,50),2)
 
                                     #depth
                                     z_value = depth_image[int(center_y + left_up_y),int(center_x + left_up_x)]
@@ -1879,11 +1901,49 @@ if __name__ == '__main__':
 
                                     # center_x = M_point['m10']/M_point['m00']
                                     # center_y = M_point['m01']/M_point['m00']
-                                    drawCenter = cv2.circle(img_org,(int(grasp_center_x),int(grasp_center_y)),2,(255,0,0),2)
+                                    
+                                    if( blade_center_x > grasp_center_x): #grasp left
+                                        cv2.putText(img_org, "angle: " + str(blade_center_x - grasp_center_x) , (10, 98), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        if(blade_center_x - grasp_center_x < 125):
+                                            drawCenter = cv2.circle(img_org,(int(grasp_center_x),int(grasp_center_y)),2,(255,0,0),2)
+                                            gray = cv2.cvtColor(crop_img,cv2.COLOR_BGR2GRAY)
+                                            edges = cv2.Canny(gray, 70, 210)
+
+                                            contours, hierarchy = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+                                            areas = []
+                                            for c in range(len(contours)):
+                                                areas.append(cv2.contourArea(contours[c]))
+                                            max_id = areas.index(max(areas))
+                                            cnt = contours[max_id] #max contours
+
+                                            list1 = np.array([left_up_x,left_up_y])
+                                            out = list1 + cnt
+
+                                            lx, ly, w, h = cv2.boundingRect(out)
+                                            # cv2.rectangle(img_org, (lx, ly), (lx+w, ly+h), (0, 0, 255), 2)
+                                            leftdistance = distance(grasp_center_x,grasp_center_y,lx,ly)
+                                            rightdistance = distance(grasp_center_x,grasp_center_y,lx+w,ly+h)
+                                            if(rightdistance < leftdistance):
+                                                cv2.rectangle(img_org, (grasp_center_x+10, grasp_center_y-10), (grasp_center_x + 30, grasp_center_y + 30),(255, 0, 255), 2)
+                                                result = angle(grasp_center_x,grasp_center_y,grasp_center_x + 30,grasp_center_y + 30)
+
+                                                box = [(grasp_center_x+10,grasp_center_y-10),(grasp_center_x,grasp_center_y),(grasp_center_x + 30,grasp_center_y+30),(grasp_center_x+40,grasp_center_y+20)]
+                                                rota_rect(box,result,grasp_center_x,grasp_center_y)
+                                            else:
+                                                cv2.rectangle(img_org, (grasp_center_x-10, grasp_center_y+10), (grasp_center_x - 30, grasp_center_y - 30),(255, 0, 255), 2)
+                                                result = angle(grasp_center_x,grasp_center_y,grasp_center_x - 30,grasp_center_y - 30)
+
+                                                box = [(grasp_center_x-30,grasp_center_y-30),(grasp_center_x-20,grasp_center_y-20),(grasp_center_x-10,grasp_center_y-10),(grasp_center_x,grasp_center_y)]
+                                                rota_rect(box,result,grasp_center_x,grasp_center_y)
+
+                                        cv2.imshow("img111",img_org)  
+                                    # cv2.rectangle(img_org,(left_up_x,left_up_y),(right_down_x,right_down_y),(50,205,50),2)
+
                                     # drawCenter = cv2.circle(img_org,(int(center_x +left_up_x),int(center_y + left_up_y)),2,(255,0,0),2)    
                                     # rect_center_x = left_up_x + (right_down_x - left_up_x)/2.0
                                     # rect_center_y = left_up_y + (right_down_y - left_up_y)/2.0             
                                     # drawCenter = cv2.circle(crop_img,(int(rect_center_x),int(rect_center_y)),2,(255,0,0),2)
+                                   
 
                                     #depth
                                     z_value = depth_image[int(grasp_center_y),int(grasp_center_x)]
@@ -1940,7 +2000,6 @@ if __name__ == '__main__':
 
                                     # print(len(contours))
                                     # print(areas)
-
                                     id = max2(areas)
                                 
                                 
@@ -1959,6 +2018,8 @@ if __name__ == '__main__':
                                     center_x = M_point['m10']/M_point['m00']
                                     center_y = M_point['m01']/M_point['m00']
                                     drawCenter = cv2.circle(img_org,(int(center_x+left_up_x),int(center_y+left_up_y)),2,(255,0,0),2)
+
+                                    cv2.rectangle(img_org,(left_up_x,left_up_y),(right_down_x,right_down_y),(50,205,50),2)
                                     #depth
                                     z_value = depth_image[int(center_y + left_up_y),int(center_x + left_up_x)]
                                     depth_value = resized_intrinsics * left_to_right_distance_cm / z_value
@@ -1991,7 +2052,41 @@ if __name__ == '__main__':
 
                                     # center_x = M_point['m10']/M_point['m00']
                                     # center_y = M_point['m01']/M_point['m00']
-                                    drawCenter = cv2.circle(img_org,(int(grasp_center_x),int(grasp_center_y)),2,(255,0,0),2)
+                                    if( blade_center_x > grasp_center_x): #grasp left
+                                        cv2.putText(img_org, "angle: " + str(blade_center_x - grasp_center_x) , (10, 98), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        if(blade_center_x - grasp_center_x < 125):
+                                            drawCenter = cv2.circle(img_org,(int(grasp_center_x),int(grasp_center_y)),2,(255,0,0),2)
+                                            gray = cv2.cvtColor(crop_img,cv2.COLOR_BGR2GRAY)
+                                            edges = cv2.Canny(gray, 70, 210)
+
+                                            contours, hierarchy = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+                                            areas = []
+                                            for c in range(len(contours)):
+                                                areas.append(cv2.contourArea(contours[c]))
+                                            max_id = areas.index(max(areas))
+                                            cnt = contours[max_id] #max contours
+
+                                            list1 = np.array([left_up_x,left_up_y])
+                                            out = list1 + cnt
+
+                                            lx, ly, w, h = cv2.boundingRect(out)
+                                            # cv2.rectangle(img_org, (lx, ly), (lx+w, ly+h), (0, 0, 255), 2)
+                                            leftdistance = distance(grasp_center_x,grasp_center_y,lx,ly)
+                                            rightdistance = distance(grasp_center_x,grasp_center_y,lx+w,ly+h)
+                                            if(rightdistance < leftdistance):
+                                                cv2.rectangle(img_org, (grasp_center_x+10, grasp_center_y-10), (grasp_center_x + 30, grasp_center_y + 30),(255, 0, 255), 2)
+                                                result = angle(grasp_center_x,grasp_center_y,grasp_center_x + 30,grasp_center_y + 30)
+
+                                                box = [(grasp_center_x+10,grasp_center_y-10),(grasp_center_x,grasp_center_y),(grasp_center_x + 30,grasp_center_y+30),(grasp_center_x+40,grasp_center_y+20)]
+                                                rota_rect(box,result,grasp_center_x,grasp_center_y)
+                                            else:
+                                                cv2.rectangle(img_org, (grasp_center_x-10, grasp_center_y+10), (grasp_center_x - 30, grasp_center_y - 30),(255, 0, 255), 2)
+                                                result = angle(grasp_center_x,grasp_center_y,grasp_center_x - 30,grasp_center_y - 30)
+
+                                                box = [(grasp_center_x-30,grasp_center_y-30),(grasp_center_x-20,grasp_center_y-20),(grasp_center_x-10,grasp_center_y-10),(grasp_center_x,grasp_center_y)]
+                                                rota_rect(box,result,grasp_center_x,grasp_center_y)
+
+                                        cv2.imshow("img111",img_org) 
                                     # drawCenter = cv2.circle(img_org,(int(center_x+left_up_x),int(center_y+left_up_y)),2,(255,0,0),2)
                                     # rect_center_x = left_up_x + (right_down_x - left_up_x)/2.0
                                     # rect_center_y = left_up_y + (right_down_y - left_up_y)/2.0             
