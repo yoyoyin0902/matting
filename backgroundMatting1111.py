@@ -1313,7 +1313,7 @@ def circle_transform(mat,orig):
         print(best_area)
         if (best_area == 0):
             print("left")
-            cv2.rectangle(orig_img,(int(center_x-20-enter_distance[0]),int(center_y-20)),(int(center_x),int(center_y+20)),(255,255,0),2)
+            cv2.rectangle(orig_img,(int(center_x-20-center_distance[0]),int(center_y-20)),(int(center_x),int(center_y+20)),(255,255,0),2)
             result = angle(lx,center_y,center_x,center_y)
             cv2.imshow("left",orig_img)
         elif (best_area == 1):
@@ -1851,12 +1851,12 @@ if __name__ == '__main__':
                                 contours, hierarchy = cv2.findContours(edges, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
                                 print(len(contours))
                                 if(len(contours) > 4): #剪刀 
-
+                                    #quadrant 1 , cut right up
                                     if( blade_center_x > grasp_center_x and blade_center_y < grasp_center_y): 
                                         cv2.putText(img_org, "distance: " + str(round(blade_center_x - grasp_center_x,3)) , (10, 125), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(img_org, "right up" , (10, 155), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
 
-                                        if((blade_center_x - grasp_center_x) <= 115 and(blade_center_x - grasp_center_x) > 30): 
+                                        if((blade_center_x - grasp_center_x) < 115 and(blade_center_x - grasp_center_x) >= 30): 
                                             cv2.putText(img_org, "cut right up 1111 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             width = 20
                                             height = 40
@@ -1885,8 +1885,9 @@ if __name__ == '__main__':
                                             cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.imwrite(center_blade + "blade_grip_"+str(c)+'.jpg',img_org)
                                         
-                                        elif((blade_center_x - grasp_center_x) > 115):
+                                        elif((blade_center_x - grasp_center_x) >= 115):
                                             cv2.putText(img_org, "cut right up 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             width = 20
                                             height = 40
@@ -1897,7 +1898,7 @@ if __name__ == '__main__':
                                             real_grasp_center_x = blade_center_x - blade_width/2.0
                                             real_grasp_center_y = blade_center_y
 
-                                            result = angle(blade_center_x - blade_width/2.0 ,blade_center_y,blade_center_x ,blade_center_y)
+                                            result = angle(blade_left_up_x ,blade_left_up_y,blade_center_x ,blade_center_y)
                                             box = [(real_grasp_center_x + width/2.0,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y + height/2.0),
                                                     (real_grasp_center_x + width/2.0,real_grasp_center_y + height/2.0)]
                                             rota = rota_rect(box,result,int(real_grasp_center_x),int(real_grasp_center_y))
@@ -1906,6 +1907,7 @@ if __name__ == '__main__':
                                             cv2.line(img_org,(int(rota[1][0]),int(rota[1][1])),(int(rota[2][0]),int(rota[2][1])),(255, 0, 255),2,cv2.LINE_AA)
                                             cv2.line(img_org,(int(rota[2][0]),int(rota[2][1])),(int(rota[3][0]),int(rota[3][1])),(255, 0, 255),2,cv2.LINE_AA)
                                             cv2.line(img_org,(int(rota[3][0]),int(rota[3][1])),(int(rota[0][0]),int(rota[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            
                                             #depth
                                             z_value = depth_image[int(real_grasp_center_y),int(real_grasp_center_x)]
                                             depth_value = resized_intrinsics * left_to_right_distance_cm / z_value
@@ -1913,11 +1915,12 @@ if __name__ == '__main__':
                                             cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.imwrite(center_blade + "blade_grip_"+str(c)+'.jpg',img_org)
                                         
                                         elif((blade_center_x - grasp_center_x) < 30):
                                             cv2.putText(img_org, "cut right up 3333 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                            width = 20
-                                            height = 50
+                                            width = 40
+                                            height = 20
 
                                             real_grasp_center_x = blade_center_x 
                                             real_grasp_center_y = blade_center_y + blade_height/2.0
@@ -1925,7 +1928,7 @@ if __name__ == '__main__':
 
                                             # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
                                             # cv2.rectangle(img_org,(int(grasp_center_x-width), int(grasp_center_y - height/2.0)), (int(grasp_center_x), int(grasp_center_y + height/2.0)),(0, 127, 255), 2)
-                                            result = angle(blade_center_x,blade_center_y,real_grasp_center_x,real_grasp_center_y)
+                                            result = angle(real_grasp_center_x,real_grasp_center_y,blade_right_down_x,blade_right_down_y)
                                             box = [(real_grasp_center_x + width/2.0 ,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y + height/2.0),
                                                     (real_grasp_center_x + width/2.0 ,real_grasp_center_y + height/2.0)]
                                             rota = rota_rect(box,result,int(real_grasp_center_x),int(real_grasp_center_y))
@@ -1946,12 +1949,14 @@ if __name__ == '__main__':
                                             cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.imwrite(center_blade + "blade_grip_"+str(c)+'.jpg',img_org)
 
-                                    #quadrant 2 , right down
+                                    #quadrant 2 , cut right down
                                     elif(blade_center_x > grasp_center_x and blade_center_y > grasp_center_y): #右下角
                                         cv2.putText(img_org, "distance: " + str(round(blade_center_x - grasp_center_x,3)) , (10, 125), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(img_org, "cut right down" , (10, 155), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        if((blade_center_x - grasp_center_x) <= 115 and(blade_center_x - grasp_center_x)>30):
+
+                                        if((blade_center_x - grasp_center_x) < 115 and(blade_center_x - grasp_center_x) >= 30):
                                             cv2.putText(img_org, "cut right down 1111 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             width = 20 
                                             height = 40
@@ -1991,36 +1996,275 @@ if __name__ == '__main__':
                                             cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                                        # elif((blade_center_x - grasp_center_x) > 115):
-                                        #     cv2.putText(img_org, "cut right down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        #     width = 20
-                                        #     height = 50
+                                            cv2.imwrite(center_blade + "blade_grip_"+str(c)+'.jpg',img_org)
+                                        
+                                        elif((blade_center_x - grasp_center_x) >= 115):
+                                            cv2.putText(img_org, "cut right down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            width = 20
+                                            height = 40
+
+                                            real_grasp_center_x = blade_center_x - blade_width/2.0
+                                            real_grasp_center_y = blade_center_y
+                        
+                                            cv2.circle(img_org,(int(real_grasp_center_x),int(blade_center_y)),2,(255,0,0),2)
+                                            cv2.rectangle(img_org, (int(real_grasp_center_x - width/2.0), int(real_grasp_center_y - height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
+
+                                            result = angle(real_grasp_center_x ,real_grasp_center_y,blade_center_x ,blade_center_y)
+                                            box = [(real_grasp_center_x + width/2.0,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y + height/2.0),
+                                                    (real_grasp_center_x + width/2.0,real_grasp_center_y + height/2.0)]
+                                            rota = rota_rect(box,result,int(real_grasp_center_x),int(real_grasp_center_y))
+
+                                            cv2.line(img_org,(int(rota[0][0]),int(rota[0][1])),(int(rota[1][0]),int(rota[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[1][0]),int(rota[1][1])),(int(rota[2][0]),int(rota[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[2][0]),int(rota[2][1])),(int(rota[3][0]),int(rota[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[3][0]),int(rota[3][1])),(int(rota[0][0]),int(rota[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            #depth
+                                            z_value = depth_image[int(real_grasp_center_y),int(real_grasp_center_x)]
+                                            depth_value = resized_intrinsics * left_to_right_distance_cm / z_value
+
+                                            cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.imwrite(center_blade + "blade_grip_"+str(c)+'.jpg',img_org)
+
+                                        elif((blade_center_x - grasp_center_x) < 30):
+                                            cv2.putText(img_org, "cut right down 3333 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            width = 40
+                                            height = 20
+
+                                            real_grasp_center_x = blade_center_x 
+                                            real_grasp_center_y = blade_center_y - blade_height/2.0
+
+                                            # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                            # cv2.rectangle(img_org,(int(grasp_center_x-width), int(grasp_center_y - height/2.0)), (int(grasp_center_x), int(grasp_center_y + height/2.0)),(0, 127, 255), 2)
+                                            result = angle(blade_left_up_x,blade_left_up_y,real_grasp_center_x,real_grasp_center_y)
+                                            box = [(real_grasp_center_x + width/2.0 ,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y + height/2.0),
+                                                    (real_grasp_center_x + width/2.0 ,real_grasp_center_y + height/2.0)]
+                                            rota = rota_rect(box,result,int(real_grasp_center_x),int(real_grasp_center_y))
                                             
-                                        #     # cv2.rectangle(img_org, (int(grasp_center_x-width/2), int(grasp_center_y)), (int(grasp_center_x +width/2), int(grasp_center_y + height)),(255, 0, 255), 2)
-                                        #     result = angle(left_up_x,left_up_y,left_up_x+grasp_width,left_up_y)
-                                        #     box = [(grasp_center_x + width/2,grasp_center_y),(grasp_center_x - width/2,grasp_center_y),(grasp_center_x - width/2,grasp_center_y+height),(grasp_center_x + width/2,grasp_center_y + height)]
-                                        #     rota = rota_rect(box,result,int(grasp_center_x),int(grasp_center_y))
+                                            cv2.line(img_org,(int(rota[0][0]), int(rota[0][1])),(int(rota[1][0]),int(rota[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[1][0]),int(rota[1][1])),(int(rota[2][0]),int(rota[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[2][0]),int(rota[2][1])),(int(rota[3][0]),int(rota[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[3][0]),int(rota[3][1])),(int(rota[0][0]),int(rota[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                                        #     cv2.line(img_org,(int(rota[0][0]),int(rota[0][1])),(int(rota[1][0]),int(rota[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                                        #     cv2.line(img_org,(int(rota[1][0]),int(rota[1][1])),(int(rota[2][0]),int(rota[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                                        #     cv2.line(img_org,(int(rota[2][0]),int(rota[2][1])),(int(rota[3][0]),int(rota[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                                        #     cv2.line(img_org,(int(rota[3][0]),int(rota[3][1])),(int(rota[0][0]),int(rota[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            real_grasp_center_x = (rota[0][0] + rota[2][0])/2.0 
+                                            real_grasp_center_y = (rota[0][1] + rota[2][1])/2.0
+                                            cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
 
-                                        #     real_grasp_center_x = (rota[0][0] + rota[2][0])/2.0 
-                                        #     real_grasp_center_y = (rota[0][1] + rota[2][1])/2.0
-                                        #     cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                            #depth
+                                            z_value = depth_image[int(real_grasp_center_y),int(real_grasp_center_x)]
+                                            depth_value = resized_intrinsics * left_to_right_distance_cm / z_value
 
-                                        #     #depth
-                                        #     z_value = depth_image[int(real_grasp_center_y),int(real_grasp_center_x)]
-                                        #     depth_value = resized_intrinsics * left_to_right_distance_cm / z_value
-
-                                        #     cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        #     cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        #     cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    
+                                            cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.imwrite(center_blade + "blade_grip_"+str(c)+'.jpg',img_org)
                             
-                                    cv2.imwrite(center_blade + "blade_grip_"+str(c)+'.jpg',img_org) 
+                                    #quadrant 3 , cut left up
+                                    elif(blade_center_x < grasp_center_x and blade_center_y < grasp_center_y): 
+                                        cv2.putText(img_org, "distance: " + str(round(blade_center_x - grasp_center_x,3)) , (10, 125), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(img_org, "cut left up " , (10, 155), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        
+                                        if((grasp_center_x - blade_center_x) < 115 and(grasp_center_x - blade_center_x)>=30):
+                                            cv2.putText(img_org, "cut left up 1111 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            width = 20
+                                            height = 50
+
+                                            # cv2.line(img_org,(int(right_down_x),int(right_down_y)),(int(blade_left_up_x),int(blade_left_up_y)),(255, 0, 255),2,cv2.LINE_AA)
+                                            real_grasp_center_x = (left_up_x + blade_right_down_x)/2.0 
+                                            real_grasp_center_y = (left_up_y + blade_right_down_y)/2.0
+                                            
+                                            # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                            # # cv2.rectangle(img_org, (int(real_grasp_center_x-width/2.0), int(real_grasp_center_y-height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
+                                            result = angle(blade_left_up_x ,blade_left_up_y,blade_right_down_x ,blade_right_down_y)
+                                            box = [(real_grasp_center_x + width/2.0,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y - height/2.0),
+                                                    (real_grasp_center_x - width/2.0,real_grasp_center_y + height/2.0),(real_grasp_center_x + width/2.0,real_grasp_center_y + height/2.0)]
+                                            rota = rota_rect(box,result,int(real_grasp_center_x),int(real_grasp_center_y))
+
+                                            cv2.line(img_org,(int(rota[0][0]),int(rota[0][1])),(int(rota[1][0]),int(rota[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[1][0]),int(rota[1][1])),(int(rota[2][0]),int(rota[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[2][0]),int(rota[2][1])),(int(rota[3][0]),int(rota[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[3][0]),int(rota[3][1])),(int(rota[0][0]),int(rota[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                            real_grasp_center_x = (rota[0][0] + rota[2][0])/2.0 
+                                            real_grasp_center_y = (rota[0][1] + rota[2][1])/2.0
+                                            cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                            
+                                            #depth
+                                            z_value = depth_image[int(real_grasp_center_y),int(real_grasp_center_x)]
+                                            depth_value = resized_intrinsics * left_to_right_distance_cm / z_value
+
+                                            cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.imwrite(center_blade + "blade_grip_"+str(c)+'.jpg',img_org)
+
+                                        elif((grasp_center_x - blade_center_x) >= 115):
+                                            cv2.putText(img_org, "cut left up 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            width = 20
+                                            height = 40
+
+                                            real_grasp_center_x = blade_center_x + blade_width/2.0
+                                            real_grasp_center_y = blade_center_y
+                        
+                                            cv2.circle(img_org,(int(real_grasp_center_x),int(blade_center_y)),2,(255,0,0),2)
+                                            # cv2.rectangle(img_org, (int(real_grasp_center_x - width/2.0), int(real_grasp_center_y - height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
+
+                                            result = angle(real_grasp_center_x ,real_grasp_center_y,blade_center_x ,blade_center_y)
+                                            box = [(real_grasp_center_x + width/2.0,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y + height/2.0),
+                                                    (real_grasp_center_x + width/2.0,real_grasp_center_y + height/2.0)]
+                                            rota = rota_rect(box,result,int(real_grasp_center_x),int(real_grasp_center_y))
+
+                                            cv2.line(img_org,(int(rota[0][0]),int(rota[0][1])),(int(rota[1][0]),int(rota[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[1][0]),int(rota[1][1])),(int(rota[2][0]),int(rota[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[2][0]),int(rota[2][1])),(int(rota[3][0]),int(rota[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[3][0]),int(rota[3][1])),(int(rota[0][0]),int(rota[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            #depth
+                                            z_value = depth_image[int(real_grasp_center_y),int(real_grasp_center_x)]
+                                            depth_value = resized_intrinsics * left_to_right_distance_cm / z_value
+
+                                            cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.imwrite(center_blade + "blade_grip_"+str(c)+'.jpg',img_org)
+
+                                        elif((grasp_center_x - blade_center_x) < 30):
+                                            cv2.putText(img_org, "cut left up 3333 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            width = 40
+                                            height = 20
+
+                                            real_grasp_center_x = blade_center_x 
+                                            real_grasp_center_y = blade_center_y + blade_height/2.0
+
+
+                                            # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                            # cv2.rectangle(img_org,(int(grasp_center_x-width), int(grasp_center_y - height/2.0)), (int(grasp_center_x), int(grasp_center_y + height/2.0)),(0, 127, 255), 2)
+                                            result = angle(real_grasp_center_x,real_grasp_center_y,blade_right_down_x,blade_right_down_y)
+                                            box = [(real_grasp_center_x + width/2.0 ,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y + height/2.0),
+                                                    (real_grasp_center_x + width/2.0 ,real_grasp_center_y + height/2.0)]
+                                            rota = rota_rect(box,result,int(real_grasp_center_x),int(real_grasp_center_y))
+                                            
+                                            cv2.line(img_org,(int(rota[0][0]), int(rota[0][1])),(int(rota[1][0]),int(rota[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[1][0]),int(rota[1][1])),(int(rota[2][0]),int(rota[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[2][0]),int(rota[2][1])),(int(rota[3][0]),int(rota[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[3][0]),int(rota[3][1])),(int(rota[0][0]),int(rota[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                            real_grasp_center_x = (rota[0][0] + rota[2][0])/2.0 
+                                            real_grasp_center_y = (rota[0][1] + rota[2][1])/2.0
+                                            cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+
+                                            #depth
+                                            z_value = depth_image[int(real_grasp_center_y),int(real_grasp_center_x)]
+                                            depth_value = resized_intrinsics * left_to_right_distance_cm / z_value
+
+                                            cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.imwrite(center_blade + "blade_grip_"+str(c)+'.jpg',img_org)
+                                    
+                                    #quadrant 4 , cut left down
+                                    elif(grasp_center_x > blade_center_x and blade_center_y > grasp_center_y): 
+                                        cv2.putText(img_org, "distance: " + str(round(blade_center_x - grasp_center_x,3)) , (10, 125), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(img_org, "cut left down" , (10, 155), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+
+                                        if((grasp_center_x - blade_center_x) < 120 and(grasp_center_x - blade_center_x)>=25):
+                                            cv2.putText(img_org, "cut left down 1111 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            width = 20
+                                            height = 50
+
+                                            real_grasp_center_x = (blade_right_down_x + left_up_x)/2.0 
+                                            real_grasp_center_y = (blade_left_up_y + right_down_y)/2.0
+
+                                            cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                            # cv2.rectangle(img_org,(int(grasp_center_x-width/2.0), int(grasp_center_y)), (int(grasp_center_x + width/2.0), int(grasp_center_y + height)),(0, 127, 255), 2)
+                                            result = angle(blade_left_up_x,blade_right_down_y,blade_right_down_x,blade_left_up_y)
+                                            box = [(real_grasp_center_x + width/2.0 ,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y + height/2.0),
+                                                    (real_grasp_center_x + width/2.0 ,real_grasp_center_y + height/2.0)]
+                                            rota = rota_rect(box,result,int(real_grasp_center_x),int(real_grasp_center_y))
+
+                                            cv2.line(img_org,(int(rota[0][0]),int(rota[0][1])),(int(rota[1][0]),int(rota[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[1][0]),int(rota[1][1])),(int(rota[2][0]),int(rota[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[2][0]),int(rota[2][1])),(int(rota[3][0]),int(rota[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[3][0]),int(rota[3][1])),(int(rota[0][0]),int(rota[0][1])),(255, 0, 255),2,cv2.LINE_AA) 
+
+                                            real_grasp_center_x = (rota[0][0] + rota[2][0])/2.0 
+                                            real_grasp_center_y = (rota[0][1] + rota[2][1])/2.0
+                                            cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                            # print(real_grasp_center_x,real_grasp_center_y)
+                                            
+                                            #depth
+                                            z_value = depth_image[int(real_grasp_center_y),int(real_grasp_center_x)]
+                                            
+                                            depth_value = resized_intrinsics * left_to_right_distance_cm / z_value
+
+                                            cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)  
+                                            cv2.imwrite(center_blade + "blade_grip_"+str(c)+'.jpg',img_org)
+                                    
+                                        elif((grasp_center_x - blade_center_x) >= 115):
+                                            cv2.putText(img_org, "cut left down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            width = 20
+                                            height = 40
+
+                                            real_grasp_center_x = blade_center_x + blade_width/2.0
+                                            real_grasp_center_y = blade_center_y
+                        
+                                            cv2.circle(img_org,(int(real_grasp_center_x),int(blade_center_y)),2,(255,0,0),2)
+                                            # cv2.rectangle(img_org, (int(real_grasp_center_x - width/2.0), int(real_grasp_center_y - height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
+
+                                            result = angle(real_grasp_center_x ,real_grasp_center_y,blade_center_x ,blade_center_y)
+                                            box = [(real_grasp_center_x + width/2.0,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y + height/2.0),
+                                                    (real_grasp_center_x + width/2.0,real_grasp_center_y + height/2.0)]
+                                            rota = rota_rect(box,result,int(real_grasp_center_x),int(real_grasp_center_y))
+
+                                            cv2.line(img_org,(int(rota[0][0]),int(rota[0][1])),(int(rota[1][0]),int(rota[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[1][0]),int(rota[1][1])),(int(rota[2][0]),int(rota[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[2][0]),int(rota[2][1])),(int(rota[3][0]),int(rota[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[3][0]),int(rota[3][1])),(int(rota[0][0]),int(rota[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            #depth
+                                            z_value = depth_image[int(real_grasp_center_y),int(real_grasp_center_x)]
+                                            depth_value = resized_intrinsics * left_to_right_distance_cm / z_value
+
+                                            cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.imwrite(center_blade + "blade_grip_"+str(c)+'.jpg',img_org)
+                                    
+                                        elif((grasp_center_x - blade_center_x) < 30):
+                                            cv2.putText(img_org, "cut left down 3333 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            width = 20
+                                            height = 40
+
+                                            real_grasp_center_x = blade_center_x 
+                                            real_grasp_center_y = blade_center_y - blade_height/2.0
+
+                                            # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                            # cv2.rectangle(img_org,(int(grasp_center_x-width), int(grasp_center_y - height/2.0)), (int(grasp_center_x), int(grasp_center_y + height/2.0)),(0, 127, 255), 2)
+                                            result = angle(real_grasp_center_x,real_grasp_center_y,blade_left_up_x,blade_right_down_y)
+                                            box = [(real_grasp_center_x + width/2.0 ,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y + height/2.0),
+                                                    (real_grasp_center_x + width/2.0 ,real_grasp_center_y + height/2.0)]
+                                            rota = rota_rect(box,result,int(real_grasp_center_x),int(real_grasp_center_y))
+                                            
+                                            cv2.line(img_org,(int(rota[0][0]), int(rota[0][1])),(int(rota[1][0]),int(rota[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[1][0]),int(rota[1][1])),(int(rota[2][0]),int(rota[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[2][0]),int(rota[2][1])),(int(rota[3][0]),int(rota[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[3][0]),int(rota[3][1])),(int(rota[0][0]),int(rota[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                            real_grasp_center_x = (rota[0][0] + rota[2][0])/2.0 
+                                            real_grasp_center_y = (rota[0][1] + rota[2][1])/2.0
+                                            cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+
+                                            #depth
+                                            z_value = depth_image[int(real_grasp_center_y),int(real_grasp_center_x)]
+                                            depth_value = resized_intrinsics * left_to_right_distance_cm / z_value
+
+                                            cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.imwrite(center_blade + "blade_grip_"+str(c)+'.jpg',img_org)
+                                    
+                                    # cv2.imwrite(center_blade + "blade_grip_"+str(c)+'.jpg',img_org) 
                                     cv2.imshow("img",img_org)
                                     
                                 else:  #鉗子
@@ -2029,7 +2273,7 @@ if __name__ == '__main__':
                                         cv2.putText(img_org, "distance: " + str(round(blade_center_x - grasp_center_x,3)) , (10, 125), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(img_org, "right up" , (10, 155), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
 
-                                        if((blade_center_x - grasp_center_x) <= 120 and(blade_center_x - grasp_center_x) > 25): 
+                                        if((blade_center_x - grasp_center_x) < 120 and(blade_center_x - grasp_center_x) >= 25): 
                                             cv2.putText(img_org, "right up 1111 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             width = 20
                                             height = 50
@@ -2056,8 +2300,9 @@ if __name__ == '__main__':
                                             cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.imwrite(center_blade + "blade_grip_"+str(c)+'.jpg',img_org)
                                         
-                                        elif((blade_center_x - grasp_center_x) > 120):
+                                        elif((blade_center_x - grasp_center_x) >= 120):
                                             cv2.putText(img_org, "right up 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             width = 20
                                             height = 50
@@ -2083,6 +2328,7 @@ if __name__ == '__main__':
                                             cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.imwrite(center_blade + "blade_grip_"+str(c)+'.jpg',img_org)
                                         
                                         elif((blade_center_x - grasp_center_x) < 25): 
                                             cv2.putText(img_org, "right up 3333 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
@@ -2110,13 +2356,14 @@ if __name__ == '__main__':
                                             cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.imwrite(center_blade + "blade_grip_"+str(c)+'.jpg',img_org)
                                     
                                     #quadrant 2 , right down
                                     elif(blade_center_x > grasp_center_x and blade_center_y > grasp_center_y): #右下角
                                         cv2.putText(img_org, "distance: " + str(round(blade_center_x - grasp_center_x,3)) , (10, 125), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(img_org, "right down" , (10, 155), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         
-                                        if((blade_center_x - grasp_center_x) <= 120 and(blade_center_x - grasp_center_x)>25):
+                                        if((blade_center_x - grasp_center_x) < 120 and(blade_center_x - grasp_center_x) >= 25):
                                             cv2.putText(img_org, "right down 1111 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             width = 50
                                             height = 20
@@ -2141,8 +2388,9 @@ if __name__ == '__main__':
                                             cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.imwrite(center_blade + "blade_grip_"+str(c)+'.jpg',img_org)
 
-                                        elif((blade_center_x - grasp_center_x) > 120): 
+                                        elif((blade_center_x - grasp_center_x) >= 120): 
                                             cv2.putText(img_org, "right down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             width = 20
                                             height = 50
@@ -2168,6 +2416,7 @@ if __name__ == '__main__':
                                             cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.imwrite(center_blade + "blade_grip_"+str(c)+'.jpg',img_org)
                                         
                                         elif((blade_center_x - grasp_center_x) < 25):
                                             cv2.putText(img_org, "right down 3333 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
@@ -2195,12 +2444,14 @@ if __name__ == '__main__':
                                             cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.imwrite(center_blade + "blade_grip_"+str(c)+'.jpg',img_org)
                                         
                                     #quadrant 3 , left up 
                                     elif(blade_center_x < grasp_center_x and blade_center_y < grasp_center_y): 
                                         cv2.putText(img_org, "distance: " + str(round(blade_center_x - grasp_center_x,3)) , (10, 125), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(img_org, "left up " , (10, 155), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        if((grasp_center_x - blade_center_x) <= 120 and(grasp_center_x - blade_center_x)>25):
+                                        
+                                        if((grasp_center_x - blade_center_x) < 120 and(grasp_center_x - blade_center_x) >= 25):
                                             cv2.putText(img_org, "left up 1111 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             width = 20
                                             height = 50
@@ -2226,8 +2477,9 @@ if __name__ == '__main__':
                                             cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.imwrite(center_blade + "blade_grip_"+str(c)+'.jpg',img_org)
                                         
-                                        elif((grasp_center_x - blade_center_x) > 120): 
+                                        elif((grasp_center_x - blade_center_x) >= 120): 
                                             cv2.putText(img_org, "left up 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             width = 20
                                             height = 50
@@ -2253,6 +2505,7 @@ if __name__ == '__main__':
                                             cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.imwrite(center_blade + "blade_grip_"+str(c)+'.jpg',img_org)
                                         
                                         elif((grasp_center_x - blade_center_x) < 25): 
                                             cv2.putText(img_org, "left up 3333 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
@@ -2280,13 +2533,14 @@ if __name__ == '__main__':
                                             cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)  
+                                            cv2.imwrite(center_blade + "blade_grip_"+str(c)+'.jpg',img_org)
 
                                     #quadrant 4 , left down
                                     elif(grasp_center_x > blade_center_x and blade_center_y > grasp_center_y): 
                                         cv2.putText(img_org, "distance: " + str(round(blade_center_x - grasp_center_x,3)) , (10, 125), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(img_org, "left down" , (10, 155), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
 
-                                        if((grasp_center_x - blade_center_x) <= 120 and(grasp_center_x - blade_center_x)>25):
+                                        if((grasp_center_x - blade_center_x) < 120 and(grasp_center_x - blade_center_x)>=25):
                                             cv2.putText(img_org, "left dpwn 1111 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             width = 20
                                             height = 50
@@ -2316,8 +2570,9 @@ if __name__ == '__main__':
                                             cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)  
+                                            cv2.imwrite(center_blade + "blade_grip_"+str(c)+'.jpg',img_org)
                                         
-                                        elif((grasp_center_x - blade_center_x) > 120): 
+                                        elif((grasp_center_x - blade_center_x) >= 120): 
                                             cv2.putText(img_org, "left dpwn 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             width = 20
                                             height = 50
@@ -2343,6 +2598,7 @@ if __name__ == '__main__':
                                             cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)  
+                                            cv2.imwrite(center_blade + "blade_grip_"+str(c)+'.jpg',img_org)
 
                                         elif((grasp_center_x - blade_center_x) < 25): 
                                             cv2.putText(img_org, "left dpwn 3333 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
@@ -2365,7 +2621,8 @@ if __name__ == '__main__':
 
                                             cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                            cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)                                          
+                                            cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)   
+                                            cv2.imwrite(center_blade + "blade_grip_"+str(c)+'.jpg',img_org)                                       
 
                                         cv2.imshow("img111",img_org)  
 
@@ -2412,11 +2669,12 @@ if __name__ == '__main__':
                                 contours, hierarchy = cv2.findContours(edges, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
                                 print(len(contours))
                                 if(len(contours) > 4): #剪刀  
+                                    #quadrant 1 , cut right up
                                     if( blade_center_x > grasp_center_x and blade_center_y < grasp_center_y): 
                                         cv2.putText(img_org, "distance: " + str(round(blade_center_x - grasp_center_x,3)) , (10, 125), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(img_org, "cut right up" , (10, 155), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
 
-                                        if((blade_center_x - grasp_center_x) <= 115 and(blade_center_x - grasp_center_x) > 30): 
+                                        if((blade_center_x - grasp_center_x) < 115 and(blade_center_x - grasp_center_x) >= 30): 
                                             cv2.putText(img_org, "cut right up 1111 2" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             width = 20
                                             height = 40
@@ -2446,7 +2704,7 @@ if __name__ == '__main__':
                                             cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         
-                                        elif((blade_center_x - grasp_center_x) > 115):
+                                        elif((blade_center_x - grasp_center_x) >= 115):
                                             cv2.putText(img_org, "cut right up 2222 2" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             width = 20
                                             height = 40
@@ -2460,7 +2718,7 @@ if __name__ == '__main__':
                                             real_grasp_center_x = blade_center_x - blade_width/2.0
                                             real_grasp_center_y = blade_center_y
 
-                                            result = angle(blade_center_x - blade_width/2.0 ,blade_center_y,blade_center_x ,blade_center_y)
+                                            result = angle(blade_left_up_x ,blade_left_up_y,blade_center_x ,blade_center_y)
                                             box = [(real_grasp_center_x + width/2.0,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y + height/2.0),
                                                     (real_grasp_center_x + width/2.0,real_grasp_center_y + height/2.0)]
                                             rota = rota_rect(box,result,int(real_grasp_center_x),int(real_grasp_center_y))
@@ -2480,15 +2738,15 @@ if __name__ == '__main__':
 
                                         elif((blade_center_x - grasp_center_x) < 30):
                                             cv2.putText(img_org, "cut right up 3333 2" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                            width = 20
-                                            height = 50
+                                            width = 40
+                                            height = 20
 
                                             real_grasp_center_x = blade_center_x 
                                             real_grasp_center_y = blade_center_y + blade_height/2.0
 
                                             # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
                                             # cv2.rectangle(img_org,(int(grasp_center_x-width), int(grasp_center_y - height/2.0)), (int(grasp_center_x), int(grasp_center_y + height/2.0)),(0, 127, 255), 2)
-                                            result = angle(blade_center_x,blade_center_y,real_grasp_center_x,real_grasp_center_y)
+                                            result = angle(real_grasp_center_x,real_grasp_center_y,blade_right_down_x,blade_right_down_y)
                                             box = [(real_grasp_center_x + width/2.0 ,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y + height/2.0),
                                                     (real_grasp_center_x + width/2.0 ,real_grasp_center_y + height/2.0)]
                                             rota = rota_rect(box,result,int(real_grasp_center_x),int(real_grasp_center_y))
@@ -2511,11 +2769,12 @@ if __name__ == '__main__':
                                             cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
 
 
-                                    #quadrant 2 , right down
+                                    #quadrant 2 , cut right down
                                     elif(blade_center_x > grasp_center_x and blade_center_y > grasp_center_y): #右下角
                                         cv2.putText(img_org, "distance: " + str(round(blade_center_x - grasp_center_x,3)) , (10, 125), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(img_org, "cut right down" , (10, 155), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        if((blade_center_x - grasp_center_x) <= 115 and(blade_center_x - grasp_center_x)>30):
+                                        
+                                        if((blade_center_x - grasp_center_x) < 115 and(blade_center_x - grasp_center_x) >= 30):
                                             cv2.putText(img_org, "cut right down 1111 2" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             width = 20 
                                             height = 40
@@ -2527,8 +2786,8 @@ if __name__ == '__main__':
                                             # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
                                             # cv2.rec tangle(img_org, (int(real_grasp_center_x-width/2.0), int(real_grasp_center_y-height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
                                             result = angle(blade_left_up_x ,blade_left_up_y,blade_right_down_x ,blade_right_down_y)
-                                            box = [(real_grasp_center_x + width/2.0,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_x - height/2.0),
-                                                    (real_grasp_center_x - width/2,real_grasp_center_x + height/2.0),(real_grasp_center_x + width/2.0,real_grasp_center_x + height/2.0)]
+                                            box = [(real_grasp_center_x + width/2.0,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y - height/2.0),
+                                                    (real_grasp_center_x - width/2,real_grasp_center_y + height/2.0),(real_grasp_center_x + width/2.0,real_grasp_center_y + height/2.0)]
                                             rota = rota_rect(box,result,int(real_grasp_center_x),int(real_grasp_center_y))
 
                                             cv2.line(img_org,(int(rota[0][0]),int(rota[0][1])),(int(rota[1][0]),int(rota[1][1])),(255, 0, 255),2,cv2.LINE_AA)
@@ -2547,8 +2806,267 @@ if __name__ == '__main__':
                                             cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    
 
+                                        elif((blade_center_x - grasp_center_x) >= 115):
+                                            cv2.putText(img_org, "cut right down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            width = 20
+                                            height = 40
+
+                                            real_grasp_center_x = blade_center_x - blade_width/2.0
+                                            real_grasp_center_y = blade_center_y
+                        
+                                            cv2.circle(img_org,(int(real_grasp_center_x),int(blade_center_y)),2,(255,0,0),2)
+                                            cv2.rectangle(img_org, (int(real_grasp_center_x - width/2.0), int(real_grasp_center_y - height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
+
+                                            result = angle(real_grasp_center_x ,real_grasp_center_y,blade_center_x ,blade_center_y)
+                                            box = [(real_grasp_center_x + width/2.0,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y + height/2.0),
+                                                    (real_grasp_center_x + width/2.0,real_grasp_center_y + height/2.0)]
+                                            rota = rota_rect(box,result,int(real_grasp_center_x),int(real_grasp_center_y))
+
+                                            cv2.line(img_org,(int(rota[0][0]),int(rota[0][1])),(int(rota[1][0]),int(rota[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[1][0]),int(rota[1][1])),(int(rota[2][0]),int(rota[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[2][0]),int(rota[2][1])),(int(rota[3][0]),int(rota[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[3][0]),int(rota[3][1])),(int(rota[0][0]),int(rota[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            #depth
+                                            z_value = depth_image[int(real_grasp_center_y),int(real_grasp_center_x)]
+                                            depth_value = resized_intrinsics * left_to_right_distance_cm / z_value
+
+                                            cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+
+                                        elif((blade_center_x - grasp_center_x) < 30):
+                                            cv2.putText(img_org, "cut right down 3333 2" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            width = 40
+                                            height = 20
+
+                                            real_grasp_center_x = blade_center_x 
+                                            real_grasp_center_y = blade_center_y - blade_height/2.0
+
+
+                                            # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                            # cv2.rectangle(img_org,(int(grasp_center_x-width), int(grasp_center_y - height/2.0)), (int(grasp_center_x), int(grasp_center_y + height/2.0)),(0, 127, 255), 2)
+                                            result = angle(blade_left_up_x,blade_left_up_y,real_grasp_center_x,real_grasp_center_y)
+                                            box = [(real_grasp_center_x + width/2.0 ,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y + height/2.0),
+                                                    (real_grasp_center_x + width/2.0 ,real_grasp_center_y + height/2.0)]
+                                            rota = rota_rect(box,result,int(real_grasp_center_x),int(real_grasp_center_y))
+                                            
+                                            cv2.line(img_org,(int(rota[0][0]), int(rota[0][1])),(int(rota[1][0]),int(rota[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[1][0]),int(rota[1][1])),(int(rota[2][0]),int(rota[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[2][0]),int(rota[2][1])),(int(rota[3][0]),int(rota[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[3][0]),int(rota[3][1])),(int(rota[0][0]),int(rota[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                            real_grasp_center_x = (rota[0][0] + rota[2][0])/2.0 
+                                            real_grasp_center_y = (rota[0][1] + rota[2][1])/2.0
+                                            cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+
+                                            #depth
+                                            z_value = depth_image[int(real_grasp_center_y),int(real_grasp_center_x)]
+                                            depth_value = resized_intrinsics * left_to_right_distance_cm / z_value
+
+                                            cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    
+                                    #quadrant 3 , cut left up
+                                    elif(blade_center_x < grasp_center_x and blade_center_y < grasp_center_y): 
+                                        cv2.putText(img_org, "distance: " + str(round(blade_center_x - grasp_center_x,3)) , (10, 125), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(img_org, "cut left up " , (10, 155), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        
+                                        if((grasp_center_x - blade_center_x) < 115 and(grasp_center_x - blade_center_x) >= 30):
+                                            cv2.putText(img_org, "cut left up 1111 2" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            width = 20
+                                            height = 50
+
+                                            # cv2.line(img_org,(int(right_down_x),int(right_down_y)),(int(blade_left_up_x),int(blade_left_up_y)),(255, 0, 255),2,cv2.LINE_AA)
+                                            real_grasp_center_x = (left_up_x + blade_right_down_x)/2.0 
+                                            real_grasp_center_y = (left_up_y + blade_right_down_y)/2.0
+                                            
+                                            # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                            # # cv2.rectangle(img_org, (int(real_grasp_center_x-width/2.0), int(real_grasp_center_y-height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
+                                            result = angle(blade_left_up_x ,blade_left_up_y,blade_right_down_x ,blade_right_down_y)
+                                            box = [(real_grasp_center_x + width/2.0,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y - height/2.0),
+                                                    (real_grasp_center_x - width/2.0,real_grasp_center_y + height/2.0),(real_grasp_center_x + width/2.0,real_grasp_center_y + height/2.0)]
+                                            rota = rota_rect(box,result,int(real_grasp_center_x),int(real_grasp_center_y))
+
+                                            cv2.line(img_org,(int(rota[0][0]),int(rota[0][1])),(int(rota[1][0]),int(rota[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[1][0]),int(rota[1][1])),(int(rota[2][0]),int(rota[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[2][0]),int(rota[2][1])),(int(rota[3][0]),int(rota[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[3][0]),int(rota[3][1])),(int(rota[0][0]),int(rota[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                            real_grasp_center_x = (rota[0][0] + rota[2][0])/2.0 
+                                            real_grasp_center_y = (rota[0][1] + rota[2][1])/2.0
+                                            cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                            
+                                            #depth
+                                            z_value = depth_image[int(real_grasp_center_y),int(real_grasp_center_x)]
+                                            depth_value = resized_intrinsics * left_to_right_distance_cm / z_value
+
+                                            cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        
+                                        elif((grasp_center_x - blade_center_x) >= 115):
+                                            cv2.putText(img_org, "cut left up 2222 2" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            width = 40
+                                            height = 20
+
+                                            real_grasp_center_x = blade_center_x + blade_width/2.0
+                                            real_grasp_center_y = blade_center_y
+                        
+                                            cv2.circle(img_org,(int(real_grasp_center_x),int(blade_center_y)),2,(255,0,0),2)
+                                            # cv2.rectangle(img_org, (int(real_grasp_center_x - width/2.0), int(real_grasp_center_y - height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
+
+                                            result = angle(real_grasp_center_x ,real_grasp_center_y,blade_center_x ,blade_center_y)
+                                            box = [(real_grasp_center_x + width/2.0,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y + height/2.0),
+                                                    (real_grasp_center_x + width/2.0,real_grasp_center_y + height/2.0)]
+                                            rota = rota_rect(box,result,int(real_grasp_center_x),int(real_grasp_center_y))
+
+                                            cv2.line(img_org,(int(rota[0][0]),int(rota[0][1])),(int(rota[1][0]),int(rota[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[1][0]),int(rota[1][1])),(int(rota[2][0]),int(rota[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[2][0]),int(rota[2][1])),(int(rota[3][0]),int(rota[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[3][0]),int(rota[3][1])),(int(rota[0][0]),int(rota[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            #depth
+                                            z_value = depth_image[int(real_grasp_center_y),int(real_grasp_center_x)]
+                                            depth_value = resized_intrinsics * left_to_right_distance_cm / z_value
+
+                                            cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+
+                                        
+                                        elif((grasp_center_x - blade_center_x) < 30):
+                                            cv2.putText(img_org, "cut left up 3333 2" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            width = 40
+                                            height = 20
+
+                                            real_grasp_center_x = blade_center_x 
+                                            real_grasp_center_y = blade_center_y + blade_height/2.0
+
+
+                                            # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                            # cv2.rectangle(img_org,(int(grasp_center_x-width), int(grasp_center_y - height/2.0)), (int(grasp_center_x), int(grasp_center_y + height/2.0)),(0, 127, 255), 2)
+                                            result = angle(real_grasp_center_x,real_grasp_center_y,blade_right_down_x,blade_right_down_y)
+                                            box = [(real_grasp_center_x + width/2.0 ,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y + height/2.0),
+                                                    (real_grasp_center_x + width/2.0 ,real_grasp_center_y + height/2.0)]
+                                            rota = rota_rect(box,result,int(real_grasp_center_x),int(real_grasp_center_y))
+                                            
+                                            cv2.line(img_org,(int(rota[0][0]), int(rota[0][1])),(int(rota[1][0]),int(rota[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[1][0]),int(rota[1][1])),(int(rota[2][0]),int(rota[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[2][0]),int(rota[2][1])),(int(rota[3][0]),int(rota[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[3][0]),int(rota[3][1])),(int(rota[0][0]),int(rota[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                            real_grasp_center_x = (rota[0][0] + rota[2][0])/2.0 
+                                            real_grasp_center_y = (rota[0][1] + rota[2][1])/2.0
+                                            cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+
+                                            #depth
+                                            z_value = depth_image[int(real_grasp_center_y),int(real_grasp_center_x)]
+                                            depth_value = resized_intrinsics * left_to_right_distance_cm / z_value
+
+                                            cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+
+                                    #quadrant 4 , cut left down
+                                    elif(grasp_center_x > blade_center_x and blade_center_y > grasp_center_y): 
+                                        cv2.putText(img_org, "distance: " + str(round(blade_center_x - grasp_center_x,3)) , (10, 125), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(img_org, "cut left down" , (10, 155), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+
+                                        if((grasp_center_x - blade_center_x) < 120 and(grasp_center_x - blade_center_x)>=25):
+                                            cv2.putText(img_org, "cut left down 1111 2" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            width = 20
+                                            height = 50
+
+                                            real_grasp_center_x = (blade_right_down_x + left_up_x)/2.0 
+                                            real_grasp_center_y = (blade_left_up_y + right_down_y)/2.0
+
+                                            cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                            # cv2.rectangle(img_org,(int(grasp_center_x-width/2.0), int(grasp_center_y)), (int(grasp_center_x + width/2.0), int(grasp_center_y + height)),(0, 127, 255), 2)
+                                            result = angle(blade_left_up_x,blade_right_down_y,blade_right_down_x,blade_left_up_y)
+                                            box = [(real_grasp_center_x + width/2.0 ,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y + height/2.0),
+                                                    (real_grasp_center_x + width/2.0 ,real_grasp_center_y + height/2.0)]
+                                            rota = rota_rect(box,result,int(grasp_center_x),int(grasp_center_y))
+
+                                            cv2.line(img_org,(int(rota[0][0]),int(rota[0][1])),(int(rota[1][0]),int(rota[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[1][0]),int(rota[1][1])),(int(rota[2][0]),int(rota[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[2][0]),int(rota[2][1])),(int(rota[3][0]),int(rota[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[3][0]),int(rota[3][1])),(int(rota[0][0]),int(rota[0][1])),(255, 0, 255),2,cv2.LINE_AA) 
+
+                                            real_grasp_center_x = (rota[0][0] + rota[2][0])/2.0 
+                                            real_grasp_center_y = (rota[0][1] + rota[2][1])/2.0
+                                            cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                            # print(real_grasp_center_x,real_grasp_center_y)
+                                            
+                                            #depth
+                                            z_value = depth_image[int(real_grasp_center_y),int(real_grasp_center_x)]
+                                            
+                                            depth_value = resized_intrinsics * left_to_right_distance_cm / z_value
+
+                                            cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)  
+
+                                        elif((grasp_center_x - blade_center_x) >= 115):
+                                            cv2.putText(img_org, "cut left down 2222 2" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            width = 20
+                                            height = 40
+
+                                            real_grasp_center_x = blade_center_x + blade_width/2.0
+                                            real_grasp_center_y = blade_center_y
+                        
+                                            cv2.circle(img_org,(int(real_grasp_center_x),int(blade_center_y)),2,(255,0,0),2)
+                                            # cv2.rectangle(img_org, (int(real_grasp_center_x - width/2.0), int(real_grasp_center_y - height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
+
+                                            result = angle(real_grasp_center_x ,real_grasp_center_y,blade_center_x ,blade_center_y)
+                                            box = [(real_grasp_center_x + width/2.0,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y + height/2.0),
+                                                    (real_grasp_center_x + width/2.0,real_grasp_center_y + height/2.0)]
+                                            rota = rota_rect(box,result,int(real_grasp_center_x),int(real_grasp_center_y))
+
+                                            cv2.line(img_org,(int(rota[0][0]),int(rota[0][1])),(int(rota[1][0]),int(rota[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[1][0]),int(rota[1][1])),(int(rota[2][0]),int(rota[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[2][0]),int(rota[2][1])),(int(rota[3][0]),int(rota[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[3][0]),int(rota[3][1])),(int(rota[0][0]),int(rota[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            #depth
+                                            z_value = depth_image[int(real_grasp_center_y),int(real_grasp_center_x)]
+                                            depth_value = resized_intrinsics * left_to_right_distance_cm / z_value
+
+                                            cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    
+                                        elif((grasp_center_x - blade_center_x) < 30):
+                                            cv2.putText(img_org, "cut left down 3333 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            width = 20
+                                            height = 40
+
+                                            real_grasp_center_x = blade_center_x 
+                                            real_grasp_center_y = blade_center_y - blade_height/2.0
+
+                                            # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                            # cv2.rectangle(img_org,(int(grasp_center_x-width), int(grasp_center_y - height/2.0)), (int(grasp_center_x), int(grasp_center_y + height/2.0)),(0, 127, 255), 2)
+                                            rresult = angle(real_grasp_center_x,real_grasp_center_y,blade_left_up_x,blade_right_down_y)
+                                            box = [(real_grasp_center_x + width/2.0 ,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y + height/2.0),
+                                                    (real_grasp_center_x + width/2.0 ,real_grasp_center_y + height/2.0)]
+                                            rota = rota_rect(box,result,int(real_grasp_center_x),int(real_grasp_center_y))
+                                            
+                                            cv2.line(img_org,(int(rota[0][0]), int(rota[0][1])),(int(rota[1][0]),int(rota[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[1][0]),int(rota[1][1])),(int(rota[2][0]),int(rota[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[2][0]),int(rota[2][1])),(int(rota[3][0]),int(rota[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                            cv2.line(img_org,(int(rota[3][0]),int(rota[3][1])),(int(rota[0][0]),int(rota[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                            real_grasp_center_x = (rota[0][0] + rota[2][0])/2.0 
+                                            real_grasp_center_y = (rota[0][1] + rota[2][1])/2.0
+                                            cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+
+                                            #depth
+                                            z_value = depth_image[int(real_grasp_center_y),int(real_grasp_center_x)]
+                                            depth_value = resized_intrinsics * left_to_right_distance_cm / z_value
+
+                                            cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    
                                     cv2.imwrite(center_blade + "blade_grip_"+str(c)+'.jpg',img_org) 
                                     cv2.imshow("img",img_org)
                                     # cv2.imshow("crop_img",crop_img)
@@ -2559,7 +3077,7 @@ if __name__ == '__main__':
                                         cv2.putText(img_org, "distance: " + str(round(blade_center_x - grasp_center_x,3)) , (10, 125), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(img_org, "right up" , (10, 155), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
 
-                                        if((blade_center_x - grasp_center_x) <= 120 and(blade_center_x - grasp_center_x) > 25): 
+                                        if((blade_center_x - grasp_center_x) < 120 and(blade_center_x - grasp_center_x) >= 25): 
                                             cv2.putText(img_org, "right up 1111 2" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             width = 20
                                             height = 50
@@ -2587,7 +3105,7 @@ if __name__ == '__main__':
                                             cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         
-                                        elif((blade_center_x - grasp_center_x) > 120):
+                                        elif((blade_center_x - grasp_center_x) >= 120):
                                             cv2.putText(img_org, "right up 2222 2" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             width = 20
                                             height = 50
@@ -2646,7 +3164,7 @@ if __name__ == '__main__':
                                         cv2.putText(img_org, "distance: " + str(round(blade_center_x - grasp_center_x,3)) , (10, 125), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(img_org, "right down" , (10, 155), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         
-                                        if((blade_center_x - grasp_center_x) <= 120 and(blade_center_x - grasp_center_x)>25):
+                                        if((blade_center_x - grasp_center_x) < 120 and(blade_center_x - grasp_center_x) >= 25):
                                             cv2.putText(img_org, "right down 1111 2" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             width = 50
                                             height = 20
@@ -2673,7 +3191,7 @@ if __name__ == '__main__':
                                             cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
 
-                                        elif((blade_center_x - grasp_center_x) > 120):
+                                        elif((blade_center_x - grasp_center_x) >= 120):
                                             cv2.putText(img_org, "right down 2222 2" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             width = 20
                                             height = 50
@@ -2732,7 +3250,7 @@ if __name__ == '__main__':
                                         cv2.putText(img_org, "distance: " + str(round(blade_center_x - grasp_center_x,3)) , (10, 125), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(img_org, "left up" , (10, 155), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
 
-                                        if((grasp_center_x - blade_center_x) <= 120 and(grasp_center_x - blade_center_x)>25): 
+                                        if((grasp_center_x - blade_center_x) < 120 and(grasp_center_x - blade_center_x) >= 25): 
                                             cv2.putText(img_org, "left up 1111 2" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             width = 20
                                             height = 45
@@ -2760,7 +3278,7 @@ if __name__ == '__main__':
                                             cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA) 
                                             
-                                        elif((grasp_center_x - blade_center_x) > 120):
+                                        elif((grasp_center_x - blade_center_x) >= 120):
                                             cv2.putText(img_org, "left up 2222 2" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             width = 20
                                             height = 45
@@ -2819,7 +3337,7 @@ if __name__ == '__main__':
                                         cv2.putText(img_org, "distance: " + str(round(blade_center_x - grasp_center_x,3)) , (10, 125), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(img_org, "left down" , (10, 155), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         
-                                        if((grasp_center_x - blade_center_x) <= 120 and(grasp_center_x - blade_center_x)>25):
+                                        if((grasp_center_x - blade_center_x) < 120 and(grasp_center_x - blade_center_x) >= 25):
                                             cv2.putText(img_org, "left down 1111 2" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             width = 20
                                             height = 50
@@ -2846,7 +3364,7 @@ if __name__ == '__main__':
                                             cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA) 
 
-                                        elif((grasp_center_x - blade_center_x) > 120):
+                                        elif((grasp_center_x - blade_center_x) >= 120):
                                             cv2.putText(img_org, "left down 2222 2" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             width = 20
                                             height = 50
@@ -2900,7 +3418,7 @@ if __name__ == '__main__':
                                             cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA) 
 
-                                        cv2.imshow("img111",img_org) 
+                                        # cv2.imshow("img111",img_org) 
                                     # drawCenter = cv2.circle(img_org,(int(center_x+left_up_x),int(center_y+left_up_y)),2,(255,0,0),2)
                                     # rect_center_x = left_up_x + (right_down_x - left_up_x)/2.0
                                     # rect_center_y = left_up_y + (right_down_y - left_up_y)/2.0             
@@ -2912,7 +3430,7 @@ if __name__ == '__main__':
                                     # cv2.putText(img_org, "depth: " + str(depth_value), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     # cv2.putText(img_org, "center: " + str(grasp_center_x) +","+ str(grasp_center_y), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                 
-                                    cv2.imwrite(center_blade + "blade_grip_"+str(c)+'.jpg',img_org) 
+                                    # cv2.imwrite(center_blade + "blade_grip_"+str(c)+'.jpg',img_org) 
                                     cv2.imshow("img",img_org)                   
                                     # cv2.imshow("crop_img222",img_org)
                             else:

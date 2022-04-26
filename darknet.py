@@ -114,7 +114,6 @@ def print_detections(detections, coordinates=False):
             print("{}: {}%    (left_x: {:.0f}   top_y:  {:.0f}   width:   {:.0f}   height:  {:.0f})".format(label, confidence, x, y, w, h))
         else:
             print("{}: {}%".format(label, confidence))
-    # return label,confidence,x,y,w,h
 
 
 def draw_boxes(detections, image, colors):
@@ -234,7 +233,7 @@ def detect_image(network, class_names, image, thresh=.5, hier_thresh=.5, nms=.45
 
 if os.name == "posix":
     cwd = os.path.dirname(__file__)
-    lib = CDLL(os.path.join(os.getcwd(), "libdarknet.so"), RTLD_GLOBAL)
+    lib = CDLL(cwd + "/libdarknet.so", RTLD_GLOBAL)
 elif os.name == "nt":
     cwd = os.path.dirname(__file__)
     os.environ['PATH'] = cwd + ';' + os.environ['PATH']

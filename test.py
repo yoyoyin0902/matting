@@ -1,343 +1,502 @@
-import cv2
+import os
+import sys
+import time
+import logging
+import random
+from random import randint
+import math
+import statistics
+import getopt
+from ctypes import *
 import numpy as np
+import cv2
+import pyzed.sl as sl
 
-def max2(x):
-    m1 = max(x)
-    x2 = x.copy()
-    x2.remove(m1)
-    m2 = max(x2)
-    x3 = x2.copy()
-    x3.remove(m2)
-    m3 = max(x3)
-    return m1,m2,m3 
-
-image = cv2.imread('blade_1.jpg')
-img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-ret, thresh = cv2.threshold(img, 230, 255, cv2.THRESH_BINARY_INV)
-contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
-areas = []
-for c in range(len(contours)):
-        areas.append(cv2.contourArea(contours[c]))
-
-id = max2(areas)
-max_id2 = areas.index(id[1])
-cnt = contours[max_id2] #max contours
-
-for c in cnt:
-    # 找到边界坐标
-    # x, y, w, h = cv2.boundingRect(c)  # ㄋ
-
-    # 找面积最小的矩形
-    rect = cv2.minAreaRect(c)
-    # 得到最小矩形的坐标
-    box = cv2.boxPoints(rect)
-
-    box = np.int0(box)
-
-	# print(rect)
-    print(rect)
-    cv2.drawContours(image, [box], 0, (255, 0, 0), 3)
-    # 计算最小封闭圆的中心和半径
-    (x, y), radius = cv2.minEnclosingCircle(c)
-    # 换成整数integer
-    center = (int(x),int(y))
-    radius = int(radius)
-    # 画圆
-    # cv2.circle(image, center, radius, (0, 255, 0), 2)
-
-# cv2.drawContours(image, contours, -1, (255, 0, 0), 1)
-cv2.imshow("img", image)
-cv2.imwrite("img_1.jpg", image)
-cv2.waitKey(0)
+# Get the top-level logger object
+log = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 
+def sample(probs):
+    s = sum(probs)
+    probs = [a/s for a in probs]
+    r = random.uniform(0, 1)
+    for i in range(len(probs)):
+        r = r - probs[i]
+        if r <= 0:
+            return i
+    return len(probs)-1
 
 
+def c_array(ctype, values):
+    arr = (ctype*len(values))()
+    arr[:] = values
+    return arr
 
 
+class BOX(Structure):
+    _fields_ = [("x", c_float),
+                ("y", c_float),
+                ("w", c_float),
+                ("h", c_float)]
 
 
+class DETECTION(Structure):
+    _fields_ = [("bbox", BOX),
+                ("classes", c_int),
+                ("prob", POINTER(c_float)),
+                ("mask", POINTER(c_float)),
+                ("objectness", c_float),
+                ("sort_class", c_int),
+                ("uc", POINTER(c_float)),
+                ("points", c_int),
+                ("embeddings", POINTER(c_float)),
+                ("embedding_size", c_int),
+                ("sim", c_float),
+                ("track_id", c_int)]
 
 
+class IMAGE(Structure):
+    _fields_ = [("w", c_int),
+                ("h", c_int),
+                ("c", c_int),
+                ("data", POINTER(c_float))]
 
 
+class METADATA(Structure):
+    _fields_ = [("classes", c_int),
+                ("names", POINTER(c_char_p))]
 
 
+#lib = CDLL("/home/pjreddie/documents/darknet/libdarknet.so", RTLD_GLOBAL)
+#lib = CDLL("darknet.so", RTLD_GLOBAL)
+hasGPU = True
+if os.name == "nt":
+    cwd = os.path.dirname(__file__)
+    os.environ['PATH'] = cwd + ';' + os.environ['PATH']
+    winGPUdll = os.path.join(cwd, "yolo_cpp_dll.dll")
+    winNoGPUdll = os.path.join(cwd, "yolo_cpp_dll_nogpu.dll")
+    envKeys = list()
+    for k, v in os.environ.items():
+        envKeys.append(k)
+    try:
+        try:
+            tmp = os.environ["FORCE_CPU"].lower()
+            if tmp in ["1", "true", "yes", "on"]:
+                raise ValueError("ForceCPU")
+            else:
+                log.info("Flag value '"+tmp+"' not forcing CPU mode")
+        except KeyError:
+            # We never set the flag
+            if 'CUDA_VISIBLE_DEVICES' in envKeys:
+                if int(os.environ['CUDA_VISIBLE_DEVICES']) < 0:
+                    raise ValueError("ForceCPU")
+            try:
+                global DARKNET_FORCE_CPU
+                if DARKNET_FORCE_CPU:
+                    raise ValueError("ForceCPU")
+            except NameError:
+                pass
+            # log.info(os.environ.keys())
+            # log.warning("FORCE_CPU flag undefined, proceeding with GPU")
+        if not os.path.exists(winGPUdll):
+            raise ValueError("NoDLL")
+        lib = CDLL(winGPUdll, RTLD_GLOBAL)
+    except (KeyError, ValueError):
+        hasGPU = False
+        if os.path.exists(winNoGPUdll):
+            lib = CDLL(winNoGPUdll, RTLD_GLOBAL)
+            log.warning("Notice: CPU-only mode")
+        else:
+            # Try the other way, in case no_gpu was
+            # compile but not renamed
+            lib = CDLL(winGPUdll, RTLD_GLOBAL)
+            log.warning("Environment variables indicated a CPU run, but we didn't find `" +
+                        winNoGPUdll+"`. Trying a GPU run anyway.")
+else:
+    # lib = CDLL("../libdarknet/libdarknet.so", RTLD_GLOBAL)
+    lib = CDLL("./libdarknet/libdarknet.so", RTLD_GLOBAL)
+lib.network_width.argtypes = [c_void_p]
+lib.network_width.restype = c_int
+lib.network_height.argtypes = [c_void_p]
+lib.network_height.restype = c_int
+
+predict = lib.network_predict
+predict.argtypes = [c_void_p, POINTER(c_float)]
+predict.restype = POINTER(c_float)
+
+if hasGPU:
+    set_gpu = lib.cuda_set_device
+    set_gpu.argtypes = [c_int]
+
+make_image = lib.make_image
+make_image.argtypes = [c_int, c_int, c_int]
+make_image.restype = IMAGE
+
+get_network_boxes = lib.get_network_boxes
+get_network_boxes.argtypes = [c_void_p, c_int, c_int, c_float, c_float, POINTER(
+    c_int), c_int, POINTER(c_int), c_int]
+get_network_boxes.restype = POINTER(DETECTION)
+
+make_network_boxes = lib.make_network_boxes
+make_network_boxes.argtypes = [c_void_p]
+make_network_boxes.restype = POINTER(DETECTION)
+
+free_detections = lib.free_detections
+free_detections.argtypes = [POINTER(DETECTION), c_int]
+
+free_ptrs = lib.free_ptrs
+free_ptrs.argtypes = [POINTER(c_void_p), c_int]
+
+network_predict = lib.network_predict
+network_predict.argtypes = [c_void_p, POINTER(c_float)]
+
+reset_rnn = lib.reset_rnn
+reset_rnn.argtypes = [c_void_p]
+
+load_net = lib.load_network
+load_net.argtypes = [c_char_p, c_char_p, c_int]
+load_net.restype = c_void_p
+
+load_net_custom = lib.load_network_custom
+load_net_custom.argtypes = [c_char_p, c_char_p, c_int, c_int]
+load_net_custom.restype = c_void_p
+
+do_nms_obj = lib.do_nms_obj
+do_nms_obj.argtypes = [POINTER(DETECTION), c_int, c_int, c_float]
+
+do_nms_sort = lib.do_nms_sort
+do_nms_sort.argtypes = [POINTER(DETECTION), c_int, c_int, c_float]
+
+free_image = lib.free_image
+free_image.argtypes = [IMAGE]
+
+letterbox_image = lib.letterbox_image
+letterbox_image.argtypes = [IMAGE, c_int, c_int]
+letterbox_image.restype = IMAGE
+
+load_meta = lib.get_metadata
+lib.get_metadata.argtypes = [c_char_p]
+lib.get_metadata.restype = METADATA
+
+load_image = lib.load_image_color
+load_image.argtypes = [c_char_p, c_int, c_int]
+load_image.restype = IMAGE
+
+rgbgr_image = lib.rgbgr_image
+rgbgr_image.argtypes = [IMAGE]
+
+predict_image = lib.network_predict_image
+predict_image.argtypes = [c_void_p, IMAGE]
+predict_image.restype = POINTER(c_float)
 
 
+def array_to_image(arr):
+    import numpy as np
+    # need to return old values to avoid python freeing memory
+    arr = arr.transpose(2, 0, 1)
+    c = arr.shape[0]
+    h = arr.shape[1]
+    w = arr.shape[2]
+    arr = np.ascontiguousarray(arr.flat, dtype=np.float32) / 255.0
+    data = arr.ctypes.data_as(POINTER(c_float))
+    im = IMAGE(w, h, c, data)
+    return im, arr
 
 
+def classify(net, meta, im):
+    out = predict_image(net, im)
+    res = []
+    for i in range(meta.classes):
+        if altNames is None:
+            name_tag = meta.names[i]
+        else:
+            name_tag = altNames[i]
+        res.append((name_tag, out[i]))
+    res = sorted(res, key=lambda x: -x[1])
+    return res
 
 
+def detect(net, meta, image, thresh=.5, hier_thresh=.5, nms=.45, debug=False):
+    """
+    Performs the detection
+    """
+    custom_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    custom_image = cv2.resize(custom_image, (lib.network_width(net), lib.network_height(net)), interpolation=cv2.INTER_LINEAR)
+    im, arr = array_to_image(custom_image)
+    num = c_int(0)
+    pnum = pointer(num)
+    predict_image(net, im)
+    dets = get_network_boxes(net, image.shape[1], image.shape[0], thresh, hier_thresh, None, 0, pnum, 0)
+    num = pnum[0]
+    if nms:
+        do_nms_sort(dets, num, meta.classes, nms)
+    res = []
+    if debug:
+        log.debug("about to range")
+    for j in range(num):
+        for i in range(meta.classes):
+            if dets[j].prob[i] > 0:
+                b = dets[j].bbox
+                if altNames is None:
+                    name_tag = meta.names[i]
+                else:
+                    name_tag = altNames[i]
+                res.append((name_tag, dets[j].prob[i], (b.x, b.y, b.w, b.h), i))
+    res = sorted(res, key=lambda x: -x[1])
+    free_detections(dets, num)
+    return res
 
 
+netMain = None
+metaMain = None
+altNames = None
 
 
+def get_object_depth(depth, bounds):
+    '''
+    Calculates the median x, y, z position of top slice(area_div) of point cloud
+    in camera frame.
+    Arguments:
+        depth: Point cloud data of whole frame.
+        bounds: Bounding box for object in pixels.
+            bounds[0]: x-center
+            bounds[1]: y-center
+            bounds[2]: width of bounding box.
+            bounds[3]: height of bounding box.
+
+    Return:
+        x, y, z: Location of object in meters.
+    '''
+    area_div = 2
+
+    x_vect = []
+    y_vect = []
+    z_vect = []
+
+    for j in range(int(bounds[0] - area_div), int(bounds[0] + area_div)):
+        for i in range(int(bounds[1] - area_div), int(bounds[1] + area_div)):
+            z = depth[i, j, 2]
+            if not np.isnan(z) and not np.isinf(z):
+                x_vect.append(depth[i, j, 0])
+                y_vect.append(depth[i, j, 1])
+                z_vect.append(z)
+    try:
+        x_median = statistics.median(x_vect)
+        y_median = statistics.median(y_vect)
+        z_median = statistics.median(z_vect)
+    except Exception:
+        x_median = -1
+        y_median = -1
+        z_median = -1
+        pass
+
+    return x_median, y_median, z_median
 
 
-# from tkinter import *
-# from PIL import Image, ImageTk
-# import cv2
-# import os
-# from tkinter import filedialog
-# from pygame import mixer
-# import requests
-# import base64
+def generate_color(meta_path):
+    '''
+    Generate random colors for the number of classes mentioned in data file.
+    Arguments:
+    meta_path: Path to .data file.
 
-# class Application(Frame):
-#     def __init__(self, master=None):
-#         Frame.__init__(self,master,bg = 'white')
-#         self.pack(expand=YES,fill=BOTH) #expand参数表示的是容器在整个窗口上，将容器放置在剩余空闲位置上的中央(包括水平和垂直方向)
-#                                         #expand=1或者expand=“yes”，表示放置在中央,expand=0或者expand=“no”，表示默认不扩展
-#                                         #fill=“x”，表示横向填充,fill=“y”，表示纵向填充,fill=“both”，表示横向和纵向都填充
-#     def window_init(self):
-#         self.master.title('帅强相机')
-#         #width,height=self.master.maxsize()
-#         width, height =800,600
-#         screenwidth = self.master.winfo_screenwidth()#获取电脑屏幕宽度
-#         screenheight = self.master.winfo_screenheight()
-#         alignstr = '%dx%d+%d+%d' % (width, height, (screenwidth - width) / 2, (screenheight - height) / 2)
-#         self.master.geometry(alignstr)#设置大小和位置
+    Return:
+    color_array: RGB color codes for each class.
+    '''
+    random.seed(42)
+    with open(meta_path, 'r') as f:
+        content = f.readlines()
+    class_num = int(content[0].split("=")[1])
+    color_array = []
+    for x in range(0, class_num):
+        color_array.append((randint(0, 255), randint(0, 255), randint(0, 255)))
+    return color_array
 
-#     def createWidgets(self):
-#         self.fm1 = Frame(self)# 创建控件容器fm1
-#         self.titleLabel = Label(self.fm1, text='欢迎使用帅强二号相机',font =('微软雅黑',30),fg = '#3366FF',bg = '#00CCFF',width  = 800) #向fm1中加入组件
-#         self.titleLabel.pack()# 将该控件容器加入到窗口中
-#         self.fm1.pack(side= TOP,expand = 1)#将该控件放在窗口顶部
 
-#         self.fm2 = Frame(self,bg = 'white')# 创建控件容器fm2
-#         self.fm2_left = Frame(self.fm2,bg = 'white')# 创建控件容器fm2_left
-#         self.fm2_right = Frame(self.fm2,bg = 'white')# 创建控件容器fm2_right
-#         self.fm2_left_top = Frame(self.fm2_left,bg = 'white')# 创建控件容器fm2_left_top
-#         self.fm2_left_bottom = Frame(self.fm2_left,bg = 'white')# 创建控件容器fm2_right_bottom
-#         self.fm2_right_top = Frame(self.fm2_right, bg='white')  # 创建控件容器fm2_left_top
-#         self.fm2_right_bottom = Frame(self.fm2_right, bg='white')  # 创建控件容器fm2_right_bottom
+def main(argv):
+    print(argv)
 
-#         self.cameraButton = Button(self.fm2_left_top, text='拍照',bg = '#00CCFF',fg = 'black',
-#                                    font = ('微软雅黑',15),width = 10,command=lambda: take_photos(i))#为fm2_left_top添加按钮
-#         self.cameraButton.pack(side=LEFT)#将fm2_left按钮放置在fm2的左边
-#         #self.predictEntry = Entry(self.fm2_left_top)#为fm2_left_top添加文本框
-#         #self.predictEntry.pack(side=LEFT)#文本框靠左
-#         self.fm2_left_top.pack(side=TOP)#将fm1_left_top控件放在fm2_left的顶部
+    thresh = 0.7
+    # thresh = 0.7
+    darknet_path="./libdarknet/"
+    # darknet_path="../libdarknet/"
+    config_path = darknet_path + "cfg/yolov4-obj.cfg"
+    weight_path = "./yolo_data/yolov4-obj_best.weights"
+    meta_path = "./yolo_data/obj.data"
+    svo_path = None
+    zed_id = 0
 
-#         self.videoButton = Button(self.fm2_left_bottom, text='录像',bg = '#00CCFF',fg = 'black',
-#                                   font = ('微软雅黑',15),width = 10, command=lambda: video(k))
-#         self.videoButton.pack(side=LEFT)
-#         #self.truthEntry = Entry(self.fm2_left_bottom)
-#         #self.truthEntry.pack(side=LEFT)
-#         self.fm2_left_bottom.pack(side=TOP)
+    # help_str = 'darknet_zed.py -c <config> -w <weight> -m <meta> -t <threshold> -s <svo_file> -z <zed_id>'
+    # try:
+    #     opts, args = getopt.getopt(argv, "hc:w:m:t:s:z:", ["config=", "weight=", "meta=", "threshold=", "svo_file=", "zed_id="])
+    #     print(opts,args)
+    # except getopt.GetoptError:
+    #     log.exception(help_str)
+    #     sys.exit(2)
+    # for opt, arg in opts:
+    #     # if opt == '-h':
+    #     #     log.info(help_str)
+    #     #     sys.exit()
+    #     if opt in ("-c", "--config"):
+    #         config_path = arg
+    #         print(config_path)
+    #     elif opt in ("-w", "--weight"):
+    #         weight_path = arg
+    #     elif opt in ("-m", "--meta"):
+    #         meta_path = arg
+    #     elif opt in ("-t", "--threshold"):
+    #         thresh = float(arg)
+    #     elif opt in ("-s", "--svo_file"):
+    #         svo_path = arg
+    #     elif opt in ("-z", "--zed_id"):
+    #         zed_id = int(arg)
 
-#         self.predictButton = Button(self.fm2_left_top, text='相册', bg='#00CCFF', fg='black',
-#                                     font=('微软雅黑', 15),width=10,command=lambda: file_photo())  # 为fm2_left_top添加按钮
-#         self.predictButton.pack(side=LEFT)  # 将fm2_left按钮放置在fm2的左边
+    cam = sl.Camera()
+    input_type = sl.InputType()
+    # if svo_path is not None:
+    #     log.info("SVO file : " + svo_path)
+    #     input_type.set_from_svo_file(svo_path)
+    # else:
+    #     # Launch camera by id
 
-#         self.truthButton = Button(self.fm2_left_bottom, text='视频', bg='#00CCFF', fg='black',
-#                                   font=('微软雅黑', 15), width=10, command=lambda:file_video())
-#         self.truthButton.pack(side=LEFT)
+    input_type.set_from_camera_id(zed_id)
 
-#         self.predictButton = Button(self.fm2_left_top, text='转灰度图', bg='#00CCFF', fg='black',
-#                                     font=('微软雅黑', 15),width=10, command=lambda:gray_scale_image())  # 为fm2_left_top添加按钮
-#         self.predictButton.pack(side=LEFT)  # 将fm2_left按钮放置在fm2的左边
+    init = sl.InitParameters(input_t=input_type)
+    init.camera_resolution = sl.RESOLUTION.HD1080 # 相机分辨率(默认-HD720)
+    init.camera_fps = 10
+    init.depth_mode = sl.DEPTH_MODE.PERFORMANCE
+    init.coordinate_units = sl.UNIT.METER
 
-#         self.truthButton = Button(self.fm2_left_bottom, text='转镜像图', bg='#00CCFF', fg='black',
-#                                   font=('微软雅黑', 15), width=10, command=lambda:the_mirror())
-#         self.truthButton.pack(side=LEFT)
+    
+    if not cam.is_opened():
+        log.info("Opening ZED Camera...")
+    status = cam.open(init)
+    if status != sl.ERROR_CODE.SUCCESS:
+        log.error(repr(status))
+        exit()
 
-#         self.predictButton = Button(self.fm2_left_top, text='人像美颜', bg='#00CCFF', fg='black',
-#                                     font=('微软雅黑', 15), width=10,command=lambda:beautify())  # 为fm2_left_top添加按钮
-#         self.predictButton.pack(side=LEFT)  # 将fm2_left按钮放置在fm2的左边
+    runtime = sl.RuntimeParameters()
+    runtime.sensing_mode = sl.SENSING_MODE.STANDARD
 
-#         self.truthButton = Button(self.fm2_left_bottom, text='转卡通图', bg='#00CCFF', fg='black',
-#                                   font=('微软雅黑', 15), width=10,command=lambda:get_cartoon())
-#         self.truthButton.pack(side=LEFT)
-#         self.fm2_left.pack(side=LEFT)  # fm2_left控件靠左
-#         self.nextVideoButton = Button(self.fm2_right_top, text='超配BGM', bg='pink', fg='black',
-#                                       font=('微软雅黑', 15), width=10,command=lambda:play_music())#为fm2_right添加按钮
-#         self.nextVideoButton.pack(side=RIGHT)#显示按钮，side=LEFT可以不要，下面一句就可以了
+    #set image size
+    image_size = cam.get_camera_information().camera_resolution
+    image_size.width = 1280
+    image_size.height = 720
+    
+    mat = sl.Mat()
+    point_cloud_mat = sl.Mat()
 
-#         self.nextVideoButton = Button(self.fm2_right_bottom, text='停止播放', bg='pink', fg='black',
-#                                       font=('微软雅黑', 15), width=10, command=lambda: stop_music())  # 为fm2_right添加按钮
-#         self.nextVideoButton.pack(side=RIGHT)
-#         self.fm2_right_top.pack(side=TOP)
-#         self.fm2_right_bottom.pack(side=BOTTOM)
-#         self.fm2_right.pack(side=RIGHT)# fm2_right控件靠右
-#         self.fm2.pack(side= TOP,expand = 1,fill = 'x')#将fm2放置在顶端，fm1先放置，所以会紧跟fm1下边
-#         # fm3
-#         self.fm3 = Frame(self)
-#         load = Image.open('a2.jpg')#专门打开图片的函数
-#         render = ImageTk.PhotoImage(load)#显示图片
-#         self.img = Label(self.fm3, image=render)#向fm3中加入组件，指定图片为render
-#         self.img.image = render#显示图片
-#         self.img.pack()
-#         self.fm3.pack(side=TOP)#将fm3放置在顶端，fm1先放置，其次为fm2,最后为fm3
+    image_zed_left = sl.Mat(image_size.width, image_size.height, sl.MAT_TYPE.U8_C4)
+    image_zed_right = sl.Mat(image_size.width, image_size.height, sl.MAT_TYPE.U8_C4)
+    depth_image_zed = sl.Mat(image_size.width,image_size.height, sl.MAT_TYPE.U8_C4)
 
-# def take_photos(i):
-#     cap = cv2.VideoCapture(0)  # 读取电脑自带摄像头内容
-#     while (1):
-#         ret, frame = cap.read()  # 按帧读取，返回两个值，ret和frame，ret为布尔值，true为真，文件读取到结尾就返回false，frame是该帧图像的三维矩阵BGR形式。）
-#         frame = cv2.flip(frame, 1)
-#         k = cv2.waitKey(1)  # 等待键盘输入
-#         if k == ord('s'):  # 当键盘输入为s时
-#             cv2.imwrite( cwd +'\photos\\' + str(i) + '.jpg', frame)
-#             i += 1
-#             # 改变number.txt文件中照片的数量
-#             file_to_read1 = open('photo_number.txt', 'r+')
-#             file_to_read1.seek(0)  # 将指针移动到开头，从第一位开始覆盖写入
-#             file_to_read1.write(str(i))
-#             file_to_read1.close()
-#             j = i - 1
-#         if k == ord('v'):
-#             img1 = cv2.imread( cwd +'\photos\\' + str(j) + '.jpg')
-#             cv2.namedWindow("img1", 0)  # 可调大小
-#             cv2.imshow('img1', img1)
-#             cv2.waitKey(1)
-#         cv2.putText(frame, 'Enter s to take a picture, ESC exit', (10,30), cv2.FONT_HERSHEY_COMPLEX, 0.75, (0, 255, 0), 2)
-#         # 图片 添加的文字 位置 字体 字体大小 字体颜色 字体粗细
-#         #cv2.putText(result, fps, (5, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 255), 2)
-#         cv2.namedWindow("camera", 0)  # 可调大小
-#         cv2.imshow("camera", frame)
-#         if k == 27:
-#             break
-#         # if cv2.getWindowProperty(cap, cv2.WND_PROP_AUTOSIZE) < 2:
-#         # break
-#     cap.release()#释放内存空间
-#     cv2.destroyAllWindows()#删除窗口
-#     return i
+    # Import the global variables. This lets us instance Darknet once,
+    # then just call performDetect() again without instancing again
+    global metaMain, netMain, altNames  # pylint: disable=W0603
+    assert 0 < thresh < 1, "Threshold should be a float between zero and one (non-inclusive)"
+    if not os.path.exists(config_path):
+        raise ValueError("Invalid config path `" +
+                         os.path.abspath(config_path)+"`")
+    if not os.path.exists(weight_path):
+        raise ValueError("Invalid weight path `" +
+                         os.path.abspath(weight_path)+"`")
+    if not os.path.exists(meta_path):
+        raise ValueError("Invalid data file path `" +
+                         os.path.abspath(meta_path)+"`")
+    if netMain is None:
+        netMain = load_net_custom(config_path.encode(
+            "ascii"), weight_path.encode("ascii"), 0, 1)  # batch size = 1
+    if metaMain is None:
+        metaMain = load_meta(meta_path.encode("ascii"))
+    if altNames is None:
+        # In thon 3, the metafile default access craps out on Windows (but not Linux)
+        # Read the names file and create a list to feed to detect
+        try:
+            with open(meta_path) as meta_fh:
+                meta_contents = meta_fh.read()
+                import re
+                match = re.search("names *= *(.*)$", meta_contents,
+                                  re.IGNORECASE | re.MULTILINE)
+                if match:
+                    result = match.group(1)
+                else:
+                    result = None
+                try:
+                    if os.path.exists(result):
+                        with open(result) as names_fh:
+                            names_list = names_fh.read().strip().split("\n")
+                            altNames = [x.strip() for x in names_list]
+                except TypeError:
+                    pass
+        except Exception:
+            pass
 
-# #打开相册文件夹
-# def file_photo():
-#     os.system("start explorer "+cwd+"\photos")
+    color_array = generate_color(meta_path)
 
-# #录像功能
-# def video(k):
-#     cap = cv2.VideoCapture(0)
-#     # 指定视频编解码方式为XVID
-#     codec = cv2.VideoWriter_fourcc(*'XVID')
-#     fps = 20.0  # 指定写入帧率为20
-#     frameSize = (640, 480)  # 指定窗口大小
-#     # # 创建 VideoWriter对象
-#     out = cv2.VideoWriter(cwd+'\\videos\\' +str(k) + '.avi', codec, fps, frameSize)
+    log.info("Running...")
 
-#     k += 1
-#     #修改存储的视频数量
-#     file_to_read = open('video_number.txt', 'r+')
-#     file_to_read.seek(0)  # 将指针移动到开头，从第一位开始覆盖写入
-#     file_to_read.write(str(k))
-#     file_to_read.close()
+    key = ''
+    while key != 113:  # for 'q' key
+        start_time = time.time() # start time of the loop
+        err = cam.grab(runtime)
+        if err == sl.ERROR_CODE.SUCCESS:
 
-#     while (cap.isOpened()):
-#         ret, frame = cap.read()
-#         if ret == True:
-#             frame = cv2.flip(frame, 1)
-#             out.write(frame)
-#             cv2.imshow("Recording,According to the end of the 'q'", frame)
-#             if cv2.waitKey(2) == ord('q'):
-#                 break
-#         else:
-#             break
-#     cap.release()
-#     out.release()
-#     cv2.destroyAllWindows()
+            cam.retrieve_image(image_zed_left, sl.VIEW.LEFT, sl.MEM.CPU, image_size)
+            cam.retrieve_image(image_zed_right, sl.VIEW.RIGHT, sl.MEM.CPU, image_size)
+            cam.retrieve_measure(depth_image_zed, sl.MEASURE.XYZRGBA, sl.MEM.CPU, image_size)
 
-# #打开视频文件夹
-# def file_video():
-#     os.system("start explorer "+cwd+"\\videos")
+            image_left = image_zed_left.get_data()
+            # image_right = image_zed_left.get_data()
+            depth_image = depth_image_zed.get_data()
+            
+            # cam.retrieve_image(mat, sl.VIEW.LEFT)
+            # image = mat.get_data()
 
-# #镜像图转换
-# def the_mirror():
-#     Fpath =filedialog.askopenfilename()
-#     img = cv2.imread(Fpath)
-#     cv2.imshow("original picture", img)
-#     img1 = cv2.flip(img, 1)  # 镜像
-#     '''
-#     参数2 必选参数。用于指定镜像翻转的类型，其中0表示绕×轴正直翻转，即垂直镜像翻转；1表示绕y轴翻转，即水平镜像翻转；-1表示绕×轴、y轴两个轴翻转，即对角镜像翻转。
-#     参数3 可选参数。用于设置输出数组，即镜像翻转后的图像数据，默认为与输入图像数组大小和类型都相同的数组。
-#     '''
-#     cv2.imshow('change picture', img1)
-#     cv2.waitKey(1)
+            # cam.retrieve_measure(point_cloud_mat, sl.MEASURE.XYZRGBA)
+            # depth = point_cloud_mat.get_data()
 
-# #灰度图转换
-# def gray_scale_image():
-#     Fpath = filedialog.askopenfilename()
-#     img1 = cv2.imread(Fpath)
-#     cv2.namedWindow("original picture", 0)  # 可调大小
-#     cv2.imshow('original picture', img1)
-#     img2 = cv2.imread(Fpath, 0)
-#     #cv2.namedWindow("gray scale image", 0)  # 可调大小
-#     cv2.imshow('gray  scale image', img2)
-#     cv2.waitKey(1)
+            # Do the detection
+            detections = detect(netMain, metaMain, image_left, thresh)
+            # print(detections)
 
-# #双边滤镜美化图片
-# def beautify():
-#     Fpath=filedialog.askopenfilename()
-#     img = cv2.imread(Fpath)
-#     cv2.imshow('original picture', img)
-#     #cv2.bilateralFilter(img,d,’p1’,’p2’)函数有四个参数需要，d是领域的直径，后面两个参数是空间高斯函数标准差和灰度值相似性高斯函数标准差。
-#     dst = cv2.bilateralFilter(img, 15, 25, 25)
-#     cv2.imshow('change picture', dst)
-#     cv2.waitKey(0)
+            # log.info(chr(27) + "[2J"+"**** " + str(len(detections)) + " Results ****")
+            for detection in detections:
+                label = detection[0]
+                confidence = detection[1]
+                pstring = label+": "+str(np.rint(100 * confidence))+"%"
+                log.info(pstring)
+                bounds = detection[2]
+                y_extent = int(bounds[3])
+                x_extent = int(bounds[2])
+                # Coordinates are around the center
+                x_coord = int(bounds[0] - bounds[2]/2)
+                y_coord = int(bounds[1] - bounds[3]/2)
+                #boundingBox = [[x_coord, y_coord], [x_coord, y_coord + y_extent], [x_coord + x_extent, y_coord + y_extent], [x_coord + x_extent, y_coord]]
+                thickness = 1
+                x, y, z = get_object_depth(depth_image, bounds)
+                distance = math.sqrt(x * x + y * y + z * z)
+                distance = "{:.2f}".format(distance)
+                cv2.rectangle(image_left, (x_coord - thickness, y_coord - thickness),
+                              (x_coord + x_extent + thickness, y_coord + (18 + thickness*4)),
+                              color_array[detection[3]], -1)
+                cv2.putText(image_left, label + " " +  (str(distance) + " m"),
+                            (x_coord + (thickness * 4), y_coord + (10 + thickness * 4)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+                cv2.rectangle(image_left, (x_coord - thickness, y_coord - thickness),
+                              (x_coord + x_extent + thickness, y_coord + y_extent + thickness),
+                              color_array[detection[3]], int(thickness*2))
 
-# # 播放BGM
-# def play_music():
-#     file=cwd+'/BGM2.mp3'
-#     # 初始化
-#     mixer.init()
-#     # 加载音乐文件
-#     mixer.music.load(file)
-#     # 开始播放音乐流
-#     mixer.music.play()
+            cv2.imshow("ZED_left", image_left)
+            cv2.imshow("ZED-depth", depth_image)
+            key = cv2.waitKey(5)
+            log.info("FPS: {}".format(1.0 / (time.time() - start_time)))
+        else:
+            key = cv2.waitKey(5)
+    cv2.destroyAllWindows()
 
-# def stop_music():
-#     mixer.music.stop()
+    cam.close()
+    log.info("\nFINISH")
 
-# def get_cartoon():
-#     request_url = "https://aip.baidubce.com/rest/2.0/image-process/v1/selfie_anime"
-#     # 二进制方式打开图片文件
-#     Fpath = filedialog.askopenfilename()
-#     f = open(Fpath, 'rb')
-#     img = base64.b64encode(f.read())
-#     f.close()
-#     host ='自行注册'#！！！！！！！
-#     response = requests.get(host)
-#     if response:
-#         print(response.json()['access_token'])
-#     params = {"image":img}
-#     access_token = response.json()['access_token']
-#     request_url = request_url + "?access_token=" + access_token
-#     headers = {'content-type': 'application/x-www-form-urlencoded'}
-#     response = requests.post(request_url, data=params, headers=headers)
-#     print(response)
-#     if response:
-#         print (response.json())
-#         f = open('cartoon.jpg', 'wb')
-#         anime = response.json()['image']#获取动漫头像
-#         print(anime)
-#         anime = base64.b64decode(anime)#对返回的图像image进行解码
-#         f.write(anime)
-#         f.close()
-#         img = cv2.imread('cartoon.jpg')
-#         cv2.namedWindow("cartoon photo", 0)  # 可调大小
-#         cv2.imshow("cartoon photo", img)
-#         cv2.waitKey(0)
 
-# if __name__=='__main__':
-#     cwd = os.getcwd()
-#     # 读取number.txt文件夹中的数据，文件夹保存了相册和视频的数量两个数据，读取后赋值给命名序号，然后拍摄后改变数据并覆盖写入number文件夹
-#     file_to_read1 = open("photo_number.txt", "r")
-#     number1 = file_to_read1.read()
-#     list1 = number1.split()
-#     i = int(list1[0])
-#     file_to_read1.close()
-#     print(i)
-#     file_to_read2 = open("video_number.txt", "r")
-#     number2 = file_to_read2.read()
-#     list2 = number2.split()
-#     k = int(list2[0])
-#     file_to_read2.close()
-#     print(k)
-#     app = Application()
-#     app.__init__()
-#     app.window_init()
-#     app.createWidgets()
-#     app.mainloop()
+if __name__ == "__main__":
+    main(sys.argv[1:])
