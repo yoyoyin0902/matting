@@ -1988,14 +1988,6 @@ if __name__ == '__main__':
                                             cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-
-                                            #depth
-                                            z_value = depth_image[int(real_grasp_center_y),int(real_grasp_center_x)]
-                                            depth_value = resized_intrinsics * left_to_right_distance_cm / z_value
-
-                                            cv2.putText(img_org, "depth: " + str(round(depth_value,3)), (10, 35), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                            cv2.putText(img_org, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 95), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                            cv2.putText(img_org, "angle: " + str(round(result,3)), (10, 65), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.imwrite(center_blade + "blade_grip_"+str(c)+'.jpg',img_org)
                                         
                                         elif((blade_center_x - grasp_center_x) >= 115):
@@ -2167,7 +2159,7 @@ if __name__ == '__main__':
                                         cv2.putText(img_org, "distance: " + str(round(blade_center_x - grasp_center_x,3)) , (10, 125), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(img_org, "cut left down" , (10, 155), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
 
-                                        if((grasp_center_x - blade_center_x) < 120 and(grasp_center_x - blade_center_x)>=25):
+                                        if((grasp_center_x - blade_center_x) < 115 and(grasp_center_x - blade_center_x)>=30):
                                             cv2.putText(img_org, "cut left down 1111 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             width = 20
                                             height = 50
