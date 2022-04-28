@@ -1678,15 +1678,16 @@ if __name__ == '__main__':
     input_type.set_from_camera_id(zed_id)
     init = sl.InitParameters(input_t=input_type)  # 初始化
     init.camera_resolution = sl.RESOLUTION.HD1080 # 相机分辨率(默认-HD720)
-    init.camera_fps = 10
-    # init.coordinate_units = sl.UNIT.METER
-    init.coordinate_units = sl.UNIT.MILLIMETER
+    init.camera_fps = 15
+    init.coordinate_units = sl.UNIT.METER
+    # init.coordinate_units = sl.UNIT.MILLIMETER
 
-    init.depth_mode = sl.DEPTH_MODE.ULTRA         # 深度模式  (默认-PERFORMANCE)
-    init.depth_minimum_distance = 150
-    init.depth_maximum_distance = 2000 
-    # init.depth_minimum_distance = 0.15
-    # init.depth_maximum_distance = 2 
+    # init.depth_mode = sl.DEPTH_MODE.ULTRA         # 深度模式  (默认-PERFORMANCE)
+    init.depth_mode = sl.DEPTH_MODE.NEURAL         # 深度模式  (默认-PERFORMANCE)
+    # init.depth_minimum_distance = 300
+    # init.depth_maximum_distance = 5000 
+    init.depth_minimum_distance = 0.3
+    init.depth_maximum_distance = 5 
     
     
 
@@ -1700,7 +1701,7 @@ if __name__ == '__main__':
 
     #set zed runtime value
     runtime_parameters =sl.RuntimeParameters()
-    runtime_parameters.sensing_mode = sl.SENSING_MODE.STANDARD
+    runtime_parameters.sensing_mode = sl.SENSING_MODE.FILL
 
     #set image size
     image_size = zed.get_camera_information().camera_resolution
@@ -1708,10 +1709,12 @@ if __name__ == '__main__':
     image_size.height = 720
 
     #turn zed to numpy(for opencv)
-    image_zed_left = sl.Mat(image_size.width, image_size.height, sl.MAT_TYPE.U8_C4)
-    image_zed_right = sl.Mat(image_size.width, image_size.height, sl.MAT_TYPE.U8_C4)
-    depth_image_zed = sl.Mat(image_size.width,image_size.height, sl.MAT_TYPE.U8_C4)
+    image_zed_left = sl.Mat(image_size.width, image_size.height)
+    image_zed_right = sl.Mat(image_size.width, image_size.height)
+    depth_image_zed = sl.Mat(image_size.width,image_size.height)
+    point_cloud = sl.Mat(image_size.width,image_size.height)
 
+    
     # global metaMain, netMain, altNames
     # netMain = None
     # metaMain = None
@@ -1773,12 +1776,18 @@ if __name__ == '__main__':
         zed.retrieve_image(image_zed_left, sl.VIEW.LEFT, sl.MEM.CPU, image_size)
         zed.retrieve_image(image_zed_right, sl.VIEW.RIGHT, sl.MEM.CPU, image_size)
         zed.retrieve_measure(depth_image_zed, sl.MEASURE.DEPTH, sl.MEM.CPU, image_size)
-
+        zed.retrieve_measure(point_cloud,sl.MEASURE.XYZRGBA)
         
         
         color_image = image_zed_left.get_data()
         # image_right = image_zed_left.get_data()
         depth_image = depth_image_zed.get_data()
+        # print(np.min(depth_image), np.max(depth_image))
+        depth_image_viz = cv2.normalize(depth_image, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8UC3)
+        depth_image_viz = cv2.applyColorMap(depth_image_viz, cv2.COLORMAP_JET)
+        print(type(depth_image))
+        # depth_image1 = cv2.cvtColor(depth_image, cv2.COLOR_GRAY2RGB)
+        # depth_image1 = point_cloud.get_value(x, y)[1]
 
         i += 1
         if i ==1:
@@ -1809,7 +1818,8 @@ if __name__ == '__main__':
         #         cv2.rectangle(image_left, (x_coord - thickness, y_coord - thickness),(x_coord + x_extent + thickness, y_coord + y_extent + thickness),
         #                       color_array[detection[3]], int(thickness*2))
         # cv2.imshow("rgbCam",color_image)
-        cv2.imshow("depth",depth_image)
+        cv2.imshow("depth",depth_image_viz)
+        # cv2.imshow("depth2",depth_image1)
     
         # #shape detection
         width = color_image.shape[1]
@@ -2892,7 +2902,6 @@ if __name__ == '__main__':
                                         
                                         cv2.circle(color_image,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
                                         # cv2.rectangle(img_org, (int(real_grasp_center_x-width/2.0), int(real_grasp_center_y-height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
-                                        
                                         result = angle(right_down_x ,left_up_y,left_up_x ,right_down_y)
                                         box = [(real_grasp_center_x + width/2.0,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y + height/2.0),
                                                 (real_grasp_center_x + width/2.0,real_grasp_center_y + height/2.0)]
