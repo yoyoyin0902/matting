@@ -37,7 +37,7 @@ class CameraZed2:
     def grab_imgs(self):  # 捕获左右图像用于相机标定（文件夹自动创建）
         img_l = sl.Mat()
         img_r = sl.Mat()
-        num = 0
+        num = 23
         # 自动创建保存文件夹（分别存放左图和右图）
         import time
         name = time.strftime("%Y-%m-%d-%H-%M", time.localtime())

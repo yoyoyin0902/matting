@@ -17,7 +17,7 @@ import numpy as np
 import pyzed.sl as sl
 
 from ctypes import *
-from random import randint
+# from random import randintre
 from tqdm import tqdm
 from PIL import Image
 from queue import Queue
@@ -985,7 +985,7 @@ def post_processing(pha):
     # imgErode = cv2.erode(imgBlur, kernel, iterations = 5)
     # imgDil = cv2.dilate(imgErode, kernel, iterations = 5)
 
-    ret,bin_img = cv2.threshold(imgBlur,110,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+    ret,bin_img = cv2.threshold(imgBlur,110,255,cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
     return bin_img
 
@@ -1020,10 +1020,13 @@ def max2(x):
     return m1,m2,m3,m4
 
 def angle(x1, y1, x2, y2):
-    if x1 == x2:
+
+    if x1 == x2: #線是豎直的
         return 90
-    if y1 == y2:
+
+    if y1 == y2: #線是水平的
         return 0
+
     k = -(y2 - y1) / (x2 - x1)
     result = np.arctan(k) * 180 / np.pi 
     # if x1 > x2 and y1 > y2:
@@ -1107,8 +1110,23 @@ def line_Segment(mat,orig):
 
     cv2.circle(orig_img,(int(circle_x),int(circle_y)),2,(0,0,255),2)
 
-    width = 40
-    height = 100
+    #計算物體長寬用
+    object_Image_mat = mat_img.copy()
+    object_Image = orig_img.copy()
+    object_edges = cv2.Canny(object_Image_mat, 70, 210)
+    contours_object, hierarchy = cv2.findContours(object_edges,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)  #cv2.RETR_EXTERNAL 定义只检测外围轮廓
+    for cnt in contours_object:
+        # 最小外接矩形框，有方向角
+        rect = cv2.minAreaRect(cnt)
+        print(rect)
+        box = cv2.boxPoints(rect)
+        box = np.int0(box)
+        # cv2.drawContours(object_Image, [box], 0, (0, 0, 255), 2)
+        # cv2.imshow("1111",object_Image)
+
+    width = 90
+    height = 20
+
     grasp_left_x = int(circle_x - (width/2.0))
     grasp_left_y = int(circle_y - (height/2.0))
     grasp_right_x = int(circle_x + (width/2.0))
@@ -1117,7 +1135,11 @@ def line_Segment(mat,orig):
     # cv2.rectangle(orig_img,(grasp_left_x,grasp_left_y),(grasp_right_x,grasp_right_y),(255,255,0),2)
 
     box = [(grasp_left_x,grasp_left_y),(grasp_right_x,grasp_left_y),(grasp_left_x,grasp_right_y),(grasp_right_x,grasp_right_y)]
-    real_angle = (angle1[0] + angle1[1])/2.0
+    
+    #手臂旋轉角度(以90度為界)
+    real_angle = (angle1[0] + angle1[1])/2.0 + 90
+    if real_angle > 90:
+        real_angle = (angle1[0] + angle1[1])/2.0-90
     
     aa = rota_rect(box,real_angle,circle_x,circle_y)
 
@@ -1130,6 +1152,7 @@ def line_Segment(mat,orig):
 
 def line_Segment_cup(mat,orig):
     mat_img = cv2.imread(str(mat),0)
+    cv2.imshow("mat",mat_img)
     orig_img = cv2.imread(orig)
 
     lsd = cv2.createLineSegmentDetector(0)
@@ -1181,16 +1204,36 @@ def line_Segment_cup(mat,orig):
 
     cv2.circle(orig_img,(int(circle_x),int(circle_y)),2,(0,0,255),2)
 
-    width = 130
+    #計算物體長寬用
+    object_Image_mat = mat_img.copy()
+    object_Image = orig_img.copy()
+    object_edges = cv2.Canny(object_Image_mat, 70, 210)
+    contours_object, hierarchy = cv2.findContours(object_edges,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)  #cv2.RETR_EXTERNAL 定义只检测外围轮廓
+    for cnt in contours_object:
+        x, y, w, h = cv2.boundingRect(cnt)
+        cv2.rectangle(object_Image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        # cv2.imshow("test",object_Image)
+
+    width = w
     height = 30
     grasp_left_x = int(circle_x - (width/2.0))
     grasp_left_y = int(circle_y - (height/2.0))
     grasp_right_x = int(circle_x + (width/2.0))
     grasp_right_y = int(circle_y + (height/2.0))
 
+    # cv2.rectangle(orig_img,(grasp_left_x,grasp_left_y),(grasp_right_x,grasp_right_y),(255,255,0),2)
+
     box = [(grasp_left_x,grasp_left_y),(grasp_right_x,grasp_left_y),(grasp_left_x,grasp_right_y),(grasp_right_x,grasp_right_y)]
     
-    real_angle =angle1[0] + 90
+    
+    real_angle = (angle1[0]+angle1[1])/2.0
+    # cv2.putText(orig_img,str(real_angle), (10, 180), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+    # if real_angle > 0:
+    #     real_angle = real_angle
+    #     cv2.putText(orig_img,str(real_angle) + "222222222", (10, 210), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+    # else:
+    #     real_angle = real_angle + 90.0
+    #     cv2.putText(orig_img,str(real_angle) + "11111111111", (10, 210), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
 
     aa = rota_rect(box,real_angle,circle_x,circle_y)
     # print(aa)
@@ -1204,14 +1247,14 @@ def line_Segment_cup(mat,orig):
     return orig_img ,circle_x,circle_y,real_angle
 
 #circle detection
-def circle_transform(mat,orig):
+def circle_transform(mat,orig,centerX,centerY):
     mat_img = cv2.imread(mat)
     orig_img = cv2.imread(orig)
 
     gray = cv2.cvtColor(mat_img,cv2.COLOR_BGR2GRAY)
     edges = cv2.Canny(gray, 70, 210)
-
     contours, hierarchy = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    print(len(contours))
 
     areas = []
     for c in range(len(contours)):
@@ -1220,92 +1263,80 @@ def circle_transform(mat,orig):
     max_id = areas.index(max(areas))
     cnt = contours[max_id] #max contours
 
-    M_point = cv2.moments(cnt)
+    # M_point = cv2.moments(cnt)
     # cv2.drawContours(orig_img, cnt, -1, (0, 0, 255), 2)
-
-    center_x = int(M_point['m10']/M_point['m00'])
-    center_y = int(M_point['m01']/M_point['m00'])
+    # center_x = int(M_point['m10']/M_point['m00'])
+    # center_y = int(M_point['m01']/M_point['m00'])
+    center_x = int(centerX)
+    center_y = int(centerY)
     drawCenter = cv2.circle(orig_img,(int(center_x),int(center_y)),2,(255,0,0),2)
-
-    contours, hierarchy = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-    print(len(contours))
-    center_distance = []
-    
     # cv2.drawContours(orig_img, contours, -1, (255, 0, 255), 2)
-    if len(contours)>2:
-        print("Hollow")
-        # cv2.imshow("11111",orig_img)
 
-        # for cont in contours:
-        lx, ly, w, h = cv2.boundingRect(cnt)
-        # cv2.rectangle(orig_img, (lx, ly), (lx+w, ly+h), (0, 0, 255), 2)
+    #計算物體長寬用
+    object_Image = orig_img.copy()
+    x, y, w, h = cv2.boundingRect(cnt)
+    # cv2.rectangle(object_Image, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
-        leftdistance = distance(lx,center_y,center_x,center_y)
-        downdistance = distance(center_x,ly+h,center_x,center_y)
-        rightdistance = distance(center_x,center_y,lx+w,center_y)
-        updistance = distance(center_x,ly,center_x,center_y)
-        # center_distance.append([leftdistance,downdistance,rightdistance,updistance])
-
-        center_distance.extend([leftdistance,downdistance,rightdistance])
-        print(center_distance)
-
-        best_area = center_distance.index(min(center_distance))
-        print(best_area)
-        if (best_area == 0):
-            print("left")
-            cv2.rectangle(orig_img,(int(center_x-20-center_distance[0]),int(center_y-20)),(int(center_x),int(center_y+20)),(255,255,0),2)
-            result = angle(lx,center_y,center_x,center_y)
-            # cv2.imshow("left",orig_img)
-        elif (best_area == 1):
-            print("down")
-            cv2.rectangle(orig_img,(int(center_x-20),int(center_y)),(int(center_x+20),int(center_y+20+center_distance[1])),(255,255,0),2)
-            result = angle(center_x,ly+h,center_x,center_y)
-            # cv2.imshow("down",orig_img)
-        elif (best_area == 2):
-            print("right")
-            cv2.rectangle(orig_img,(int(center_x),int(center_y-20)),(int(center_x+20+center_distance[2]),int(center_y+20)),(255,255,0),2)
-            result = angle(center_x,center_y,lx+w,center_y)
-            # cv2.imshow("right",orig_img)
-        # elif (best_area == 3):
-        #     print("up")
-        #     cv2.rectangle(orig_img,(int(center_x-20),int(center_y-20-center_distance[3])),(int(center_x+20),int(center_y)),(255,255,0),2)
-        #     cv2.imshow("up",orig_img)
-        else:
-            print("no")
-        
-        # width = 30
-        # height = 80
-        # grasp_left_x = int(center_x - (width/2.0))
-        # grasp_left_y = int(center_y - 15)
-        # grasp_right_x = int(center_x + (width/2.0))
-        # grasp_right_y = int(center_y + height)
-
-
-        # cv2.rectangle(orig_img,(grasp_left_x,grasp_left_y),(grasp_right_x,grasp_right_y),(255,255,0),2)
-        # result = angle(grasp_left_x,grasp_left_y,grasp_left_x,grasp_left_y + height)
-        # cv2.imshow("2222",orig_img)
-        # result = 90
-        print(result)
-        # cv2.imshow("1",orig_img)
-
-    else:
-        print("Solid")
-        width = 140
-        height = 30
+    if w < 100: #小於一定大小直接抓全部
+        width = w + 20
+        height = 20
         grasp_left_x = int(center_x - (width/2.0))
         grasp_left_y = int(center_y - (height/2.0))
         grasp_right_x = int(center_x + (width/2.0))
         grasp_right_y = int(center_y + (height/2.0))
-
-        # ellipse= cv2.fitEllipse(contours[])
-        # cv2.ellipse(orig_img,ellipse,(0,235,0),2)
-        # cv2.imshow("ellipse",orig_img)
     
         cv2.rectangle(orig_img,(grasp_left_x,grasp_left_y),(grasp_right_x,grasp_right_y),(255,255,0),2)
-        result = 0
+        result = -90
         # result = angle(grasp_left_x,grasp_left_y,grasp_left_x,grasp_left_y + height)
         # cv2.imshow("2222",orig_img)
         print(result)
+    else:
+        if len(contours)>5:
+            print("Hollow")
+            
+            # 直线拟合
+            rows, cols = object_Image.shape[:2]
+            [vx, vy, x, y] = cv2.fitLine(cnt, cv2.DIST_L2, 0, 0.01, 0.01)
+            lefty = int((-x * vy / vx) + y)
+            righty = int(((cols - x) * vy / vx) + y)
+            # img = cv2.line(object_Image, (cols - 1, righty), (0, lefty), (0, 255, 255), 2)
+            
+            width =  30
+            height = h - h/3.0
+            # cv2.rectangle(object_Image,(int(center_x - width/2.0),int(center_y)),(int(center_x + width/2.0),int(center_y + height)),(255,255,0),2)
+            roct_result = angle(cols - 1, righty,0, lefty)
+            print(roct_result)
+            # box = [(center_x + width,center_y- height/2.0),(center_x ,center_y - height/2.0),
+            #         (center_x ,center_y + height/2.0),(center_x + width,center_y + height/2.0)]
+            box = [(center_x + width/2.0,center_y),(center_x - width/2.0,center_y),
+                    (center_x - width/2.0,center_y + height),(center_x + width/2.0,center_y + height)]
+            rota = rota_rect(box,roct_result,int(center_x),int(center_y))
+
+            cv2.line(orig_img,(int(rota[0][0]), int(rota[0][1])),(int(rota[1][0]),int(rota[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+            cv2.line(orig_img,(int(rota[1][0]),int(rota[1][1])),(int(rota[2][0]),int(rota[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+            cv2.line(orig_img,(int(rota[2][0]),int(rota[2][1])),(int(rota[3][0]),int(rota[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+            cv2.line(orig_img,(int(rota[3][0]),int(rota[3][1])),(int(rota[0][0]),int(rota[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+            
+            # cv2.imshow("test",orig_img)
+            result = -90 + roct_result
+
+            print(result)
+            # cv2.imshow("1",orig_img)
+
+        else:
+            print("Solid")
+            width = w + 20
+            height = 20
+            grasp_left_x = int(center_x - (width/2.0))
+            grasp_left_y = int(center_y - (height/2.0))
+            grasp_right_x = int(center_x + (width/2.0))
+            grasp_right_y = int(center_y + (height/2.0))
+
+            cv2.rectangle(orig_img,(grasp_left_x,grasp_left_y),(grasp_right_x,grasp_right_y),(255,255,0),2)
+            result = 0
+            # result = angle(grasp_left_x,grasp_left_y,grasp_left_x,grasp_left_y + height)
+            # cv2.imshow("2222",orig_img)
+            print(result)
 
     return orig_img,center_x,center_y,result
 
@@ -1705,8 +1736,8 @@ if __name__ == '__main__':
 
     #set image size
     image_size = zed.get_camera_information().camera_resolution
-    image_size.width = 1280
-    image_size.height = 720
+    image_size.width = 960
+    image_size.height = 540
 
     #turn zed to numpy(for opencv)
     image_zed_left = sl.Mat(image_size.width, image_size.height)
@@ -1783,8 +1814,9 @@ if __name__ == '__main__':
         # image_right = image_zed_left.get_data()
         depth_image = depth_image_zed.get_data()
         # print(np.min(depth_image), np.max(depth_image))
-        depth_image_viz = cv2.normalize(depth_image, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8UC3)
-        depth_image_viz = cv2.applyColorMap(depth_image_viz, cv2.COLORMAP_JET)
+
+        # depth_image_viz = cv2.normalize(depth_image, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8UC3)
+        # depth_image_viz = cv2.applyColorMap(depth_image_viz, cv2.COLORMAP_JET)
         print(type(depth_image))
         # depth_image1 = cv2.cvtColor(depth_image, cv2.COLOR_GRAY2RGB)
         # depth_image1 = point_cloud.get_value(x, y)[1]
@@ -1818,7 +1850,7 @@ if __name__ == '__main__':
         #         cv2.rectangle(image_left, (x_coord - thickness, y_coord - thickness),(x_coord + x_extent + thickness, y_coord + y_extent + thickness),
         #                       color_array[detection[3]], int(thickness*2))
         # cv2.imshow("rgbCam",color_image)
-        cv2.imshow("depth",depth_image_viz)
+        cv2.imshow("depth",depth_image)
         # cv2.imshow("depth2",depth_image1)
     
         # #shape detection
@@ -1857,7 +1889,6 @@ if __name__ == '__main__':
 
                     left_up_x = int(round((long_center_x - (long_width/2.0)),3))
                     left_up_y = int(round((long_center_y - (long_height/2.0)),3))
-
                     right_down_x = int(round((long_center_x + long_width/2.0),3))
                     right_down_y = int(round((long_center_y + (long_height/2.0)),3))
 
@@ -1867,11 +1898,15 @@ if __name__ == '__main__':
                     shutil.copy(local_img_name, bgrlong_path +str(a) +'.jpg')
                     
                     matimg = handle(orig_long,bgrlong_path +str(a) +'.jpg')
-                    process = post_processing(matimg[2])
+
+                    # process = tensor_to_np(matimg[2])
+                    # cv2.imshow("process",process)
+
+                    # process = post_processing(matimg[2])
                     process_long = save_process_long+"long_"+str(a)+'.jpg'
                     cv2.imwrite(process_long,process)
 
-                    img = cv2.imread(process_long)
+                    # img = cv2.imread(process_long)
 
                     center = line_Segment(process_long,orig_long)
 
@@ -1889,22 +1924,28 @@ if __name__ == '__main__':
                 elif detections[0][0] == "circle" and key == 114:
                     b += 1
 
+                    circle_center_x = detections[0][2][0]
+                    circle_center_y = detections[0][2][1]
+                    circle_width = detections[0][2][2]
+                    circle_height = detections[0][2][3]
+
                     orig_circle = save_path_circle+str(b) +'.jpg'
                     cv2.imwrite(orig_circle,color_image)
 
                     shutil.copy(local_img_name, bgrcircle_path + str(b) +'.jpg')
                     matimg = handle(orig_circle,bgrcircle_path + str(b) +'.jpg')
                     
+                    # process = tensor_to_np(matimg[2])
                     process = post_processing(matimg[2])
+                    # cv2.imshow("process",process)
+                    process = tensor_to_np(matimg[2])
                     process_circle = save_process_circle + "circle_" + str(b) + '.jpg'
                     cv2.imwrite(process_circle,process)
 
-                    center = circle_transform(process_circle,orig_circle)
+                    center = circle_transform(process_circle,orig_circle,circle_center_x,circle_center_y)
 
                     # 求取深度
                     z_value = depth_image_zed.get_value(center[1],center[2])
-                    print(center[1],center[2])
-                    print(z_value[1])
 
                     cv2.putText(center[0], "Object: " + str(detections[0][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                     cv2.putText(center[0], "Depth: " + str(round(z_value[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
@@ -1924,7 +1965,11 @@ if __name__ == '__main__':
 
                         matimg = handle(orig_columnar,bgrcolumnar_path + new_obj_name)                        
 
-                        process = post_processing(matimg[2])
+                        # process = post_processing(matimg[2])
+
+                        process = tensor_to_np(matimg[2])
+                        cv2.imshow("process",process)
+
                         process_columnar = save_process_columnar + "columnar_" + str(c) + '.jpg'
                         cv2.imwrite(process_columnar,process)
 
