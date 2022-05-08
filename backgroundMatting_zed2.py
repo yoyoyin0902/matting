@@ -15,6 +15,7 @@ import argparse
 import torchvision
 import numpy as np
 import pyzed.sl as sl
+from pylsd.lsd import lsd
 
 from ctypes import *
 # from random import randintre
@@ -1058,37 +1059,38 @@ def rota_rect(box, theta, x, y):
 def line_Segment(mat,orig):
     mat_img = cv2.imread(str(mat),0)
     orig_img = cv2.imread(orig)
-    # cv2.imshow("mat",mat_img)
 
-    # gray = cv2.cvtColor(mat,cv2.COLOR_BGR2GRAY)
-    lsd = cv2.createLineSegmentDetector(0)
+    #這是舊版本 opencv不在支援此library
+    # lsd = cv2.createLineSegmentDetector(0)
+    # dlines = lsd.detect(mat_img)
 
-    dlines = lsd.detect(mat_img)
+    dlines = lsd(mat_img) #dlines = [point1.x, point1.y, point2.x, point2.y, width]
     
     ver_lines = []
     coordinate = []
     angle1 = []
 
-    for dline in dlines[0]:
+    for dline in dlines:
         # print(dline[i])
-        x0 = int(round(dline[0][0]))
-        y0 = int(round(dline[0][1]))
-        x1 = int(round(dline[0][2]))
-        y1 = int(round(dline[0][3]))
+        x0 = int(round(dline[0]))
+        y0 = int(round(dline[1]))
+        x1 = int(round(dline[2]))
+        y1 = int(round(dline[3]))
         distance = math.sqrt((x0-x1)**2+(y0-y1)**2)
+        print(distance)
         ver_lines.append(distance)
 
     maxIndex = max2(ver_lines)
 
-    for dline in dlines[0]:
-        x0 = int(round(dline[0][0]))
-        y0 = int(round(dline[0][1]))
-        x1 = int(round(dline[0][2]))
-        y1 = int(round(dline[0][3]))
+    for dline in dlines:
+        x0 = int(round(dline[0]))
+        y0 = int(round(dline[1]))
+        x1 = int(round(dline[2]))
+        y1 = int(round(dline[3]))
         distance = math.sqrt((x0-x1)**2+(y0-y1)**2)
     
         if(distance >= int(maxIndex[1])):
-            # cv2.line(orig_img,(x0,y0),(x1,y1),(0,255,0),2,cv2.LINE_AA)
+            cv2.line(orig_img,(x0,y0),(x1,y1),(0,255,0),2,cv2.LINE_AA)
             coordinate.append(((x0,y0),(x1,y1)))
 
             result = angle(x0,y0,x1,y1)
@@ -1096,15 +1098,16 @@ def line_Segment(mat,orig):
 
     line1 = math.sqrt((coordinate[0][1][0]-coordinate[1][1][0])**2+(coordinate[0][1][1]-coordinate[1][1][1])**2)
     line2 = math.sqrt((coordinate[0][0][0]-coordinate[1][0][0])**2+(coordinate[0][0][1]-coordinate[1][0][1])**2)
+
     # cv2.line(orig_img,(coordinate[0][0][0],coordinate[0][0][1]),(coordinate[1][1][0],coordinate[1][1][1]),(255,0,0),2,cv2.LINE_AA)
     # cv2.line(orig_img,(coordinate[0][1][0],coordinate[0][1][1]),(coordinate[1][0][0],coordinate[1][1][1]),(255,0,0),2,cv2.LINE_AA)
     if (line1 > line2):
-        # cv2.line(orig_img,coordinate[0][1],coordinate[1][1],(255,0,0),2,cv2.LINE_AA)
+        cv2.line(orig_img,coordinate[0][1],coordinate[1][1],(255,0,0),2,cv2.LINE_AA)
         circle_x = (coordinate[0][1][0] + coordinate[1][1][0])/2
         circle_y = (coordinate[0][1][1] + coordinate[1][1][1])/2
     
     else:
-        # cv2.line(orig_img,coordinate[0][0],coordinate[1][0],(255,0,0),2,cv2.LINE_AA)
+        cv2.line(orig_img,coordinate[0][0],coordinate[1][0],(255,0,0),2,cv2.LINE_AA)
         circle_x = (coordinate[0][0][0] + coordinate[1][0][0])/2
         circle_y = (coordinate[0][0][1] + coordinate[1][0][1])/2
 
@@ -1155,34 +1158,35 @@ def line_Segment_cup(mat,orig):
     cv2.imshow("mat",mat_img)
     orig_img = cv2.imread(orig)
 
-    lsd = cv2.createLineSegmentDetector(0)
-
-    dlines = lsd.detect(mat_img)
+    # lsd = cv2.createLineSegmentDetector(0)
+    # dlines = lsd.detect(mat_img)
+    
+    dlines = lsd(mat_img)
     
     ver_lines = []
     coordinate = []
     angle1 = []
 
-    for dline in dlines[0]:
+    for dline in dlines:
         # print(dline[i])
-        x0 = int(round(dline[0][0]))
-        y0 = int(round(dline[0][1]))
-        x1 = int(round(dline[0][2]))
-        y1 = int(round(dline[0][3]))
+        x0 = int(round(dline[0]))
+        y0 = int(round(dline[1]))
+        x1 = int(round(dline[2]))
+        y1 = int(round(dline[3]))
         distance = math.sqrt((x0-x1)**2+(y0-y1)**2)
         ver_lines.append(distance)
 
     maxIndex = max2(ver_lines)
 
-    for dline in dlines[0]:
-        x0 = int(round(dline[0][0]))
-        y0 = int(round(dline[0][1]))
-        x1 = int(round(dline[0][2]))
-        y1 = int(round(dline[0][3]))
+    for dline in dlines:
+        x0 = int(round(dline[0]))
+        y0 = int(round(dline[1]))
+        x1 = int(round(dline[2]))
+        y1 = int(round(dline[3]))
         distance = math.sqrt((x0-x1)**2+(y0-y1)**2)
     
         if(distance >= int(maxIndex[1])):
-            # cv2.line(orig_img,(x0,y0),(x1,y1),(0,255,0),2,cv2.LINE_AA)
+            cv2.line(orig_img,(x0,y0),(x1,y1),(0,255,0),2,cv2.LINE_AA)
             coordinate.append(((x0,y0),(x1,y1)))
 
             result = angle(x0,y0,x1,y1)
@@ -1622,9 +1626,28 @@ def get_object_depth(depth, bounds):
 # predict_image = lib.network_predict_image
 # predict_image.argtypes = [c_void_p, IMAGE]
 # predict_image.restype = POINTER(c_float)
-
-
 # ------------------------------------------------------- detection -------------------------------------------------
+# ------------------------------------------------------- coordinate -------------------------------------------------
+
+zed_camera_intrinsic ={
+    #旋轉矩陣
+    #rotation matrix
+    "R": [[-0.91536173, 0.40180837, 0.02574754],
+          [0.05154812, 0.18037357, -0.98224649],
+          [-0.39931903, -0.89778361, -0.18581953]],
+    #translation vector
+    "T": [119.986, 0.0000, 0.0000],
+    #focal length f/dx, f/dy
+    "f": [1094.7000, 1094.3500],
+    #principal point，主点，主轴与像平面的交点
+    "c": [985.8450, 542.2120]
+}
+
+
+
+
+# ------------------------------------------------------- coordinate -------------------------------------------------
+
 # ------------------------------------------------------- Matting Arguments -------------------------------------------------
 parser = argparse.ArgumentParser(description='Inference images')
 parser.add_argument('--model-type', type=str, required=False, choices=['mattingbase', 'mattingrefine'],
@@ -1902,7 +1925,7 @@ if __name__ == '__main__':
                     # process = tensor_to_np(matimg[2])
                     # cv2.imshow("process",process)
 
-                    # process = post_processing(matimg[2])
+                    process = post_processing(matimg[2])
                     process_long = save_process_long+"long_"+str(a)+'.jpg'
                     cv2.imwrite(process_long,process)
 
@@ -1938,7 +1961,7 @@ if __name__ == '__main__':
                     # process = tensor_to_np(matimg[2])
                     process = post_processing(matimg[2])
                     # cv2.imshow("process",process)
-                    process = tensor_to_np(matimg[2])
+                    # process = tensor_to_np(matimg[2])
                     process_circle = save_process_circle + "circle_" + str(b) + '.jpg'
                     cv2.imwrite(process_circle,process)
 
