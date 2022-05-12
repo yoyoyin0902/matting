@@ -37,12 +37,13 @@ class CameraZed2:
     def grab_imgs(self):  # 捕获左右图像用于相机标定（文件夹自动创建）
         img_l = sl.Mat()
         img_r = sl.Mat()
-        num = 23
+        num = 0
+        num1 = 1
         # 自动创建保存文件夹（分别存放左图和右图）
         import time
         name = time.strftime("%Y-%m-%d-%H-%M", time.localtime())
-        self.savepath_L = "/home/user/Documents/ZED/left/"
-        self.savepath_R = "/home/user/Documents/ZED/right/"
+        self.savepath_L = "/home/user/cali/left/"
+        self.savepath_R = "/home/user/cali/right/"
         # os.makedirs(self.savepath_L,exist_ok=True)
         # os.makedirs(self.savepath_R,exist_ok=True)
 
@@ -57,12 +58,13 @@ class CameraZed2:
                 cv2.imshow('View',cv2.resize(view,(1920,540)))
                 key = cv2.waitKey(1)
                 if key & 0xFF == ord('s'):  # 按S同时保存左右图像
-                    savePath_L = self.savepath_L+"L{:0>3d}.png".format(num)
+                    savePath_L = self.savepath_L + str(num)+".jpg"
                     print(savePath_L)
                     cv2.imwrite(savePath_L, self.img_l)
-                    savePath_R = self.savepath_R + "R{:0>3d}.png".format(num)
+                    savePath_R = self.savepath_R + str(num1)+".jpg"
                     cv2.imwrite(savePath_R, self.img_r)
-                    num +=1
+                    num +=2
+                    num1 +=2
                 if key & 0xFF == 27:  # 按esc退出视图窗口
                     break
 
