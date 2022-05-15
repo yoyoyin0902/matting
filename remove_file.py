@@ -38,6 +38,15 @@ for t in blade_process:
   except OSError as e:
     print('Delete Problem: ', e)
 
+blade_mat = glob.glob("/home/user/shape_detection/blade/mat/*.jpg")
+blade_mat_path = "/home/user/shape_detection/blade/mat"
+print('Sample Folder: ', os.listdir(blade_mat_path))
+for t in blade_mat:
+  try:
+    os.remove(t)
+  except OSError as e:
+    print('Delete Problem: ', e)
+
 #circle
 circle_bgr = glob.glob("/home/user/shape_detection/circle/bgr/*.jpg")
 circle_bgr_path = "/home/user/shape_detection/circle/bgr"
@@ -70,6 +79,15 @@ circle_process = glob.glob("/home/user/shape_detection/circle/process/*.jpg")
 circle_process_path = "/home/user/shape_detection/circle/process"
 print('Sample Folder: ', os.listdir(circle_process_path))
 for t in circle_process:
+  try:
+    os.remove(t)
+  except OSError as e:
+    print('Delete Problem: ', e)
+
+circle_mat = glob.glob("/home/user/shape_detection/circle/mat/*.jpg")
+circle_mat_path = "/home/user/shape_detection/circle/mat"
+print('Sample Folder: ', os.listdir(circle_mat_path))
+for t in circle_mat:
   try:
     os.remove(t)
   except OSError as e:
@@ -112,6 +130,15 @@ for t in columnar_process:
   except OSError as e:
     print('Delete Problem: ', e)
 
+columnar_mat = glob.glob("/home/user/shape_detection/columnar/mat/*.jpg")
+columnar_mat_path = "/home/user/shape_detection/columnar/mat"
+print('Sample Folder: ', os.listdir(columnar_mat_path))
+for t in columnar_mat:
+  try:
+    os.remove(t)
+  except OSError as e:
+    print('Delete Problem: ', e)
+
 #long
 long_bgr = glob.glob("/home/user/shape_detection/long/bgr/*.jpg")
 long_bgr_path = "/home/user/shape_detection/long/bgr"
@@ -144,6 +171,15 @@ long_process = glob.glob("/home/user/shape_detection/long/process/*.jpg")
 long_process_path = "/home/user/shape_detection/long/process"
 print('Sample Folder: ', os.listdir(long_process_path))
 for t in long_process:
+  try:
+    os.remove(t)
+  except OSError as e:
+    print('Delete Problem: ', e)
+
+long_mat = glob.glob("/home/user/shape_detection/long/mat/*.jpg")
+long_mat_path = "/home/user/shape_detection/long/mat"
+print('Sample Folder: ', os.listdir(long_mat_path))
+for t in long_mat:
   try:
     os.remove(t)
   except OSError as e:
