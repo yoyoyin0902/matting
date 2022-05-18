@@ -1221,40 +1221,68 @@ def line_Segment_cup(mat,orig):
         center_x1 = int(x + w/2) #外接矩形中心
         center_y1 = int(y+h/2)
         cv2.circle(object_Image,(int(center_x1),int(center_y1)),2,(255, 128, 0),2)
-        
     
+    circle_X = center_x1 
+    circle_Y = center_y1 +30
+
+    print(circle_X,circle_Y)
+    print("1111111111111111111111111")
+
     # 直线拟合
     rows, cols = object_Image.shape[:2]
     [vx, vy, x, y] = cv2.fitLine(cnt, cv2.DIST_L2, 0, 0.01, 0.01)
     lefty = int((-x * vy / vx) + y)
     righty = int(((cols - x) * vy / vx) + y)
-    # cv2.line(object_Image, (cols - 1, righty), (0, lefty), (0, 255, 255), 2)
-    # cv2.imshow("test",object_Image)
+    cv2.line(object_Image, (cols - 1, righty), (0, lefty), (0, 255, 255), 2)
+    cv2.imshow("test",object_Image)
+    roct_result = angle(cols - 1, righty,0, lefty)
+
+
+    # width = w
+    # height = 10
+    # grasp_left_x = int(circle_x - (width/2.0))
+    # grasp_left_y = int(circle_y - (height/2.0))
+    # grasp_right_x = int(circle_x + (width/2.0))
+    # grasp_right_y = int(circle_y + (height/2.0))
 
     width = w
-    height = 30
-    grasp_left_x = int(circle_x - (width/2.0))
-    grasp_left_y = int(circle_y - (height/2.0))
-    grasp_right_x = int(circle_x + (width/2.0))
-    grasp_right_y = int(circle_y + (height/2.0))
+    height = 20
+    grasp_left_x = int(circle_X - (width/2.0))
+    grasp_left_y = int(circle_Y - (height/2.0))
+    grasp_right_x = int(circle_X + (width/2.0))
+    grasp_right_y = int(circle_Y + (height/2.0))
+
 
     # cv2.rectangle(orig_img,(grasp_left_x,grasp_left_y),(grasp_right_x,grasp_right_y),(255,255,0),2)
 
     box = [(grasp_left_x,grasp_left_y),(grasp_right_x,grasp_left_y),(grasp_left_x,grasp_right_y),(grasp_right_x,grasp_right_y)]
     
-    if angle1[0]+angle1[1] <15: #旋轉角度不超過15度角
-        real_angle = (angle1[0]+angle1[1])/2.0
-    else :
-        real_angle = 90 - (angle1[0]+angle1[1])/2.0
+    print(angle1[0],angle1[1])
+    print("123456789")
 
-    aa = rota_rect(box,real_angle,circle_x,circle_y)
+    
+
+    # if angle1[0]+angle1[1] <15 and angle1[0]+angle1[1] >0 : #旋轉角度不超過15度角
+    #     real_angle = (angle1[0]+angle1[1])/2.0
+
+    # elif angle1[0]+angle1[1] <0 and angle1[0]+angle1[1] >-100:
+    #     real_angle = 180 + (angle1[0]+angle1[1])/2.0
+    # else :
+    #     real_angle = 90 - (angle1[0]+angle1[1])/2.0
+    if roct_result >0 :
+        roct_result = 90 - roct_result
+    else:
+        roct_result = 90 + roct_result
+    
+
+    aa = rota_rect(box,roct_result,circle_X,circle_Y)
 
     cv2.line(orig_img,(int(aa[0][0]),int(aa[0][1])),(int(aa[2][0]),int(aa[2][1])),(255, 0, 255),2,cv2.LINE_AA)
     cv2.line(orig_img,(int(aa[1][0]),int(aa[1][1])),(int(aa[3][0]),int(aa[3][1])),(255, 0, 255),2,cv2.LINE_AA)
     cv2.line(orig_img,(int(aa[0][0]),int(aa[0][1])),(int(aa[1][0]),int(aa[1][1])),(255, 0, 255),2,cv2.LINE_AA)
     cv2.line(orig_img,(int(aa[2][0]),int(aa[2][1])),(int(aa[3][0]),int(aa[3][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-    return orig_img ,circle_x,circle_y,real_angle
+    return orig_img ,circle_x,circle_y,roct_result
 
 #circle detection
 def circle_transform(mat,orig,detections_number):
@@ -1309,18 +1337,23 @@ def circle_transform(mat,orig,detections_number):
         # cv2.imshow("area",object_Image)
         roct_result = angle(cols - 1, righty,0, lefty)
         box = [(grasp_right_x,grasp_left_y),(grasp_left_x,grasp_left_y),
-                    (grasp_left_x,grasp_right_y),(grasp_right_x,grasp_right_y)]
+                (grasp_left_x,grasp_right_y),(grasp_right_x,grasp_right_y)]
+        # box = [(grasp_right_x,grasp_left_y),(grasp_left_x,grasp_left_y),
+        #             (grasp_left_x,grasp_right_y),(grasp_right_x,grasp_right_y)]
         rota = rota_rect(box,roct_result,int(center_x),int(center_y))
 
-        cv2.line(orig_img,(int(rota[0][0]), int(rota[0][1])),(int(rota[1][0]),int(rota[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-        cv2.line(orig_img,(int(rota[1][0]),int(rota[1][1])),(int(rota[2][0]),int(rota[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-        cv2.line(orig_img,(int(rota[2][0]),int(rota[2][1])),(int(rota[3][0]),int(rota[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-        cv2.line(orig_img,(int(rota[3][0]),int(rota[3][1])),(int(rota[0][0]),int(rota[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+        # cv2.line(orig_img,(int(rota[0][0]), int(rota[0][1])),(int(rota[1][0]),int(rota[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+        # cv2.line(orig_img,(int(rota[1][0]),int(rota[1][1])),(int(rota[2][0]),int(rota[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+        # cv2.line(orig_img,(int(rota[2][0]),int(rota[2][1])),(int(rota[3][0]),int(rota[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+        # cv2.line(orig_img,(int(rota[3][0]),int(rota[3][1])),(int(rota[0][0]),int(rota[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-        circle_centerX = (rota[0][0] + rota[2][0])/2.0
-        circle_centerY = (rota[0][1] + rota[2][1])/2.0
-        cv2.circle(orig_img,(int(circle_centerX),int(circle_centerY)),2,(255,255,0),2)
-        # cv2.imshow("orig_img",orig_img)
+        # circle_centerX = (rota[0][0] + rota[2][0])/2.0
+        # circle_centerY = (rota[0][1] + rota[2][1])/2.0
+        # cv2.circle(orig_img,(int(circle_centerX),int(circle_centerY)),2,(255,255,0),2)
+        # # cv2.imshow("orig_img",orig_img)
+
+
+        
         result = roct_result
 
     else:
@@ -1506,183 +1539,6 @@ def get_object_depth(depth, bounds):
 
     return x_median, y_median, z_median
 
-
-# def generate_color(meta_path):
-#     '''
-#     Generate random colors for the number of classes mentioned in data file.
-#     Arguments:
-#     meta_path: Path to .data file.
-
-#     Return:
-#     color_array: RGB color codes for each class.
-#     '''
-#     random.seed(42)
-#     with open(meta_path, 'r') as f:
-#         content = f.readlines()
-#     class_num = int(content[0].split("=")[1])
-#     color_array = []
-#     for x in range(0, class_num):
-#         color_array.append((randint(0, 255), randint(0, 255), randint(0, 255)))
-#     return color_array
-
-# def c_array(ctype, values):
-#     arr = (ctype*len(values))()
-#     arr[:] = values
-#     return arr
-
-
-# class BOX(Structure):
-#     _fields_ = [("x", c_float),
-#                 ("y", c_float),
-#                 ("w", c_float),
-#                 ("h", c_float)]
-
-
-# class DETECTION(Structure):
-#     _fields_ = [("bbox", BOX),
-#                 ("classes", c_int),
-#                 ("prob", POINTER(c_float)),
-#                 ("mask", POINTER(c_float)),
-#                 ("objectness", c_float),
-#                 ("sort_class", c_int),
-#                 ("uc", POINTER(c_float)),
-#                 ("points", c_int),
-#                 ("embeddings", POINTER(c_float)),
-#                 ("embedding_size", c_int),
-#                 ("sim", c_float),
-#                 ("track_id", c_int)]
-
-# class IMAGE(Structure):
-#     _fields_ = [("w", c_int),
-#                 ("h", c_int),
-#                 ("c", c_int),
-#                 ("data", POINTER(c_float))]
-
-
-# class METADATA(Structure):
-#     _fields_ = [("classes", c_int),
-#                 ("names", POINTER(c_char_p))]
-
-# hasGPU = True
-# if os.name == "nt":
-#     cwd = os.path.dirname(__file__)
-#     os.environ['PATH'] = cwd + ';' + os.environ['PATH']
-#     winGPUdll = os.path.join(cwd, "yolo_cpp_dll.dll")
-#     winNoGPUdll = os.path.join(cwd, "yolo_cpp_dll_nogpu.dll")
-#     envKeys = list()
-#     for k, v in os.environ.items():
-#         envKeys.append(k)
-#     try:
-#         try:
-#             tmp = os.environ["FORCE_CPU"].lower()
-#             if tmp in ["1", "true", "yes", "on"]:
-#                 raise ValueError("ForceCPU")
-#             else:
-#                 log.info("Flag value '"+tmp+"' not forcing CPU mode")
-#         except KeyError:
-#             # We never set the flag
-#             if 'CUDA_VISIBLE_DEVICES' in envKeys:
-#                 if int(os.environ['CUDA_VISIBLE_DEVICES']) < 0:
-#                     raise ValueError("ForceCPU")
-#             try:
-#                 global DARKNET_FORCE_CPU
-#                 if DARKNET_FORCE_CPU:
-#                     raise ValueError("ForceCPU")
-#             except NameError:
-#                 pass
-#             # log.info(os.environ.keys())
-#             # log.warning("FORCE_CPU flag undefined, proceeding with GPU")
-#         if not os.path.exists(winGPUdll):
-#             raise ValueError("NoDLL")
-#         lib = CDLL(winGPUdll, RTLD_GLOBAL)
-#     except (KeyError, ValueError):
-#         hasGPU = False
-#         if os.path.exists(winNoGPUdll):
-#             lib = CDLL(winNoGPUdll, RTLD_GLOBAL)
-#             log.warning("Notice: CPU-only mode")
-#         else:
-#             # Try the other way, in case no_gpu was
-#             # compile but not renamed
-#             lib = CDLL(winGPUdll, RTLD_GLOBAL)
-#             log.warning("Environment variables indicated a CPU run, but we didn't find `" +
-#                         winNoGPUdll+"`. Trying a GPU run anyway.")
-# else:
-#     # lib = CDLL("../libdarknet/libdarknet.so", RTLD_GLOBAL)
-#     lib = CDLL("./libdarknet/libdarknet.so", RTLD_GLOBAL)
-# lib.network_width.argtypes = [c_void_p]
-# lib.network_width.restype = c_int
-# lib.network_height.argtypes = [c_void_p]
-# lib.network_height.restype = c_int
-
-# predict = lib.network_predict
-# predict.argtypes = [c_void_p, POINTER(c_float)]
-# predict.restype = POINTER(c_float)
-
-# if hasGPU:
-#     set_gpu = lib.cuda_set_device
-#     set_gpu.argtypes = [c_int]
-
-# make_image = lib.make_image
-# make_image.argtypes = [c_int, c_int, c_int]
-# make_image.restype = IMAGE
-
-# get_network_boxes = lib.get_network_boxes
-# get_network_boxes.argtypes = [c_void_p, c_int, c_int, c_float, c_float, POINTER(
-#     c_int), c_int, POINTER(c_int), c_int]
-# get_network_boxes.restype = POINTER(DETECTION)
-
-# make_network_boxes = lib.make_network_boxes
-# make_network_boxes.argtypes = [c_void_p]
-# make_network_boxes.restype = POINTER(DETECTION)
-
-# free_detections = lib.free_detections
-# free_detections.argtypes = [POINTER(DETECTION), c_int]
-
-# free_ptrs = lib.free_ptrs
-# free_ptrs.argtypes = [POINTER(c_void_p), c_int]
-
-# network_predict = lib.network_predict
-# network_predict.argtypes = [c_void_p, POINTER(c_float)]
-
-# reset_rnn = lib.reset_rnn
-# reset_rnn.argtypes = [c_void_p]
-
-# load_net = lib.load_network
-# load_net.argtypes = [c_char_p, c_char_p, c_int]
-# load_net.restype = c_void_p
-
-# load_net_custom = lib.load_network_custom
-# load_net_custom.argtypes = [c_char_p, c_char_p, c_int, c_int]
-# load_net_custom.restype = c_void_p
-
-# do_nms_obj = lib.do_nms_obj
-# do_nms_obj.argtypes = [POINTER(DETECTION), c_int, c_int, c_float]
-
-# do_nms_sort = lib.do_nms_sort
-# do_nms_sort.argtypes = [POINTER(DETECTION), c_int, c_int, c_float]
-
-# free_image = lib.free_image
-# free_image.argtypes = [IMAGE]
-
-# letterbox_image = lib.letterbox_image
-# letterbox_image.argtypes = [IMAGE, c_int, c_int]
-# letterbox_image.restype = IMAGE
-
-# load_meta = lib.get_metadata
-# lib.get_metadata.argtypes = [c_char_p]
-# lib.get_metadata.restype = METADATA
-
-# load_image = lib.load_image_color
-# load_image.argtypes = [c_char_p, c_int, c_int]
-# load_image.restype = IMAGE
-
-# rgbgr_image = lib.rgbgr_image
-# rgbgr_image.argtypes = [IMAGE]
-
-# predict_image = lib.network_predict_image
-# predict_image.argtypes = [c_void_p, IMAGE]
-# predict_image.restype = POINTER(c_float)
-# ------------------------------------------------------- detection -------------------------------------------------
 # ------------------------------------------------------- Matting Arguments -------------------------------------------------
 parser = argparse.ArgumentParser(description='Inference images')
 parser.add_argument('--model-type', type=str, required=False, choices=['mattingbase', 'mattingrefine'],default='mattingrefine')
@@ -1710,11 +1566,17 @@ thresh = 0.7
 show_coordinates = True
 zed_id = 0
 
-#original_img
-save_path_columnar = "/home/user/shape_detection/columnar/orig/"
-save_path_long = "/home/user/shape_detection/long/orig/"
-save_path_circle = "/home/user/shape_detection/circle/orig/"
-save_path_blade = "/home/user/shape_detection/blade/orig/"
+#original_img left
+save_path_columnar_left = "/home/user/shape_detection/columnar/orig/orig_left/"
+save_path_long_left = "/home/user/shape_detection/long/orig/orig_left/"
+save_path_circle_left = "/home/user/shape_detection/circle/orig/orig_left/"
+save_path_blade_left = "/home/user/shape_detection/blade/orig/orig_left/"
+
+#original_img right
+save_path_columnar_right = "/home/user/shape_detection/columnar/orig/orig_right/"
+save_path_long_right = "/home/user/shape_detection/long/orig/orig_right/"
+save_path_circle_right = "/home/user/shape_detection/circle/orig/orig_right/"
+save_path_blade_right = "/home/user/shape_detection/blade/orig/orig_right/"
 
 #process
 save_process_columnar = "/home/user/shape_detection/columnar/process/" 
@@ -1722,25 +1584,39 @@ save_process_circle = "/home/user/shape_detection/circle/process/"
 save_process_long = "/home/user/shape_detection/long/process/"
 save_process_blade = "/home/user/shape_detection/blade/process/"
 
-#matting
-save_mat_columnar = "/home/user/shape_detection/columnar/mat/"
-save_mat_long = "/home/user/shape_detection/long/mat/"
-save_mat_circle = "/home/user/shape_detection/circle/mat/"
-save_mat_blade = "/home/user/shape_detection/blade/mat/"
+#matting left
+save_mat_columnar_left = "/home/user/shape_detection/columnar/mat/mat_left/"
+save_mat_long_left = "/home/user/shape_detection/long/mat/mat_left/"
+save_mat_circler_left = "/home/user/shape_detection/circle/mat/mat_left/"
+save_mat_blader_left = "/home/user/shape_detection/blade/mat/mat_left/"
+
+#matting right
+save_mat_columnar_right = "/home/user/shape_detection/columnar/mat/mat_right/"
+save_mat_long_right = "/home/user/shape_detection/long/mat/mat_right/"
+save_mat_circle_right = "/home/user/shape_detection/circle/mat/mat_right/"
+save_mat_blade_right = "/home/user/shape_detection/blade/mat/mat_right/"
 
 dataset_root_path = r"/home/user/matting/imagedata"
 img_floder = os.path.join(dataset_root_path,"img")
 bgr_floder = os.path.join(dataset_root_path,"bgr")
 
 #first_bgr
-local_img_name=r'/home/user/shape_detection/bgr/1.jpg'
-save_bgr = "/home/user/shape_detection/bgr/"
+local_img_name_left=r'/home/user/shape_detection/bgr_left/1.jpg'
+local_img_name_right=r'/home/user/shape_detection/bgr_right/1.jpg'
+save_bgr_left = "/home/user/shape_detection/bgr_left/"
+save_bgr_right = "/home/user/shape_detection/bgr_right/"
 
-#second_bgr
-bgrcircle_path = "/home/user/shape_detection/circle/bgr/"
-bgrblade_path = "/home/user/shape_detection/blade/bgr/"
-bgrlong_path = "/home/user/shape_detection/long/bgr/"
-bgrcolumnar_path = "/home/user/shape_detection/columnar/bgr/"
+#second_bgr left
+bgrcircle_path_left = "/home/user/shape_detection/circle/bgr/bgr_left/"
+bgrblade_path_left = "/home/user/shape_detection/blade/bgr/bgr_left/"
+bgrlong_path_left = "/home/user/shape_detection/long/bgr/bgr_left/"
+bgrcolumnar_path_left = "/home/user/shape_detection/columnar/bgr/bgr_left/"
+
+#second_bgr right
+bgrcircle_path_right = "/home/user/shape_detection/circle/bgr/bgr_right/"
+bgrblade_path_right = "/home/user/shape_detection/blade/bgr/bgr_right/"
+bgrlong_path_right = "/home/user/shape_detection/long/bgr/bgr_right/"
+bgrcolumnar_path_right = "/home/user/shape_detection/columnar/bgr/bgr_right/"
 
 #find center
 center_circle = "/home/user/shape_detection/circle/center/"
@@ -1812,7 +1688,8 @@ if __name__ == '__main__':
     image_zed_right = sl.Mat(image_size.width, image_size.height)
     depth_image_zed = sl.Mat(image_size.width,image_size.height)
     point_cloud = sl.Mat(image_size.width,image_size.height)
-    point_cloud1 = sl.Mat(500,500,sl.MAT_TYPE.F32_C4, sl.MEM.CPU)
+    point_cloud1 = sl.Mat(image_size.width,image_size.height)
+    # point_cloud1 = sl.Mat(500,500,sl.MAT_TYPE.F32_C4, sl.MEM.CPU)
 
     i = -10
     a = 0
@@ -1834,192 +1711,331 @@ if __name__ == '__main__':
         zed.retrieve_measure(point_cloud1, sl.MEASURE.XYZRGBA,sl.MEM.CPU, image_size)
         
         color_image = image_zed_left.get_data()
+        color_image1 = image_zed_right.get_data()
         # image_right = image_zed_left.get_data()
         depth_image = depth_image_zed.get_data()
         # print(np.min(depth_image), np.max(depth_image))
 
-        # depth_image_viz = cv2.normalize(depth_image, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8UC3)
-        # depth_image_viz = cv2.applyColorMap(depth_image_viz, cv2.COLORMAP_JET)
-        print(type(depth_image))
-        # depth_image1 = cv2.cvtColor(depth_image, cv2.COLOR_GRAY2RGB)
-        # depth_image1 = point_cloud.get_value(x, y)[1]
-
         i += 1
         if i ==1:
-            cv2.imwrite(save_bgr + '1.jpg',color_image)
+            cv2.imwrite(save_bgr_left + '1.jpg',color_image)
+            cv2.imwrite(save_bgr_right + '1.jpg',color_image1)
         
         cv2.imshow("depth",depth_image)
         # cv2.imshow("depth2",depth_image1)
     
         # #shape detection
-        width = color_image.shape[1]
-        height = color_image.shape[0]
+        width_left = color_image.shape[1]
+        height_left = color_image.shape[0]
+        width_right = color_image1.shape[1]
+        height_right= color_image1.shape[0]
 
         t_prev = time.time()
 
-        frame_rgb = cv2.cvtColor(color_image, cv2.COLOR_BGR2RGB)
-        frame_resized = cv2.resize(frame_rgb, (width, height))
+        frame_rgb_left = cv2.cvtColor(color_image, cv2.COLOR_BGR2RGB)
+        frame_resized_left = cv2.resize(frame_rgb_left, (width_left, height_left))
+        frame_rgb_right = cv2.cvtColor(color_image1, cv2.COLOR_BGR2RGB)
+        frame_resized_right = cv2.resize(frame_rgb_right, (width_right, height_right))
 
-        darknet_image = darknet.make_image(width, height, 3)
-        darknet.copy_image_from_bytes(darknet_image, frame_resized.tobytes()) 
-        detections = darknet.detect_image(network, class_names, darknet_image, thresh=thresh)
-        darknet.print_detections(detections, show_coordinates)
-        print(detections)
-        
-        darknet.free_image(darknet_image)
+
+        darknet_image_left = darknet.make_image(width_left, height_left, 3)
+        darknet.copy_image_from_bytes(darknet_image_left, frame_resized_left.tobytes()) 
+        detections_left = darknet.detect_image(network, class_names, darknet_image_left, thresh=thresh)
+        darknet.print_detections(detections_left, show_coordinates)
+        print(detections_left)
+        darknet.free_image(darknet_image_left)
+
+        darknet_image_right = darknet.make_image(width_right, height_right, 3)
+        darknet.copy_image_from_bytes(darknet_image_right, frame_resized_right.tobytes()) 
+        detections_right = darknet.detect_image(network, class_names, darknet_image_right, thresh=thresh)
+        darknet.print_detections(detections_right, show_coordinates)
+        print(detections_right)
+        darknet.free_image(darknet_image_right)
 
         # # draw bounding box
-        image = darknet.draw_boxes(detections, frame_resized, class_colors)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image_left = darknet.draw_boxes(detections_left, frame_resized_left, class_colors)
+        image_left = cv2.cvtColor(image_left, cv2.COLOR_BGR2RGB)
 
-        cv2.imshow("win_title", image)
+        image_right = darknet.draw_boxes(detections_right, frame_resized_right, class_colors)
+        image_right = cv2.cvtColor(image_right, cv2.COLOR_BGR2RGB)
+
+        cv2.imshow("image_left", image_left)
+        cv2.imshow("image_right", image_right)
         fps = int(1/(time.time()-t_prev))
+
+        point3D_A = point_cloud.get_value(319,477)
+        A_x = point3D_A[1][0]
+        A_y = point3D_A[1][1]
+        A_z = point3D_A[1][2]
+        color = point3D_A[1][3]
+
+        point3D_B = point_cloud1.get_value(176,473)
+        B_x = point3D_B[1][0]
+        B_y = point3D_B[1][1]
+        B_z = point3D_B[1][2]
+        color = point3D_B[1][3]
+
+        point3D_C = point_cloud.get_value(412,477)
+        C_x = point3D_C[1][0]
+        C_y = point3D_C[1][1]
+        C_z = point3D_C[1][2]
+        color = point3D_C[1][3]
+
+        point3D_D = point_cloud1.get_value(268,476)
+        D_x = point3D_D[1][0]
+        D_y = point3D_D[1][1]
+        D_z = point3D_D[1][2]
+        color = point3D_D[1][3]
+
+        point3D_check = point_cloud.get_value(570,383)
+        check_x = point3D_check[1][0]
+        check_y = point3D_check[1][1]
+        check_z = point3D_check[1][2]
+        color = point3D_check[1][3]
+
+        print("point3D_A: "+ str(A_x)+ " ," + str(A_y) + " ," + str(A_z))
+        print("point3D_B: "+ str(B_x)+ " ," + str(B_y) + " ," + str(B_z))
+        print("point3D_C: "+ str(C_x)+ " ," + str(C_y) + " ," + str(C_z))
+        print("point3D_D: "+ str(D_x)+ " ," + str(D_y) + " ," + str(D_z))
+        print("point3D_check: "+ str(check_x)+ " ," + str(check_y) + " ," + str(check_z))
+
         #好想睡覺.....
-        if  len(detections) != 0:
-            if int(float(detections[0][1])) >= 90:
-                if detections[0][0] == "long" and key == 114:
+        if  len(detections_left) != 0:
+            if int(float(detections_left[0][1])) >= 85 :
+                if detections_left[0][0] == "long" and key == 114:
                     a += 1
 
-                    long_center_x = detections[0][2][0]
-                    long_center_y = detections[0][2][1]
-                    long_width = detections[0][2][2]
-                    long_height = detections[0][2][3]
+                    long_center_x_left = detections_left[0][2][0]
+                    long_center_y_left = detections_left[0][2][1]
+                    long_width_left = detections_left[0][2][2]
+                    long_height_left = detections_left[0][2][3]
 
-                    left_up_x = int(round((long_center_x - (long_width/2.0)),3))
-                    left_up_y = int(round((long_center_y - (long_height/2.0)),3))
-                    right_down_x = int(round((long_center_x + long_width/2.0),3))
-                    right_down_y = int(round((long_center_y + (long_height/2.0)),3))
+                    left_up_x_left = int(round((long_center_x_left - (long_width_left/2.0)),3))
+                    left_up_y_left = int(round((long_center_y_left - (long_height_left/2.0)),3))
+                    right_down_x_left = int(round((long_center_x_left + long_width_left/2.0),3))
+                    right_down_y_left = int(round((long_center_y_left + (long_height_left/2.0)),3))
 
-                    orig_long = save_path_long+str(a) +'.jpg'
+                    long_center_x_right = detections_right[0][2][0]
+                    long_center_y_right = detections_right[0][2][1]
+                    long_width_right = detections_right[0][2][2]
+                    long_height_right = detections_right[0][2][3]
 
-                    cv2.imwrite(orig_long,color_image)
-                    shutil.copy(local_img_name, bgrlong_path +str(a) +'.jpg')
+                    left_up_x_right = int(round((long_center_x_right - (long_width_right/2.0)),3))
+                    left_up_y_right = int(round((long_center_y_right - (long_height_right/2.0)),3))
+                    right_down_x_right = int(round((long_center_x_right + long_width_right/2.0),3))
+                    right_down_y_right = int(round((long_center_y_right + (long_height_right/2.0)),3))
+
+                    orig_long_left = save_path_long_left + str(a) +'.jpg'
+                    orig_long_right = save_path_long_right + str(a) +'.jpg'
+                    cv2.imwrite(orig_long_left,color_image)
+                    cv2.imwrite(orig_long_right,color_image1)
+                    
+                    shutil.copy(local_img_name_left, bgrlong_path_left +str(a) +'.jpg')
+                    shutil.copy(local_img_name_right, bgrlong_path_right +str(a) +'.jpg')
 
                     #matting
-                    matimg = handle(orig_long,bgrlong_path +str(a) +'.jpg') #com,fgr,pha
-                    mat_long = tensor_to_np(matimg[2])
-                    matimg_mat = save_mat_long+"long_"+str(a)+'.jpg'
-                    cv2.imwrite(matimg_mat,mat_long)
+                    matimg_left = handle(orig_long_left,bgrlong_path_left +str(a) +'.jpg') #com,fgr,pha
+                    mat_long_left = tensor_to_np(matimg_left[2])
+                    matimg_mat_left = save_mat_long_left+"long_"+str(a)+'.jpg'
+                    cv2.imwrite(matimg_mat_left,mat_long_left)
 
-                    process = post_processing(matimg[2])
-                    process_long = save_process_long+"long_"+str(a)+'.jpg'
-                    cv2.imwrite(process_long,process)
+                    matimg_right = handle(orig_long_right,bgrlong_path_right +str(a) +'.jpg') #com,fgr,pha
+                    mat_long_right = tensor_to_np(matimg_right[2])
+                    matimg_mat_right = save_mat_long_right + "long_"+str(a)+'.jpg'
+                    cv2.imwrite(matimg_mat_right,mat_long_right)
 
-                    center = line_Segment(process_long,orig_long)
+                    process_left = post_processing(matimg_left[2])
+                    process_long_left = save_process_long+"long_left_"+str(a)+'.jpg'
+                    cv2.imwrite(process_long_left,process_left)
 
-                    point3D = point_cloud.get_value(center[1],center[2])
-                    x = point3D[1][0]
-                    y = point3D[1][1]
-                    z = point3D[1][2]
-                    color = point3D[1][3]
+                    process_right = post_processing(matimg_right[2])
+                    process_long_right = save_process_long+"long_right_"+str(a)+'.jpg'
+                    cv2.imwrite(process_long_right,process_right)
 
+                    center_left = line_Segment(process_long_left,orig_long_left)
+                    center_right = line_Segment(process_long_right,orig_long_right)
+
+                    point3D_left = point_cloud.get_value(center_left[1],center_left[2])
+                    x_left = point3D_left[1][0]
+                    y_left = point3D_left[1][1]
+                    z_left = point3D_left[1][2]
+                    color_left = point3D_left[1][3]
+
+                    point3D_right = point_cloud1.get_value(center_right[1],center_right[2])
+                    x_right = point3D_right[1][0]
+                    y_right = point3D_right[1][1]
+                    z_right = point3D_right[1][2]
+                    color_right = point3D_right[1][3]
+                    
                     # viewer.updateData(point_cloud1)
                     # 求取深度
-                    z_value = depth_image_zed.get_value(center[1],center[2])
+                    z_value_left = depth_image_zed.get_value(center_left[1],center_left[2])
+                    z_value_right = depth_image_zed.get_value(center_right[1],center_right[2])
 
-                    cv2.putText(center[0], "Object: " + str(detections[0][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                    cv2.putText(center[0], "Depth: " + str(round(z_value[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                    cv2.putText(center[0], "Center: " + str(round(center[1],3)) +","+ str(round(center[2],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                    cv2.putText(center[0], "Angle: " + str(round(center[3],3)) , (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                    cv2.putText(center[0], "point3D_xyz: " + str(round(x,3))+", " + str(round(y,3))+", "  + str(round(z,3)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                    cv2.imwrite(center_long+"long_"+str(a)+'.jpg',center[0])
-                    cv2.imshow("finish",center[0])
+                    cv2.putText(center_left[0], "Object: " + str(detections_left[0][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                    cv2.putText(center_left[0], "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                    cv2.putText(center_left[0], "Center: " + str(round(center_left[1],3)) +","+ str(round(center_left[2],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                    cv2.putText(center_left[0], "Angle: " + str(round(center_left[3],3)) , (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                    cv2.putText(center_left[0], "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                    cv2.imwrite(center_long+"long_left_"+str(a)+'.jpg',center_left[0])
+                    cv2.imshow("finish_left",center_left[0])
 
-                elif detections[0][0] == "circle" or detections[0][0] == "hollow":
-                    # print(len(detections))
+                    cv2.putText(center_right[0], "Object: " + str(detections_right[0][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                    cv2.putText(center_right[0], "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                    cv2.putText(center_right[0], "Center: " + str(round(center_right[1],3)) +","+ str(round(center_right[2],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                    cv2.putText(center_right[0], "Angle: " + str(round(center_right[3],3)) , (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                    cv2.putText(center_right[0], "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                    cv2.imwrite(center_long+"long_right_"+str(a)+'.jpg',center_right[0])
+                    cv2.imshow("finish_right",center_right[0])
+
+                elif detections_left[0][0] == "circle" or detections_left[0][0] == "hollow":
                     if  key == 114:
                         b += 1
-                        detections_num = int(len(detections))
-                        print(detections_num)
+                        detections_num = int(len(detections_left))
+                        orig_circle_left= save_path_circle_left+str(b) +'.jpg'
+                        orig_circle_right= save_path_circle_right+str(b) +'.jpg'
+                        cv2.imwrite(orig_circle_left,color_image)
+                        cv2.imwrite(orig_circle_right,color_image1)
 
-                        orig_circle = save_path_circle+str(b) +'.jpg'
-                        cv2.imwrite(orig_circle,color_image)
+                        shutil.copy(local_img_name_left, bgrcircle_path_left + str(b) +'.jpg')
+                        shutil.copy(local_img_name_right, bgrcircle_path_right + str(b) +'.jpg')
 
-                        shutil.copy(local_img_name, bgrcircle_path + str(b) +'.jpg')
-                        matimg = handle(orig_circle,bgrcircle_path + str(b) +'.jpg')
-                        mat_circle = tensor_to_np(matimg[2])
-                        matimg_mat = save_mat_circle+"circle_"+str(b)+'.jpg'
-                        cv2.imwrite(matimg_mat,mat_circle)
+                        matimg_left = handle(orig_circle_left,bgrcircle_path_left + str(b) +'.jpg')
+                        mat_circle_left = tensor_to_np(matimg_left[2])
+                        matimg_mat_left = save_mat_circler_left+"circle_"+str(b)+'.jpg'
+                        cv2.imwrite(matimg_mat_left,mat_circle_left)
 
-                        # process = tensor_to_np(matimg[2])
-                        process = post_processing(matimg[2])
-                        process_circle = save_process_circle + "circle_" + str(b) + '.jpg'
-                        cv2.imwrite(process_circle,process)
+                        matimg_right = handle(orig_circle_right,bgrcircle_path_right + str(b) +'.jpg')
+                        mat_circle_right = tensor_to_np(matimg_right[2])
+                        matimg_mat_right = save_mat_circle_right + "circle_"+str(b)+'.jpg'
+                        cv2.imwrite(matimg_mat_right,mat_circle_right)
+
+                        process_left = post_processing(matimg_left[2])
+                        process_circle_left = save_process_circle + "circle_left_" + str(b) + '.jpg'
+                        cv2.imwrite(process_circle_left,process_left)
+
+                        process_right = post_processing(matimg_right[2])
+                        process_circle_right = save_process_circle + "circle_right_" + str(b) + '.jpg'
+                        cv2.imwrite(process_circle_right,process_right)
 
                         # center = circle_transform(process_circle,orig_circle,circle_center_x,circle_center_y)
-                        center = circle_transform(process_circle,orig_circle,len(detections))
+                        center_left = circle_transform(process_circle_left,orig_circle_left,len(detections_left))
+                        center_right = circle_transform(process_circle_right,orig_circle_right,len(detections_left))
 
-                        point3D = point_cloud.get_value(center[1],center[2])
-                        x = point3D[1][0]
-                        y = point3D[1][1]
-                        z = point3D[1][2]
-                        color = point3D[1][3]
+                        point3D_left = point_cloud.get_value(center_left[1],center_left[2])
+                        x_left = point3D_left[1][0]
+                        y_left = point3D_left[1][1]
+                        z_left = point3D_left[1][2]
+                        color_left = point3D_left[1][3]
+
+                        point3D_right = point_cloud1.get_value(center_right[1],center_right[2])
+                        x_right = point3D_right[1][0]
+                        y_right = point3D_right[1][1]
+                        z_right = point3D_right[1][2]
+                        color_right = point3D_right[1][3]
 
                         # viewer.updateData(point_cloud1)
 
                         # 求取深度
-                        z_value = depth_image_zed.get_value(center[1],center[2])
+                        z_value_left = depth_image_zed.get_value(center_left[1],center_left[2])
+                        z_value_right = depth_image_zed.get_value(center_right[1],center_right[2])
 
-                        cv2.putText(center[0], "Object: " + str(detections[0][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        cv2.putText(center[0], "Depth: " + str(round(z_value[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        cv2.putText(center[0], "Center: " + str(round(center[1],3)) +","+ str(round(center[2],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        cv2.putText(center[0], "Angle: " + str(round(center[3],3)) , (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        cv2.putText(center[0], "point3D_xyz: " + str(round(x,3))+", " + str(round(y,3))+", "  + str(round(z,3)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        cv2.imwrite(center_circle+"circle_"+str(b)+'.jpg',center[0])
-                        cv2.imshow("finish",center[0])
+                        cv2.putText(center_left[0], "Object: " + str(detections_left[0][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                        cv2.putText(center_left[0], "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                        cv2.putText(center_left[0], "Center: " + str(round(center_left[1],3)) +","+ str(round(center_left[2],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                        cv2.putText(center_left[0], "Angle: " + str(round(center_left[3],3)) , (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                        cv2.putText(center_left[0], "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                        cv2.imwrite(center_circle+"circle_left_"+str(b)+'.jpg',center_left[0])
+                        cv2.imshow("finish_left",center_left[0])
 
-                elif detections[0][0] == "columnar" or detections[0][0] == "grip":
+                        cv2.putText(center_right[0], "Object: " + str(detections_right[0][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                        cv2.putText(center_right[0], "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                        cv2.putText(center_right[0], "Center: " + str(round(center_right[1],3)) +","+ str(round(center_right[2],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                        cv2.putText(center_right[0], "Angle: " + str(round(center_right[3],3)) , (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                        cv2.putText(center_right[0], "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                        cv2.imwrite(center_circle+"circle_right_"+str(b)+'.jpg',center_right[0])
+                        cv2.imshow("finish_right",center_right[0])
+
+                elif detections_left[0][0] == "columnar" or detections_left[0][0] == "grip":
                     if key ==114:
                         c += 1
-                        orig_columnar = save_path_columnar+str(c) +'.jpg'
-                        cv2.imwrite(orig_columnar,color_image)
+                        orig_columnar_left = save_path_columnar_left + str(c) +'.jpg'
+                        cv2.imwrite(orig_columnar_left,color_image)
+                        orig_columnar_right = save_path_columnar_right + str(c) +'.jpg'
+                        cv2.imwrite(orig_columnar_right,color_image1)
 
-                        new_obj_name = str(c) +'.jpg'
-                        shutil.copy(local_img_name, bgrcolumnar_path + new_obj_name)
+                        shutil.copy(local_img_name_left, bgrcolumnar_path_left + str(c) +'.jpg')
+                        shutil.copy(local_img_name_right, bgrcolumnar_path_right + str(c) +'.jpg')
 
-                        matimg = handle(orig_columnar,bgrcolumnar_path + new_obj_name) 
-                        mat_columnar = tensor_to_np(matimg[2])
-                        matimg_mat = save_mat_columnar+"columnar_"+str(c)+'.jpg'
-                        cv2.imwrite(matimg_mat,mat_columnar)
+                        matimg_left = handle(orig_columnar_left,bgrcolumnar_path_left + str(c) +'.jpg') 
+                        mat_columnar_left = tensor_to_np(matimg_left[2])
+                        matimg_mat_left = save_mat_columnar_left + "columnar_" + str(c) + '.jpg'
+                        cv2.imwrite(matimg_mat_left,mat_columnar_left)
 
-                        process = post_processing(matimg[2])
-                        # process = tensor_to_np(matimg[2])
-                        process_columnar = save_process_columnar + "columnar_" + str(c) + '.jpg'
-                        cv2.imwrite(process_columnar,process)
+                        matimg_right= handle(orig_columnar_right,bgrcolumnar_path_right + str(c) +'.jpg') 
+                        mat_columnar_right = tensor_to_np(matimg_right[2])
+                        matimg_mat_right = save_mat_columnar_right + "columnar_" + str(c)+'.jpg'
+                        cv2.imwrite(matimg_mat_right,mat_columnar_right)
 
-                        if(len(detections) == 1): #單純瓶子
-                            center = line_Segment_cup(process_columnar,orig_columnar)
+                        process_left = post_processing(matimg_left[2])
+                        process_columnar_left = save_process_columnar + "columnar_left" + str(c) + '.jpg'
+                        cv2.imwrite(process_columnar_left,process_left)
 
-                            point3D = point_cloud.get_value(center[1],center[2])
-                            x = point3D[1][0]
-                            y = point3D[1][1]
-                            z = point3D[1][2]
-                            color = point3D[1][3]
+                        process_right = post_processing(matimg_right[2])
+                        process_columnar_right = save_process_columnar + "columnar_right" + str(c) + '.jpg'
+                        cv2.imwrite(process_columnar_right,process_right)
+
+                        if(len(detections_left) == 1) and (len(detections_right) == 1): #單純瓶子
+
+                            center_left = line_Segment_cup(process_columnar_left,orig_columnar_left)
+                            center_right = line_Segment_cup(process_columnar_right,orig_columnar_right)
+
+                            point3D_left = point_cloud.get_value(center_left[1],center_left[2])
+                            x_left = point3D_left[1][0]
+                            y_left = point3D_left[1][1]
+                            z_left = point3D_left[1][2]
+                            color_left = point3D_left[1][3]
+
+                            point3D_right = point_cloud1.get_value(center_right[1],center_right[2])
+                            x_right = point3D_right[1][0]
+                            y_right = point3D_right[1][1]
+                            z_right = point3D_right[1][2]
+                            color_right = point3D_right[1][3]
 
                             # viewer.updateData(point_cloud1)
                             #depth
-                            z_value = depth_image_zed.get_value(center[1],center[2])
+                            z_value_left = depth_image_zed.get_value(center_left[1],center_left[2])
+                            z_value_right = depth_image_zed.get_value(center_right[1],center_right[2])
 
-                            cv2.putText(center[0], "Object: " + str(detections[0][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                            cv2.putText(center[0], "Depth: " + str(round(z_value[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                            cv2.putText(center[0], "Center: " + str(round(center[1],3)) +","+ str(round(center[2],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                            cv2.putText(center[0], "Angle: " + str(round(center[3],3)) , (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                            cv2.putText(center[0], "point3D_xyz: " + str(round(x,3))+", " + str(round(y,3))+", "  + str(round(z,3)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                            cv2.imwrite(center_columnar+"columnar_"+str(c)+'.jpg',center[0])
-                            cv2.imshow("finish",center[0])
-                        #可以畢業就好><
+                            cv2.putText(center_left[0], "Object: " + str(detections_left[0][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                            cv2.putText(center_left[0], "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                            cv2.putText(center_left[0], "Center: " + str(round(center_left[1],3)) +","+ str(round(center_left[2],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                            cv2.putText(center_left[0], "Angle: " + str(round(center_left[3],3)) , (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                            cv2.putText(center_left[0], "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                            cv2.imwrite(center_columnar+"columnar_left_"+str(c)+'.jpg',center_left[0])
+                            cv2.imshow("finish_left",center_left[0])
+
+                            cv2.putText(center_right[0], "Object: " + str(detections_right[0][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                            cv2.putText(center_right[0], "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                            cv2.putText(center_right[0], "Center: " + str(round(center_right[1],3)) +","+ str(round(center_right[2],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                            cv2.putText(center_right[0], "Angle: " + str(round(center_right[3],3)) , (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                            cv2.putText(center_right[0], "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                            cv2.imwrite(center_columnar+"columnar_right_"+str(c)+'.jpg',center_right[0])
+                            cv2.imshow("finish_right",center_right[0])
+                            #可以畢業就好><
+
                         else:  #馬克杯
-                            if detections[0][0] == "grip" and detections[1][0]== "columnar":
+                            if detections_left[0][0] == "grip" and detections_left[1][0]== "columnar":
 
-                                grip_center_x = detections[0][2][0]
-                                grip_center_y = detections[0][2][1] 
-                                grip_width = detections[0][2][2]
-                                grip_height = detections[0][2][3]
+                                grip_center_x = detections_left[0][2][0]
+                                grip_center_y = detections_left[0][2][1] 
+                                grip_width = detections_left[0][2][2]
+                                grip_height = detections_left[0][2][3]
 
-                                columnar_center_x = detections[1][2][0]
-                                columnar_center_y = detections[1][2][1]
-                                columnar_width = detections[1][2][2]
-                                columnar_height = detections[1][2][3]
+                                columnar_center_x = detections_left[1][2][0]
+                                columnar_center_y = detections_left[1][2][1]
+                                columnar_width = detections_left[1][2][2]
+                                columnar_height = detections_left[1][2][3]
 
                                 roct_result = angle(grip_center_x, grip_center_y,columnar_center_x, columnar_center_y)
                                 print(roct_result)
@@ -2080,11 +2096,11 @@ if __name__ == '__main__':
                                     z_value = depth_image_zed.get_value(center[0],center[1])
 
                                     cv2.putText(color_image, "test: " + str(number) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "Object: " + str(detections[0][0]) +"," +str(detections[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     cv2.putText(color_image, "Depth: " + str(round(z_value[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     cv2.putText(color_image, "Center: " + str(round(center[0],3)) +","+ str(round(center[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     cv2.putText(color_image, "angle: "+ str(real_angle), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "point3D_xyz: " + str(round(x,3))+", " + str(round(y,3))+", "  + str(round(z,3)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "point3D_xyz: " + str(round(x,5))+", " + str(round(y,5))+", "  + str(round(z,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     cv2.imwrite(center_columnar+"columnar_grip_"+str(c)+'.jpg',color_image)  
                                     cv2.imshow("finish",color_image)
 
@@ -2145,24 +2161,24 @@ if __name__ == '__main__':
                                     z_value = depth_image_zed.get_value(center[0],center[1])
 
                                     cv2.putText(color_image, "test: " + str(number) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "Object: " + str(detections[0][0]) +"," +str(detections[0][1]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[0][1]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     cv2.putText(color_image, "Depth: " + str(round(z_value[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     cv2.putText(color_image, "Center: " + str(round(center[0],3)) +","+ str(round(center[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     cv2.putText(color_image, "angle: "+ str(real_angle), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "point3D_xyz: " + str(round(x,3))+", " + str(round(y,3))+", "  + str(round(z,3)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "point3D_xyz: " + str(round(x,5))+", " + str(round(y,5))+", "  + str(round(z,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     cv2.imwrite(center_columnar+"columnar_grip_"+str(c)+'.jpg',color_image)  
                                     cv2.imshow("finish",color_image)  
 
-                            elif detections[1][0] == "grip" and detections[0][0]== "columnar":
-                                grip_center_x = detections[1][2][0]
-                                grip_center_y = detections[1][2][1]
-                                grip_width = detections[1][2][2]
-                                grip_height = detections[1][2][3]
+                            elif detections_left[1][0] == "grip" and detections_left[0][0]== "columnar":
+                                grip_center_x = detecdetections_lefttions[1][2][0]
+                                grip_center_y = detections_left[1][2][1]
+                                grip_width = detections_left[1][2][2]
+                                grip_height = detections_left[1][2][3]
 
-                                columnar_center_x = detections[0][2][0]
-                                columnar_center_y = detections[0][2][1]
-                                columnar_width = detections[0][2][2]
-                                columnar_height = detections[0][2][3]
+                                columnar_center_x = detections_left[0][2][0]
+                                columnar_center_y = detections_left[0][2][1]
+                                columnar_width = detections_left[0][2][2]
+                                columnar_height = detections_left[0][2][3]
 
                                 roct_result = angle(grip_center_x, grip_center_y,columnar_center_x, columnar_center_y)
                                 print(roct_result)
@@ -2221,11 +2237,11 @@ if __name__ == '__main__':
                                     z_value = depth_image_zed.get_value(center[0],center[1])
 
                                     cv2.putText(color_image, "test: " + str(number) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "Object: " + str(detections[0][0]) +"," +str(detections[0][1]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[0][1]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     cv2.putText(color_image, "Depth: " + str(round(z_value[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     cv2.putText(color_image, "Center: " + str(round(center[0],3)) +","+ str(round(center[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     cv2.putText(color_image, "angle: "+ str(real_angle), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "point3D_xyz: " + str(round(x,3))+", " + str(round(y,3))+", "  + str(round(z,3)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "point3D_xyz: " + str(round(x,5))+", " + str(round(y,5))+", "  + str(round(z,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     cv2.imwrite(center_columnar+"columnar_grip_"+str(c)+'.jpg',color_image)  
                                     cv2.imshow("finish",color_image) 
                                 #人生好難阿 看不到眼前的希望  am1:47
@@ -2271,7 +2287,7 @@ if __name__ == '__main__':
                                         real_angle = roct_result
                                         # number = 33332222
                                     
-                                    cv2.circle(color_image,(int(center[0]),int(center[1])),2,(0,0,255),2)
+                                    cv2.circle(color_image,(int(center[0]),int(ˇcenter[1])),2,(0,0,255),2)
 
                                     point3D = point_cloud.get_value(center[0],center[1])
                                     x = point3D[1][0]
@@ -2285,15 +2301,15 @@ if __name__ == '__main__':
                                     z_value = depth_image_zed.get_value(center[0],center[1])
 
                                     cv2.putText(color_image, "test: " + str(number) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "Object: " + str(detections[0][0]) +"," +str(detections[0][1]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[0][1]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     cv2.putText(color_image, "Depth: " + str(round(z_value[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     cv2.putText(color_image, "Center: " + str(round(center[0],3)) +","+ str(round(center[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     cv2.putText(color_image, "angle: "+ str(real_angle), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "point3D_xyz: " + str(round(x,3))+", " + str(round(y,3))+", "  + str(round(z,3)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "point3D_xyz: " + str(round(x,5))+", " + str(round(y,5))+", "  + str(round(z,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     cv2.imwrite(center_columnar+"columnar_grip_"+str(c)+'.jpg',color_image)  
                                     cv2.imshow("finish",color_image) 
 
-                elif detections[0][0] == "blade" or detections[0][0] == "grasp" or detections[0][0] == "round_grasp": 
+                elif detections_left[0][0] == "blade" or detections_left[0][0] == "grasp" or detections_left[0][0] == "round_grasp": 
                     if key == 114:
                         d += 1
                         orig_blade = save_path_blade+str(d) +'.jpg'
@@ -2651,26 +2667,26 @@ if __name__ == '__main__':
                             #depth
                             z_value = depth_image_zed.get_value(real_grasp_center_x,real_grasp_center_y)
 
-                            cv2.putText(color_image, "Object: " + str(detections[0][0]) +"," +str(detections[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                            cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                             cv2.putText(color_image, "Depth: " + str(round(z_value[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                             cv2.putText(color_image, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                             cv2.putText(color_image, "angle: " + str(round(result,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                            cv2.putText(color_image, "point3D_xyz: " + str(round(x,3))+", " + str(round(y,3))+", "  + str(round(z,3)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                            cv2.putText(color_image, "point3D_xyz: " + str(round(x,5))+", " + str(round(y,5))+", "  + str(round(z,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                             cv2.imwrite(center_blade + "blade_grip_"+str(d)+'.jpg',color_image) 
                             cv2.imshow("finish",color_image)
 
                         
                         #剪刀2
-                        elif detections[0][0] == "round_grasp" and detections[1][0] == "blade":
-                            round_grasp_center_x = round(detections[0][2][0])
-                            round_grasp_center_y = round(detections[0][2][1])
-                            round_grasp_width = round(detections[0][2][2])
-                            round_grasp_height = round(detections[0][2][3])
+                        elif detections_left[0][0] == "round_grasp" and detections_left[1][0] == "blade":
+                            round_grasp_center_x = round(detections_left[0][2][0])
+                            round_grasp_center_y = round(detections_left[0][2][1])
+                            round_grasp_width = round(detections_left[0][2][2])
+                            round_grasp_height = round(detections_left[0][2][3])
 
-                            blade_center_x = round(detections[1][2][0])
-                            blade_center_y = round(detections[1][2][1])
-                            blade_width = round(detections[1][2][2])
-                            blade_height = round(detections[1][2][3])
+                            blade_center_x = round(detections_left[1][2][0])
+                            blade_center_y = round(detections_left[1][2][1])
+                            blade_width = round(detections_left[1][2][2])
+                            blade_height = round(detections_left[1][2][3])
 
                             left_up_x = round(round_grasp_center_x - (round_grasp_width/2.0))
                             left_up_y = round(round_grasp_center_y - (round_grasp_height/2.0))
@@ -3005,26 +3021,26 @@ if __name__ == '__main__':
                             #depth
                             z_value = depth_image_zed.get_value(real_grasp_center_x,real_grasp_center_y)
 
-                            cv2.putText(color_image, "Object: " + str(detections[0][0]) +"," +str(detections[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                            cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                             cv2.putText(color_image, "Depth: " + str(round(z_value[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                             cv2.putText(color_image, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                             cv2.putText(color_image, "angle: " + str(round(result,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                            cv2.putText(color_image, "point3D_xyz: " + str(round(x,3))+", " + str(round(y,3))+", "  + str(round(z,3)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                            cv2.putText(color_image, "point3D_xyz: " + str(round(x,5))+", " + str(round(y,5))+", "  + str(round(z,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                             cv2.imwrite(center_blade + "blade_grip_"+str(d)+'.jpg',color_image) 
                             cv2.imshow("finish",color_image)
                             
 
                         #鉗子1
-                        elif detections[1][0] == "grasp" and detections[0][0] == "blade":
-                            grasp_center_x = round(detections[1][2][0])
-                            grasp_center_y = round(detections[1][2][1])
-                            grasp_width = round(detections[1][2][2])
-                            grasp_height = round(detections[1][2][3])
+                        elif detections_left[1][0] == "grasp" and detections_left[0][0] == "blade":
+                            grasp_center_x = round(detections_left[1][2][0])
+                            grasp_center_y = round(detections_left[1][2][1])
+                            grasp_width = round(detections_left[1][2][2])
+                            grasp_height = round(detections_left[1][2][3])
 
-                            blade_center_x = round(detections[0][2][0])
-                            blade_center_y = round(detections[0][2][1])
-                            blade_width = round(detections[0][2][2])
-                            blade_height = round(detections[0][2][3])
+                            blade_center_x = round(detections_left[0][2][0])
+                            blade_center_y = round(detections_left[0][2][1])
+                            blade_width = round(detections_left[0][2][2])
+                            blade_height = round(detections_left[0][2][3])
 
                             left_up_x = round(grasp_center_x - (grasp_width/2.0))
                             left_up_y = round(grasp_center_y - (grasp_height/2.0))
@@ -3138,23 +3154,6 @@ if __name__ == '__main__':
                                     real_grasp_center_x = (rota[0][0] + rota[2][0])/2.0 
                                     real_grasp_center_y = (rota[0][1] + rota[2][1])/2.0
                                     cv2.circle(color_image,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
-                                    
-                                    # point3D = point_cloud.get_value(real_grasp_center_x,real_grasp_center_y)
-                                    # x = point3D[1][0]
-                                    # y = point3D[1][1]
-                                    # z = point3D[1][2]
-                                    # color = point3D[1][3]
-                                    
-                                    # #depth
-                                    # z_value = depth_image_zed.get_value(real_grasp_center_x,real_grasp_center_y)
-
-                                    # cv2.putText(color_image, "Object: " + str(detections[0][0]) +"," +str(detections[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    # cv2.putText(color_image, "Depth: " + str(round(z_value[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    # cv2.putText(color_image, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    # cv2.putText(color_image, "angle: " + str(round(result,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    # cv2.putText(color_image, "point3D_xyz: " + str(round(x,3))+", " + str(round(y,3))+", "  + str(round(z,3)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    # cv2.imwrite(center_blade + "blade_grasp_"+str(d)+'.jpg',color_image)
-                                    # cv2.imshow("finish",color_image)
 
                                 elif((blade_center_x - grasp_center_x) < 25):
                                     cv2.putText(color_image, "right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
@@ -3310,25 +3309,25 @@ if __name__ == '__main__':
                             #depth
                             z_value = depth_image_zed.get_value(real_grasp_center_x,real_grasp_center_y)
 
-                            cv2.putText(color_image, "Object: " + str(detections[0][0]) +"," +str(detections[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                            cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                             cv2.putText(color_image, "Depth: " + str(round(z_value[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                             cv2.putText(color_image, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                             cv2.putText(color_image, "angle: " + str(round(result,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                            cv2.putText(color_image, "point3D_xyz: " + str(round(x,3))+", " + str(round(y,3))+", "  + str(round(z,3)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                            cv2.putText(color_image, "point3D_xyz: " + str(round(x,5))+", " + str(round(y,5))+", "  + str(round(z,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                             cv2.imwrite(center_blade + "blade_grip_"+str(d)+'.jpg',color_image) 
                             cv2.imshow("finish",color_image)
 
                         #鉗子2
-                        elif detections[0][0] == "grasp" and detections[1][0] == "blade":
-                            grasp_center_x = detections[0][2][0]
-                            grasp_center_y = detections[0][2][1]
-                            grasp_width = detections[0][2][2]
-                            grasp_height = detections[0][2][3]
+                        elif detections_left[0][0] == "grasp" and detections_left[1][0] == "blade":
+                            grasp_center_x = detections_left[0][2][0]
+                            grasp_center_y = detections_left[0][2][1]
+                            grasp_width = detections_left[0][2][2]
+                            grasp_height = detections_left[0][2][3]
 
-                            blade_center_x = detections[1][2][0]
-                            blade_center_y = detections[1][2][1]
-                            blade_width = detections[1][2][2]
-                            blade_height = detections[1][2][3]
+                            blade_center_x = detections_left[1][2][0]
+                            blade_center_y = detections_left[1][2][1]
+                            blade_width = detections_left[1][2][2]
+                            blade_height = detections_left[1][2][3]
 
                             left_up_x = int(grasp_center_x - (grasp_width/2.0))
                             left_up_y = int(grasp_center_y - (grasp_height/2.0))
@@ -3598,11 +3597,11 @@ if __name__ == '__main__':
                             #depth
                             z_value = depth_image_zed.get_value(real_grasp_center_x,real_grasp_center_y)
 
-                            cv2.putText(color_image, "Object: " + str(detections[0][0]) +"," +str(detections[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                            cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                             cv2.putText(color_image, "Depth: " + str(round(z_value[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                             cv2.putText(color_image, "center: " + "("+ str(round(real_grasp_center_x,3)) +","+ str(round(real_grasp_center_y,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                             cv2.putText(color_image, "angle: " + str(round(result,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                            cv2.putText(color_image, "point3D_xyz: " + str(round(x,3))+", " + str(round(y,3))+", "  + str(round(z,3)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                            cv2.putText(color_image, "point3D_xyz: " + str(round(x,5))+", " + str(round(y,5))+", "  + str(round(z,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                             cv2.imwrite(center_blade + "blade_grasp_"+str(d)+'.jpg',color_image) 
                             cv2.imshow("finish",color_image)
                         #沒東西
