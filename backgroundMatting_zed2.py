@@ -1157,7 +1157,7 @@ def line_Segment(mat,orig):
 
 def line_Segment_cup(mat,orig):
     mat_img = cv2.imread(str(mat),0)
-    cv2.imshow("mat",mat_img)
+    # cv2.imshow("mat",mat_img)
     orig_img = cv2.imread(orig)
 
     # lsd = cv2.createLineSegmentDetector(0)
@@ -1188,7 +1188,7 @@ def line_Segment_cup(mat,orig):
         distance = math.sqrt((x0-x1)**2+(y0-y1)**2)
     
         if(distance >= int(maxIndex[1])):
-            cv2.line(orig_img,(x0,y0),(x1,y1),(0,255,0),2,cv2.LINE_AA)
+            # cv2.line(orig_img,(x0,y0),(x1,y1),(0,255,0),2,cv2.LINE_AA)
             coordinate.append(((x0,y0),(x1,y1)))
 
             result = angle(x0,y0,x1,y1)
@@ -1208,7 +1208,7 @@ def line_Segment_cup(mat,orig):
         circle_x = (coordinate[0][0][0] + coordinate[1][0][0])/2
         circle_y = (coordinate[0][0][1] + coordinate[1][0][1])/2
 
-    cv2.circle(orig_img,(int(circle_x),int(circle_y)),2,(0,0,255),2)
+    # cv2.circle(orig_img,(int(circle_x),int(circle_y)),2,(0,0,255),2)
 
     #計算物體長寬用
     object_Image_mat = mat_img.copy()
@@ -1223,10 +1223,10 @@ def line_Segment_cup(mat,orig):
         cv2.circle(object_Image,(int(center_x1),int(center_y1)),2,(255, 128, 0),2)
     
     circle_X = center_x1 
-    circle_Y = center_y1 +30
+    circle_Y = center_y1 +20
 
-    print(circle_X,circle_Y)
-    print("1111111111111111111111111")
+    # print(circle_X,circle_Y)
+    # print("1111111111111111111111111")
 
     # 直线拟合
     rows, cols = object_Image.shape[:2]
@@ -1234,7 +1234,7 @@ def line_Segment_cup(mat,orig):
     lefty = int((-x * vy / vx) + y)
     righty = int(((cols - x) * vy / vx) + y)
     cv2.line(object_Image, (cols - 1, righty), (0, lefty), (0, 255, 255), 2)
-    cv2.imshow("test",object_Image)
+    # cv2.imshow("test",object_Image)
     roct_result = angle(cols - 1, righty,0, lefty)
 
 
@@ -1245,7 +1245,7 @@ def line_Segment_cup(mat,orig):
     # grasp_right_x = int(circle_x + (width/2.0))
     # grasp_right_y = int(circle_y + (height/2.0))
 
-    width = w
+    width = w + 20
     height = 20
     grasp_left_x = int(circle_X - (width/2.0))
     grasp_left_y = int(circle_Y - (height/2.0))
@@ -1281,6 +1281,8 @@ def line_Segment_cup(mat,orig):
     cv2.line(orig_img,(int(aa[1][0]),int(aa[1][1])),(int(aa[3][0]),int(aa[3][1])),(255, 0, 255),2,cv2.LINE_AA)
     cv2.line(orig_img,(int(aa[0][0]),int(aa[0][1])),(int(aa[1][0]),int(aa[1][1])),(255, 0, 255),2,cv2.LINE_AA)
     cv2.line(orig_img,(int(aa[2][0]),int(aa[2][1])),(int(aa[3][0]),int(aa[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+    cv2.circle(orig_img,(int(circle_X),int(circle_Y)),2,(255, 128, 0),2)
 
     return orig_img ,circle_x,circle_y,roct_result
 
@@ -2026,301 +2028,1256 @@ if __name__ == '__main__':
 
                         else:  #馬克杯
                             if detections_left[0][0] == "grip" and detections_left[1][0]== "columnar":
+                                if detections_right[0][0] == "grip" and detections_right[1][0]== "columnar":
+                                    grip_center_x_left = detections_left[0][2][0]
+                                    grip_center_y_left = detections_left[0][2][1] 
+                                    grip_width_left = detections_left[0][2][2]
+                                    grip_height_left = detections_left[0][2][3]
 
-                                grip_center_x = detections_left[0][2][0]
-                                grip_center_y = detections_left[0][2][1] 
-                                grip_width = detections_left[0][2][2]
-                                grip_height = detections_left[0][2][3]
+                                    columnar_center_x_left = detections_left[1][2][0]
+                                    columnar_center_y_left = detections_left[1][2][1]
+                                    columnar_width_left = detections_left[1][2][2]
+                                    columnar_height_left = detections_left[1][2][3]
 
-                                columnar_center_x = detections_left[1][2][0]
-                                columnar_center_y = detections_left[1][2][1]
-                                columnar_width = detections_left[1][2][2]
-                                columnar_height = detections_left[1][2][3]
+                                    grip_center_x_right = detections_right[0][2][0]
+                                    grip_center_y_right = detections_right[0][2][1] 
+                                    grip_width_right = detections_right[0][2][2]
+                                    grip_height_right = detections_right[0][2][3]
 
-                                roct_result = angle(grip_center_x, grip_center_y,columnar_center_x, columnar_center_y)
-                                print(roct_result)
-                                
-                                if(columnar_center_x > grip_center_x): #grip left
+                                    columnar_center_x_right = detections_right[1][2][0]
+                                    columnar_center_y_right = detections_right[1][2][1]
+                                    columnar_width_right = detections_right[1][2][2]
+                                    columnar_height_right = detections_right[1][2][3]
 
-                                    if(roct_result<=15):
-                                    # if((columnar_center_x - grip_center_x) >= 70):
-                                        left_up_x = int((grip_center_x+10) - grip_width)
-                                        left_up_y = int((grip_center_y+10) - (grip_width/3.0))
-                                        right_down_x = int(grip_center_x)
-                                        right_down_y = int(left_up_y + (grip_width/3.0))
+                                    roct_result_left = angle(grip_center_x_left, grip_center_y_left,columnar_center_x_left, columnar_center_y_left)
+                                    print(roct_result_left)
+                                    roct_result_right = angle(grip_center_x_right, grip_center_y_right,columnar_center_x_right, columnar_center_y_right)
+                                    print(roct_result_right)
+                                    if(columnar_center_x_left > grip_center_x_left): #grip left right is the same
+                                        if(roct_result_left <= 15) or (roct_result_right <= 15):
+                                            # if((columnar_center_x - grip_center_x) >= 70):
+                                            left_up_x_left = int((grip_center_x_left+10) - grip_width_left)
+                                            left_up_y_left = int((grip_center_y_left+10) - (grip_width_left/3.0))
+                                            right_down_x_left = int(grip_center_x_left)
+                                            right_down_y_left = int(left_up_y_left + (grip_width_left/3.0))
 
-                                        cv2.rectangle(color_image,(left_up_x,left_up_y),(right_down_x,right_down_y),(255,0,255),2)
-                                        center = calculate_center(left_up_x,left_up_y,right_down_x,right_down_y)
-                                        # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                        real_angle = roct_result
-                                        number =111
+                                            left_up_x_right = int((grip_center_x_right+10) - grip_width_right)
+                                            left_up_y_right = int((grip_center_y_right+10) - (grip_width_right/3.0))
+                                            right_down_x_right = int(grip_center_x_right)
+                                            right_down_y_right = int(left_up_y_right + (grip_width_right/3.0))
 
-                                    elif(roct_result >15 and roct_result<40):
-                                    # elif((columnar_center_x - grip_center_x) < 70 and (columnar_center_x - grip_center_x) >= 1 ):
-                                        left_up_x = int((grip_center_x ) - (grip_height/2.0))
-                                        left_up_y = int((grip_center_y + 10) - (grip_width/3.0))
-                                        right_down_x = int(grip_center_x)
-                                        right_down_y = int(grip_center_y + (grip_height/4.0))
+                                            cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
+                                            center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
+                                            # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            real_angle_left = roct_result_left
+                                            number_left =1119
 
-                                        cv2.rectangle(color_image,(left_up_x,left_up_y),(right_down_x,right_down_y),(255,0,255),2)
+                                            cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
+                                            center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
+                                            # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            real_angle_right = roct_result_right
+                                            number_right =1118
 
-                                        center = calculate_center(left_up_x,left_up_y,right_down_x,right_down_y)
-                                        # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                        real_angle = roct_result
-                                        number =222
+                                        elif(roct_result_left >15 and roct_result_left <40) or (roct_result_right >15 and roct_result_right <40):
+                                            # elif((columnar_center_x - grip_center_x) < 70 and (columnar_center_x - grip_center_x) >= 1 ):
+                                            left_up_x_left = int((grip_center_x_left ) - (grip_height_left/2.0))
+                                            left_up_y_left = int((grip_center_y_left + 10) - (grip_width_left/3.0))
+                                            right_down_x_left = int(grip_center_x_left)
+                                            right_down_y_left = int(grip_center_y_left + (grip_height_left/4.0))
+
+                                            left_up_x_right = int((grip_center_x_right ) - (grip_height_right/2.0))
+                                            left_up_y_right = int((grip_center_y_right + 10) - (grip_width_right/3.0))
+                                            right_down_x_right = int(grip_center_x_right)
+                                            right_down_y_right = int(grip_center_y_right + (grip_height_right/4.0))
+
+                                            cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
+                                            center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
+                                            # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            real_angle_left = roct_result_left
+                                            number_left =2229
+
+                                            cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
+                                            center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
+                                            # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            real_angle_right = roct_result_right
+                                            number_right =2228
+                                        
+                                        elif(roct_result_left > 40) or (roct_result_right > 40):
+                                            # elif((columnar_center_x - grip_center_x) < 70 and (columnar_center_x - grip_center_x) >= 1 ):
+                                            left_up_x_left = int((grip_center_x_left) - grip_width_left+10)
+                                            left_up_y_left = int((grip_center_y_left+10) - (grip_width_left/2.0))
+                                            right_down_x_left = int(grip_center_x_left + grip_width_left-10)
+                                            right_down_y_left = int(grip_center_y_left + (grip_width_left/2.0))
+
+                                            left_up_x_right = int((grip_center_x_right) - grip_width_right+10)
+                                            left_up_y_right = int((grip_center_y_right+10) - (grip_width_right/2.0))
+                                            right_down_x_right = int(grip_center_x_right + grip_width_right-10)
+                                            right_down_y_right = int(grip_center_y_right + (grip_width_roght/2.0))
+
+                                            cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
+                                            center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
+                                            # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            real_angle_left = roct_result_left
+                                            number_left =3339
+
+                                            cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right,(right_down_x_right,right_down_y_right),(255,0,255),2))
+                                            center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
+                                            # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            real_angle_right = roct_result_right
+                                            number_right =3338
+                
+                                        cv2.circle(color_image,(int(center_left[0]),int(center_left[1])),2,(0,0,255),2)
+                                        cv2.circle(color_image1,(int(center_right[0]),int(center_right[1])),2,(0,0,255),2)
+
+                                        point3D_left = point_cloud.get_value(center_left[0],center_left[1])
+                                        x_left = point3D_left[1][0]
+                                        y_left = point3D_left[1][1]
+                                        z_left = point3D_left[1][2]
+                                        color_left = point3D_left[1][3]
+
+                                        point3D_right = point_cloud1.get_value(center_right[0],center_right[1])
+                                        x_right = point3D_right[1][0]
+                                        y_right = point3D_right[1][1]
+                                        z_right = point3D_right[1][2]
+                                        color_right = point3D_right[1][3]
+
+                                        # viewer.updateData(point_cloud1)
+                                        #depth
+                                        z_value_left = depth_image_zed.get_value(center_left[0],center_left[1])
+                                        z_value_right = depth_image_zed.get_value(center_right[0],center_right[1])
+
+                                        cv2.putText(color_image, "test: " + str(number_left) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image, "Center: " + str(round(center_left[0],3)) +","+ str(round(center_left[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image, "angle: "+ str(real_angle_left), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.imwrite(center_columnar+"columnar_grip_left_"+str(c)+'.jpg',color_image)  
+                                        cv2.imshow("finish_left",color_image) 
+
+                                        cv2.putText(color_image1, "test: " + str(number_right) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "Center: " + str(round(center_right[0],3)) +","+ str(round(center_right[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "angle: "+ str(real_angle_right), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.imwrite(center_columnar+"columnar_grip_right"+str(c)+'.jpg',color_image1)  
+                                        cv2.imshow("finish_right",color_image1) 
+
+                                    else: #grip right
+
+                                        if(roct_result_left >=-15) or (roct_result_right >=-15):
+                                            # if((columnar_center_x - grip_center_x) >= 70):
+                                            left_up_x_left = int(grip_center_x_left)
+                                            left_up_y_left = int((grip_center_y_left+10) - (grip_width_left/3.0))
+                                            right_down_x_left = int(grip_center_x_left + grip_width_left)
+                                            right_down_y_left = int(grip_center_y_left + (grip_width_left/3.0))
+
+                                            left_up_x_right = int(grip_center_x_right)
+                                            left_up_y_right = int((grip_center_y_right+10) - (grip_width_right/3.0))
+                                            right_down_x_right = int(grip_center_x_right + grip_width_right)
+                                            right_down_y_right = int(grip_center_y_right + (grip_height_right/3.0))
+
+                                            cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
+                                            center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
+                                            # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            real_angle_left = roct_result_left
+                                            number_left = 111111111119
+
+                                            cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
+                                            center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
+                                            # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            real_angle_right = roct_result_right
+                                            number_right = 111111111118
+
+                                        elif(roct_result_left <-15 and roct_result_left >-40) or (roct_result_right <-15 and roct_result_right >-40):
+                                            # elif((columnar_center_x - grip_center_x) < 70 and (columnar_center_x - grip_center_x) >= 1 ):
+                                            left_up_x_left = int(grip_center_x_left)
+                                            left_up_y_left = int((grip_center_y_left+15) - (grip_width_left/3.0))
+                                            right_down_x_left = int(grip_center_x_left-10 +grip_width_left)
+                                            # right_down_x_left = int(grip_center_x_left-10 +(grip_height_left/2.0))
+                                            right_down_y_left = int(grip_center_y_left + (grip_width_left/3.0))
+
+                                            left_up_x_right = int(grip_center_x_right)
+                                            left_up_y_right = int((grip_center_y_right+15) - (grip_width_right/3.0))
+                                            # right_down_x_right = int(grip_center_x_right-10 +(grip_height_right/2.0))
+                                            right_down_x_right  = int(grip_center_x_right -10 +grip_width_right )
+                                            right_down_y_right = int(grip_center_y_right + (grip_width_right/3.0))
+
+
+                                            cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
+                                            center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
+                                            # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            real_angle_left = roct_result_left
+                                            number_left = 22221111119
+
+                                            cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
+                                            center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
+                                            # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            real_angle_right = roct_result_right
+                                            number_right = 22221111118
                                     
-                                    elif(roct_result > 40):
-                                    # elif((columnar_center_x - grip_center_x) < 70 and (columnar_center_x - grip_center_x) >= 1 ):
-                                        left_up_x = int((grip_center_x) - grip_width+10)
-                                        left_up_y = int((grip_center_y+10) - (grip_width/2.0))
-                                        right_down_x = int(grip_center_x + grip_width-10)
-                                        right_down_y = int(grip_center_y + (grip_width/2.0))
+                                        elif(roct_result_left < -40) or (roct_result_right < -40):
+                                            # elif((columnar_center_x - grip_center_x) < 70 and (columnar_center_x - grip_center_x) >= 1 ):
+                                            left_up_x_left = int((grip_center_x_left) - grip_width_left+10)
+                                            left_up_y_left = int((grip_center_y_left+10) - (grip_width_left/2.0))
+                                            right_down_x_left = int(grip_center_x_left +grip_width_left)
+                                            right_down_y_left = int(grip_center_y_left + (grip_width_left/2.0))
 
-                                        cv2.rectangle(color_image,(left_up_x,left_up_y),(right_down_x,right_down_y),(255,0,255),2)
+                                            left_up_x_right = int((grip_center_x_right) - grip_width_right+10)
+                                            left_up_y_right = int((grip_center_y_right+10) - (grip_width_right/2.0))
+                                            right_down_x_right = int(grip_center_x_right +grip_width_right)
+                                            right_down_y_right = int(grip_center_y_right + (grip_width_right/2.0))
 
-                                        center = calculate_center(left_up_x,left_up_y,right_down_x,right_down_y)
-                                        # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                        real_angle = roct_result
-                                        number =333
-            
-                                    cv2.circle(color_image,(int(center[0]),int(center[1])),2,(0,0,255),2)
+                                            cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
+                                            center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
+                                            # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            real_angle_left = roct_result_left
+                                            number = 3333111119
 
-                                    point3D = point_cloud.get_value(center[0],center[1])
-                                    x = point3D[1][0]
-                                    y = point3D[1][1]
-                                    z = point3D[1][2]
-                                    color = point3D[1][3]
+                                            cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
+                                            center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
+                                            # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            real_angle_right = roct_result_right
+                                            number = 3333111118
+                                    
+                                        cv2.circle(color_image,(int(center_left[0]),int(center_left[1])),2,(0,0,255),2)
+                                        cv2.circle(color_image1,(int(center_right[0]),int(center_right[1])),2,(0,0,255),2)
 
-                                    # viewer.updateData(point_cloud1)
-                                    #depth
-                                    z_value = depth_image_zed.get_value(center[0],center[1])
+                                        point3D_left = point_cloud.get_value(center_left[0],center_left[1])
+                                        x_left = point3D_left[1][0]
+                                        y_left = point3D_left[1][1]
+                                        z_left = point3D_left[1][2]
+                                        color_left = point3D_left[1][3]
 
-                                    cv2.putText(color_image, "test: " + str(number) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "Depth: " + str(round(z_value[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "Center: " + str(round(center[0],3)) +","+ str(round(center[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "angle: "+ str(real_angle), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "point3D_xyz: " + str(round(x,5))+", " + str(round(y,5))+", "  + str(round(z,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.imwrite(center_columnar+"columnar_grip_"+str(c)+'.jpg',color_image)  
-                                    cv2.imshow("finish",color_image)
+                                        point3D_right = point_cloud1.get_value(center_right[0],center_right[1])
+                                        x_right = point3D_right[1][0]
+                                        y_right = point3D_right[1][1]
+                                        z_right = point3D_right[1][2]
+                                        color_right = point3D_right[1][3]
 
-                                else: #grip right
+                                        # viewer.updateData(point_cloud1)
+                                        #depth
+                                        z_value_left = depth_image_zed.get_value(center_left[0],center_left[1])
+                                        z_value_right = depth_image_zed.get_value(center_right[0],center_right[1])
 
-                                    if(roct_result>=-15):
-                                        # if((columnar_center_x - grip_center_x) >= 70):
-                                        left_up_x = int(grip_center_x)
-                                        left_up_y = int((grip_center_y+10) - (grip_width/3.0))
-                                        right_down_x = int(grip_center_x + grip_width)
-                                        right_down_y = int(grip_center_y + (grip_width/3.0))
+                                        cv2.putText(color_image, "test: " + str(number_left) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image, "Center: " + str(round(center_left[0],3)) +","+ str(round(center_left[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image, "angle: "+ str(real_angle_left), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.imwrite(center_columnar+"columnar_grip_left_"+str(c)+'.jpg',color_image)  
+                                        cv2.imshow("finish_left",color_image) 
 
-                                        cv2.rectangle(color_image,(left_up_x,left_up_y),(right_down_x,right_down_y),(255,0,255),2)
-                                        center = calculate_center(left_up_x,left_up_y,right_down_x,right_down_y)
-                                        # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                        real_angle = roct_result
-                                        number = 11111111111
+                                        cv2.putText(color_image1, "test: " + str(number_right) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "Center: " + str(round(center_right[0],3)) +","+ str(round(center_right[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "angle: "+ str(real_angle_right), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.imwrite(center_columnar+"columnar_grip_right_"+str(c)+'.jpg',color_image1)  
+                                        cv2.imshow("finish_right",color_image1) 
+                                    
 
-                                    elif(roct_result <-15 and roct_result>-40):
-                                    # elif((columnar_center_x - grip_center_x) < 70 and (columnar_center_x - grip_center_x) >= 1 ):
-                                        left_up_x = int(grip_center_x)
-                                        left_up_y = int((grip_center_y+15) - (grip_width/3.0))
-                                        right_down_x = int(grip_center_x-10 +(grip_height/2.0))
-                                        right_down_y = int(grip_center_y + (grip_width/3.0))
+                                elif detections_right[1][0] == "grip" and detections_right[0][0]== "columnar":
+                                    grip_center_x_left = detections_left[0][2][0]
+                                    grip_center_y_left = detections_left[0][2][1] 
+                                    grip_width_left = detections_left[0][2][2]
+                                    grip_height_left = detections_left[0][2][3]
 
-                                        cv2.rectangle(color_image,(left_up_x,left_up_y),(right_down_x,right_down_y),(255,0,255),2)
+                                    columnar_center_x_left = detections_left[1][2][0]
+                                    columnar_center_y_left = detections_left[1][2][1]
+                                    columnar_width_left = detections_left[1][2][2]
+                                    columnar_height_left = detections_left[1][2][3]
 
-                                        center = calculate_center(left_up_x,left_up_y,right_down_x,right_down_y)
-                                        # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                        real_angle = roct_result
-                                        number = 2222111111
+                                    grip_center_x_right = detections_right[1][2][0]
+                                    grip_center_y_right = detections_right[1][2][1] 
+                                    grip_width_right = detections_right[1][2][2]
+                                    grip_height_right = detections_right[1][2][3]
+
+                                    columnar_center_x_right = detections_right[0][2][0]
+                                    columnar_center_y_right = detections_right[0][2][1]
+                                    columnar_width_right = detections_right[0][2][2]
+                                    columnar_height_right = detections_right[0][2][3]
+
+                                    roct_result_left = angle(grip_center_x_left, grip_center_y_left,columnar_center_x_left, columnar_center_y_left)
+                                    print(roct_result_left)
+                                    roct_result_right = angle(grip_center_x_right, grip_center_y_right,columnar_center_x_right, columnar_center_y_right)
+                                    print(roct_result_right)
+                                    if(columnar_center_x_left > grip_center_x_left): #grip left right is the same
+                                        if(roct_result_left <= 15) or (roct_result_right <= 15):
+                                            # if((columnar_center_x - grip_center_x) >= 70):
+                                            left_up_x_left = int((grip_center_x_left+10) - grip_width_left)
+                                            left_up_y_left = int((grip_center_y_left+10) - (grip_width_left/3.0))
+                                            right_down_x_left = int(grip_center_x_left)
+                                            right_down_y_left = int(left_up_y_left + (grip_width_left/3.0))
+
+                                            left_up_x_right = int((grip_center_x_right+10) - grip_width_right)
+                                            left_up_y_right = int((grip_center_y_right+10) - (grip_width_right/3.0))
+                                            right_down_x_right = int(grip_center_x_right)
+                                            right_down_y_right = int(left_up_y_right + (grip_width_right/3.0))
+
+                                            cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
+                                            center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
+                                            # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            real_angle_left = roct_result_left
+                                            number_left =1119
+
+                                            cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
+                                            center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
+                                            # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            real_angle_right = roct_result_right
+                                            number_right =1118
+
+                                        elif(roct_result_left >15 and roct_result_left <40) or (roct_result_right >15 and roct_result_right <40):
+                                            # elif((columnar_center_x - grip_center_x) < 70 and (columnar_center_x - grip_center_x) >= 1 ):
+                                            left_up_x_left = int((grip_center_x_left ) - (grip_height_left/2.0))
+                                            left_up_y_left = int((grip_center_y_left + 10) - (grip_width_left/3.0))
+                                            right_down_x_left = int(grip_center_x_left)
+                                            right_down_y_left = int(grip_center_y_left + (grip_height_left/4.0))
+
+                                            left_up_x_right = int((grip_center_x_right ) - (grip_height_right/2.0))
+                                            left_up_y_right = int((grip_center_y_right + 10) - (grip_width_right/3.0))
+                                            right_down_x_right = int(grip_center_x_right)
+                                            right_down_y_right = int(grip_center_y_right + (grip_height_right/4.0))
+
+                                            cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
+                                            center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
+                                            # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            real_angle_left = roct_result_left
+                                            number_left =2229
+
+                                            cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
+                                            center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
+                                            # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            real_angle_right = roct_result_right
+                                            number_right =2228
+                                        
+                                        elif(roct_result_left > 40) or (roct_result_right > 40):
+                                            # elif((columnar_center_x - grip_center_x) < 70 and (columnar_center_x - grip_center_x) >= 1 ):
+                                            left_up_x_left = int((grip_center_x_left) - grip_width_left+10)
+                                            left_up_y_left = int((grip_center_y_left+10) - (grip_width_left/2.0))
+                                            right_down_x_left = int(grip_center_x_left + grip_width_left-10)
+                                            right_down_y_left = int(grip_center_y_left + (grip_width_left/2.0))
+
+                                            left_up_x_right = int((grip_center_x_right) - grip_width_right+10)
+                                            left_up_y_right = int((grip_center_y_right+10) - (grip_width_right/2.0))
+                                            right_down_x_right = int(grip_center_x_right + grip_width_right-10)
+                                            right_down_y_right = int(grip_center_y_right + (grip_width_roght/2.0))
+
+                                            cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
+                                            center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
+                                            # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            real_angle_left = roct_result_left
+                                            number_left =3339
+
+                                            cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right,(right_down_x_right,right_down_y_right),(255,0,255),2))
+                                            center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
+                                            # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            real_angle_right = roct_result_right
+                                            number_right =3338
+                
+                                        cv2.circle(color_image,(int(center_left[0]),int(center_left[1])),2,(0,0,255),2)
+                                        cv2.circle(color_image1,(int(center_right[0]),int(center_right[1])),2,(0,0,255),2)
+
+                                        point3D_left = point_cloud.get_value(center_left[0],center_left[1])
+                                        x_left = point3D_left[1][0]
+                                        y_left = point3D_left[1][1]
+                                        z_left = point3D_left[1][2]
+                                        color_left = point3D_left[1][3]
+
+                                        point3D_right = point_cloud1.get_value(center_right[0],center_right[1])
+                                        x_right = point3D_right[1][0]
+                                        y_right = point3D_right[1][1]
+                                        z_right = point3D_right[1][2]
+                                        color_right = point3D_right[1][3]
+
+                                        # viewer.updateData(point_cloud1)
+                                        #depth
+                                        z_value_left = depth_image_zed.get_value(center_left[0],center_left[1])
+                                        z_value_right = depth_image_zed.get_value(center_right[0],center_right[1])
+
+                                        cv2.putText(color_image, "test: " + str(number_left) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image, "Center: " + str(round(center_left[0],3)) +","+ str(round(center_left[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image, "angle: "+ str(real_angle_left), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.imwrite(center_columnar+"columnar_grip_left_"+str(c)+'.jpg',color_image)  
+                                        cv2.imshow("finish_left",color_image) 
+
+                                        cv2.putText(color_image1, "test: " + str(number_right) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "Center: " + str(round(center_right[0],3)) +","+ str(round(center_right[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "angle: "+ str(real_angle_right), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.imwrite(center_columnar+"columnar_grip_right"+str(c)+'.jpg',color_image1)  
+                                        cv2.imshow("finish_right",color_image1) 
+
+                                    else: #grip right
+                                        if(roct_result_left >=-15) or (roct_result_right >=-15):
+                                            # if((columnar_center_x - grip_center_x) >= 70):
+                                            left_up_x_left = int(grip_center_x_left)
+                                            left_up_y_left = int((grip_center_y_left+10) - (grip_width_left/3.0))
+                                            right_down_x_left = int(grip_center_x_left + grip_width_left)
+                                            right_down_y_left = int(grip_center_y_left + (grip_width_left/3.0))
+
+                                            left_up_x_right = int(grip_center_x_right)
+                                            left_up_y_right = int((grip_center_y_right+10) - (grip_width_right/3.0))
+                                            right_down_x_right = int(grip_center_x_right + grip_width_right)
+                                            right_down_y_right = int(grip_center_y_right + (grip_height_right/3.0))
+
+                                            cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
+                                            center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
+                                            # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            real_angle_left = roct_result_left
+                                            number_left = 111111111119
+
+                                            cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
+                                            center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
+                                            # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            real_angle_right = roct_result_right
+                                            number_right = 111111111118
+
+                                        elif(roct_result_left <-15 and roct_result_left >-40) or (roct_result_right <-15 and roct_result_right >-40):
+                                            # elif((columnar_center_x - grip_center_x) < 70 and (columnar_center_x - grip_center_x) >= 1 ):
+                                            left_up_x_left = int(grip_center_x_left)
+                                            left_up_y_left = int((grip_center_y_left+15) - (grip_width_left/3.0))
+                                            right_down_x_left = int(grip_center_x_left-10 +grip_width_left)
+                                            # right_down_x_left = int(grip_center_x_left-10 +(grip_height_left/2.0))
+                                            right_down_y_left = int(grip_center_y_left + (grip_width_left/3.0))
+
+                                            left_up_x_right = int(grip_center_x_right)
+                                            left_up_y_right = int((grip_center_y_right+15) - (grip_width_right/3.0))
+                                            # right_down_x_right = int(grip_center_x_right-10 +(grip_height_right/2.0))
+                                            right_down_x_right  = int(grip_center_x_right -10 +grip_width_right )
+                                            right_down_y_right = int(grip_center_y_right + (grip_width_right/3.0))
+
+
+                                            cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
+                                            center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
+                                            # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            real_angle_left = roct_result_left
+                                            number_left = 22221111119
+
+                                            cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
+                                            center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
+                                            # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            real_angle_right = roct_result_right
+                                            number_right = 22221111118
+                                    
+                                        elif(roct_result_left < -40) or (roct_result_right < -40):
+                                            # elif((columnar_center_x - grip_center_x) < 70 and (columnar_center_x - grip_center_x) >= 1 ):
+                                            left_up_x_left = int((grip_center_x_left) - grip_width_left+10)
+                                            left_up_y_left = int((grip_center_y_left+10) - (grip_width_left/2.0))
+                                            right_down_x_left = int(grip_center_x_left +grip_width_left)
+                                            right_down_y_left = int(grip_center_y_left + (grip_width_left/2.0))
+
+                                            left_up_x_right = int((grip_center_x_right) - grip_width_right+10)
+                                            left_up_y_right = int((grip_center_y_right+10) - (grip_width_right/2.0))
+                                            right_down_x_right = int(grip_center_x_right +grip_width_right)
+                                            right_down_y_right = int(grip_center_y_right + (grip_width_right/2.0))
+
+                                            cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
+                                            center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
+                                            # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            real_angle_left = roct_result_left
+                                            number = 3333111119
+
+                                            cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
+                                            center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
+                                            # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            real_angle_right = roct_result_right
+                                            number = 3333111118
+                                    
+                                        cv2.circle(color_image,(int(center_left[0]),int(center_left[1])),2,(0,0,255),2)
+                                        cv2.circle(color_image1,(int(center_right[0]),int(center_right[1])),2,(0,0,255),2)
+
+                                        point3D_left = point_cloud.get_value(center_left[0],center_left[1])
+                                        x_left = point3D_left[1][0]
+                                        y_left = point3D_left[1][1]
+                                        z_left = point3D_left[1][2]
+                                        color_left = point3D_left[1][3]
+
+                                        point3D_right = point_cloud1.get_value(center_right[0],center_right[1])
+                                        x_right = point3D_right[1][0]
+                                        y_right = point3D_right[1][1]
+                                        z_right = point3D_right[1][2]
+                                        color_right = point3D_right[1][3]
+
+                                        # viewer.updateData(point_cloud1)
+                                        #depth
+                                        z_value_left = depth_image_zed.get_value(center_left[0],center_left[1])
+                                        z_value_right = depth_image_zed.get_value(center_right[0],center_right[1])
+
+                                        cv2.putText(color_image, "test: " + str(number_left) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image, "Center: " + str(round(center_left[0],3)) +","+ str(round(center_left[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image, "angle: "+ str(real_angle_left), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.imwrite(center_columnar+"columnar_grip_left_"+str(c)+'.jpg',color_image)  
+                                        cv2.imshow("finish_left",color_image) 
+
+                                        cv2.putText(color_image1, "test: " + str(number_right) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "Center: " + str(round(center_right[0],3)) +","+ str(round(center_right[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "angle: "+ str(real_angle_right), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.imwrite(center_columnar+"columnar_grip_right_"+str(c)+'.jpg',color_image1)  
+                                        cv2.imshow("finish_right",color_image1) 
+
                                 
-                                    elif(roct_result < -40):
-                                    # elif((columnar_center_x - grip_center_x) < 70 and (columnar_center_x - grip_center_x) >= 1 ):
-                                        left_up_x = int((grip_center_x) - grip_width+10)
-                                        left_up_y = int((grip_center_y+10) - (grip_width/2.0))
-                                        right_down_x = int(grip_center_x +grip_width)
-                                        right_down_y = int(grip_center_y + (grip_width/2.0))
-
-                                        cv2.rectangle(color_image,(left_up_x,left_up_y),(right_down_x,right_down_y),(255,0,255),2)
-
-                                        center = calculate_center(left_up_x,left_up_y,right_down_x,right_down_y)
-                                        # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                        real_angle = roct_result
-                                        number = 333311111
-                                
-                                    cv2.circle(color_image,(int(center[0]),int(center[1])),2,(0,0,255),2)
-
-                                    point3D = point_cloud.get_value(center[0],center[1])
-                                    x = point3D[1][0]
-                                    y = point3D[1][1]
-                                    z = point3D[1][2]
-                                    color = point3D[1][3]
-
-                                    # viewer.updateData(point_cloud1)
-
-                                    #depth
-                                    z_value = depth_image_zed.get_value(center[0],center[1])
-
-                                    cv2.putText(color_image, "test: " + str(number) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[0][1]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "Depth: " + str(round(z_value[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "Center: " + str(round(center[0],3)) +","+ str(round(center[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "angle: "+ str(real_angle), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "point3D_xyz: " + str(round(x,5))+", " + str(round(y,5))+", "  + str(round(z,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.imwrite(center_columnar+"columnar_grip_"+str(c)+'.jpg',color_image)  
-                                    cv2.imshow("finish",color_image)  
-
                             elif detections_left[1][0] == "grip" and detections_left[0][0]== "columnar":
-                                grip_center_x = detecdetections_lefttions[1][2][0]
-                                grip_center_y = detections_left[1][2][1]
-                                grip_width = detections_left[1][2][2]
-                                grip_height = detections_left[1][2][3]
+                                if detections_right[0][0] == "grip" and detections_right[1][0]== "columnar":
+                                    grip_center_x_left = detections_left[1][2][0]
+                                    grip_center_y_left = detections_left[1][2][1] 
+                                    grip_width_left = detections_left[1][2][2]
+                                    grip_height_left = detections_left[1][2][3]
 
-                                columnar_center_x = detections_left[0][2][0]
-                                columnar_center_y = detections_left[0][2][1]
-                                columnar_width = detections_left[0][2][2]
-                                columnar_height = detections_left[0][2][3]
+                                    columnar_center_x_left = detections_left[0][2][0]
+                                    columnar_center_y_left = detections_left[0][2][1]
+                                    columnar_width_left = detections_left[0][2][2]
+                                    columnar_height_left = detections_left[0][2][3]
 
-                                roct_result = angle(grip_center_x, grip_center_y,columnar_center_x, columnar_center_y)
-                                print(roct_result)
+                                    grip_center_x_right = detections_right[0][2][0]
+                                    grip_center_y_right = detections_right[0][2][1] 
+                                    grip_width_right = detections_right[0][2][2]
+                                    grip_height_right = detections_right[0][2][3]
 
-                                if(columnar_center_x > grip_center_x):
+                                    columnar_center_x_right = detections_right[1][2][0]
+                                    columnar_center_y_right = detections_right[1][2][1]
+                                    columnar_width_right = detections_right[1][2][2]
+                                    columnar_height_right = detections_right[1][2][3]
 
-                                    if(roct_result<=15):
-                                        # if((columnar_center_x - grip_center_x) >= 70):
-                                        left_up_x = int((grip_center_x+10) - grip_width)
-                                        left_up_y = int((grip_center_y+10) - (grip_width/3.0))
-                                        right_down_x = int(grip_center_x)
-                                        right_down_y = int(left_up_y + (grip_width/3.0))
+                                    roct_result_left = angle(grip_center_x_left, grip_center_y_left,columnar_center_x_left, columnar_center_y_left)
+                                    print(roct_result_left)
+                                    roct_result_right = angle(grip_center_x_right, grip_center_y_right,columnar_center_x_right, columnar_center_y_right)
+                                    print(roct_result_right)
+                                    if(columnar_center_x_left > grip_center_x_left):
+                                        if(roct_result_left <= 15) or (roct_result_right <= 15):
+                                            # if((columnar_center_x - grip_center_x) >= 70):
+                                            left_up_x_left = int((grip_center_x_left+10) - grip_width_left)
+                                            left_up_y_left = int((grip_center_y_left+10) - (grip_width_left/3.0))
+                                            right_down_x_left = int(grip_center_x_left)
+                                            right_down_y_left = int(left_up_y_left + (grip_width_left/3.0))
 
-                                        cv2.rectangle(color_image,(left_up_x,left_up_y),(right_down_x,right_down_y),(255,0,255),2)
-                                        center = calculate_center(left_up_x,left_up_y,right_down_x,right_down_y)
-                                        # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                        real_angle = roct_result
+                                            left_up_x_right = int((grip_center_x_right+10) - grip_width_right)
+                                            left_up_y_right = int((grip_center_y_right+10) - (grip_width_right/3.0))
+                                            right_down_x_right = int(grip_center_x_right)
+                                            right_down_y_right = int(left_up_y_right + (grip_width_right/3.0))
 
-                                    elif(roct_result >15 and roct_result<40):
-                                        # elif((columnar_center_x - grip_center_x) < 70 and (columnar_center_x - grip_center_x) >= 1 ):
-                                            left_up_x = int((grip_center_x) - (grip_height/2.0))
-                                            left_up_y = int((grip_center_y + 10) - (grip_width/3.0))
-                                            right_down_x = int(grip_center_x )
-                                            right_down_y = int(grip_center_y + (grip_height/4.0))
-
-                                            cv2.rectangle(color_image,(left_up_x,left_up_y),(right_down_x,right_down_y),(255,0,255),2)
-
-                                            center = calculate_center(left_up_x,left_up_y,right_down_x,right_down_y)
+                                            cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
+                                            center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle = roct_result
-                                    
-                                    elif(roct_result > 40):
-                                        # elif((columnar_center_x - grip_center_x) < 70 and (columnar_center_x - grip_center_x) >= 1 ):
-                                            left_up_x = int((grip_center_x) - grip_width+10)
-                                            left_up_y = int((grip_center_y+10) - (grip_width/2.0))
-                                            right_down_x = int(grip_center_x + grip_width-10)
-                                            right_down_y = int(grip_center_y + (grip_width/2.0))
+                                            real_angle_left = roct_result_left
+                                            number_left =11129
 
-                                            cv2.rectangle(color_image,(left_up_x,left_up_y),(right_down_x,right_down_y),(255,0,255),2)
-
-                                            center = calculate_center(left_up_x,left_up_y,right_down_x,right_down_y)
+                                            cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
+                                            center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle = roct_result
-                                    
-                                    cv2.circle(color_image,(int(center[0]),int(center[1])),2,(0,0,255),2)
+                                            real_angle_right = roct_result_right
+                                            number_right =11128
 
-                                    point3D = point_cloud.get_value(center[0],center[1])
-                                    x = point3D[1][0]
-                                    y = point3D[1][1]
-                                    z = point3D[1][2]
-                                    color = point3D[1][3]
+                                        elif(roct_result_left >15 and roct_result_left <40) or (roct_result_right >15 and roct_result_right <40):
+                                            # elif((columnar_center_x - grip_center_x) < 70 and (columnar_center_x - grip_center_x) >= 1 ):
+                                            left_up_x_left = int((grip_center_x_left ) - (grip_height_left/2.0))
+                                            left_up_y_left = int((grip_center_y_left + 10) - (grip_width_left/3.0))
+                                            right_down_x_left = int(grip_center_x_left)
+                                            right_down_y_left = int(grip_center_y_left + (grip_height_left/4.0))
 
-                                    # viewer.updateData(point_cloud1)
+                                            left_up_x_right = int((grip_center_x_right ) - (grip_height_right/2.0))
+                                            left_up_y_right = int((grip_center_y_right + 10) - (grip_width_right/3.0))
+                                            right_down_x_right = int(grip_center_x_right)
+                                            right_down_y_right = int(grip_center_y_right + (grip_height_right/4.0))
 
-                                    #depth
-                                    z_value = depth_image_zed.get_value(center[0],center[1])
+                                            cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
+                                            center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
+                                            # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            real_angle_left = roct_result_left
+                                            number_left =22229
 
-                                    cv2.putText(color_image, "test: " + str(number) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[0][1]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "Depth: " + str(round(z_value[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "Center: " + str(round(center[0],3)) +","+ str(round(center[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "angle: "+ str(real_angle), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "point3D_xyz: " + str(round(x,5))+", " + str(round(y,5))+", "  + str(round(z,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.imwrite(center_columnar+"columnar_grip_"+str(c)+'.jpg',color_image)  
-                                    cv2.imshow("finish",color_image) 
-                                #人生好難阿 看不到眼前的希望  am1:47
-                                else: #grip right
-                                    if(roct_result >= -15):
-                                        # if((columnar_center_x - grip_center_x) >= 70):
-                                        left_up_x = int(grip_center_x)
-                                        left_up_y = int((grip_center_y+10) - (grip_width/3.0))
-                                        right_down_x = int(grip_center_x +grip_width)
-                                        right_down_y = int(grip_center_y + (grip_width/3.0))
+                                            cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
+                                            center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
+                                            # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            real_angle_right = roct_result_right
+                                            number_right =22228
+                                        
+                                        elif(roct_result_left > 40) or (roct_result_right > 40):
+                                            # elif((columnar_center_x - grip_center_x) < 70 and (columnar_center_x - grip_center_x) >= 1 ):
+                                            left_up_x_left = int((grip_center_x_left) - grip_width_left+10)
+                                            left_up_y_left = int((grip_center_y_left+10) - (grip_width_left/2.0))
+                                            right_down_x_left = int(grip_center_x_left + grip_width_left-10)
+                                            right_down_y_left = int(grip_center_y_left + (grip_width_left/2.0))
 
-                                        cv2.rectangle(color_image,(left_up_x,left_up_y),(right_down_x,right_down_y),(255,0,255),2)
-                                        center = calculate_center(left_up_x,left_up_y,right_down_x,right_down_y)
-                                        # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                        real_angle = roct_result
-                                        # number = 111112222
+                                            left_up_x_right = int((grip_center_x_right) - grip_width_right+10)
+                                            left_up_y_right = int((grip_center_y_right+10) - (grip_width_right/2.0))
+                                            right_down_x_right = int(grip_center_x_right + grip_width_right-10)
+                                            right_down_y_right = int(grip_center_y_right + (grip_width_roght/2.0))
 
-                                    elif(roct_result < -15 and roct_result > -40):
-                                        # elif((columnar_center_x - grip_center_x) < 70 and (columnar_center_x - grip_center_x) >= 1 ):
-                                        left_up_x = int(grip_center_x )
-                                        left_up_y = int((grip_center_y+15) - (grip_width/3.0))
-                                        right_down_x = int((grip_center_x-10) + (grip_height/2.0))
-                                        right_down_y = int(grip_center_y + (grip_width/3.0))
+                                            cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
+                                            center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
+                                            # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            real_angle_left = roct_result_left
+                                            number_left =33329
 
-                                        cv2.rectangle(color_image,(left_up_x,left_up_y),(right_down_x,right_down_y),(255,0,255),2)
+                                            cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right,(right_down_x_right,right_down_y_right),(255,0,255),2))
+                                            center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
+                                            # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            real_angle_right = roct_result_right
+                                            number_right =33328
+                                        
+                                        cv2.circle(color_image,(int(center_left[0]),int(center_left[1])),2,(0,0,255),2)
+                                        cv2.circle(color_image1,(int(center_right[0]),int(center_right[1])),2,(0,0,255),2)
 
-                                        center = calculate_center(left_up_x,left_up_y,right_down_x,right_down_y)
-                                        # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                        real_angle = roct_result
-                                        # number = 22222222
-                                    
-                                    elif(roct_result < -40):
-                                        # elif((columnar_center_x - grip_center_x) < 70 and (columnar_center_x - grip_center_x) >= 1 ):
-                                        left_up_x = int((grip_center_x) - grip_width+10)
-                                        left_up_y = int((grip_center_y+10) - (grip_width/2.0))
-                                        right_down_x = int(grip_center_x + grip_width-10)
-                                        right_down_y = int(grip_center_y + (grip_width/2.0))
+                                        point3D_left = point_cloud.get_value(center_left[0],center_left[1])
+                                        x_left = point3D_left[1][0]
+                                        y_left = point3D_left[1][1]
+                                        z_left = point3D_left[1][2]
+                                        color_left = point3D_left[1][3]
 
-                                        cv2.rectangle(color_image,(left_up_x,left_up_y),(right_down_x,right_down_y),(255,0,255),2)
+                                        point3D_right = point_cloud1.get_value(center_right[0],center_right[1])
+                                        x_right = point3D_right[1][0]
+                                        y_right = point3D_right[1][1]
+                                        z_right = point3D_right[1][2]
+                                        color_right = point3D_right[1][3]
 
-                                        center = calculate_center(left_up_x,left_up_y,right_down_x,right_down_y)
-                                        # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                        real_angle = roct_result
-                                        # number = 33332222
-                                    
-                                    cv2.circle(color_image,(int(center[0]),int(ˇcenter[1])),2,(0,0,255),2)
+                                        # viewer.updateData(point_cloud1)
+                                        #depth
+                                        z_value_left = depth_image_zed.get_value(center_left[0],center_left[1])
+                                        z_value_right = depth_image_zed.get_value(center_right[0],center_right[1])
 
-                                    point3D = point_cloud.get_value(center[0],center[1])
-                                    x = point3D[1][0]
-                                    y = point3D[1][1]
-                                    z = point3D[1][2]
-                                    color = point3D[1][3]
+                                        cv2.putText(color_image, "test: " + str(number_left) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image, "Center: " + str(round(center_left[0],3)) +","+ str(round(center_left[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image, "angle: "+ str(real_angle_left), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.imwrite(center_columnar+"columnar_grip_left_"+str(c)+'.jpg',color_image)  
+                                        cv2.imshow("finish_left",color_image) 
 
-                                    # viewer.updateData(point_cloud1)
+                                        cv2.putText(color_image1, "test: " + str(number_right) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "Center: " + str(round(center_right[0],3)) +","+ str(round(center_right[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "angle: "+ str(real_angle_right), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.imwrite(center_columnar+"columnar_grip_right"+str(c)+'.jpg',color_image1)  
+                                        cv2.imshow("finish_right",color_image1) 
+                                    #人生好難阿 看不到眼前的希望  am1:47
+                                    else: #grip right
+                                            if(roct_result_left >=-15) or (roct_result_right >=-15):
+                                                # if((columnar_center_x - grip_center_x) >= 70):
+                                                left_up_x_left = int(grip_center_x_left)
+                                                left_up_y_left = int((grip_center_y_left+10) - (grip_width_left/3.0))
+                                                right_down_x_left = int(grip_center_x_left + grip_width_left)
+                                                right_down_y_left = int(grip_center_y_left + (grip_width_left/3.0))
 
-                                    #depth
-                                    z_value = depth_image_zed.get_value(center[0],center[1])
+                                                left_up_x_right = int(grip_center_x_right)
+                                                left_up_y_right = int((grip_center_y_right+10) - (grip_width_right/3.0))
+                                                right_down_x_right = int(grip_center_x_right + grip_width_right)
+                                                right_down_y_right = int(grip_center_y_right + (grip_height_right/3.0))
 
-                                    cv2.putText(color_image, "test: " + str(number) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[0][1]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "Depth: " + str(round(z_value[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "Center: " + str(round(center[0],3)) +","+ str(round(center[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "angle: "+ str(real_angle), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "point3D_xyz: " + str(round(x,5))+", " + str(round(y,5))+", "  + str(round(z,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.imwrite(center_columnar+"columnar_grip_"+str(c)+'.jpg',color_image)  
-                                    cv2.imshow("finish",color_image) 
+                                                cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
+                                                center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
+                                                # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                                real_angle_left = roct_result_left
+                                                number_left = 1111111111129
+
+                                                cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
+                                                center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
+                                                # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                                real_angle_right = roct_result_right
+                                                number_right = 1111111111128
+
+                                            elif(roct_result_left <-15 and roct_result_left >-40) or (roct_result_right <-15 and roct_result_right >-40):
+                                                # elif((columnar_center_x - grip_center_x) < 70 and (columnar_center_x - grip_center_x) >= 1 ):
+                                                left_up_x_left = int(grip_center_x_left)
+                                                left_up_y_left = int((grip_center_y_left+15) - (grip_width_left/3.0))
+                                                right_down_x_left = int(grip_center_x_left-10 +grip_width_left)
+                                                # right_down_x_left = int(grip_center_x_left-10 +(grip_height_left/2.0))
+                                                right_down_y_left = int(grip_center_y_left + (grip_width_left/3.0))
+
+                                                left_up_x_right = int(grip_center_x_right)
+                                                left_up_y_right = int((grip_center_y_right+15) - (grip_width_right/3.0))
+                                                # right_down_x_right = int(grip_center_x_right-10 +(grip_height_right/2.0))
+                                                right_down_x_right = int(grip_center_x_right -10 +grip_width_right)
+                                                right_down_y_right = int(grip_center_y_right + (grip_width_right/3.0))
+
+
+                                                cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
+                                                center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
+                                                # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                                real_angle_left = roct_result_left
+                                                number_left = 222211111129
+
+                                                cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
+                                                center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
+                                                # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                                real_angle_right = roct_result_right
+                                                number_right = 222211111128
+                                            
+                                            elif(roct_result_left < -40) or (roct_result_right < -40):
+                                                # elif((columnar_center_x - grip_center_x) < 70 and (columnar_center_x - grip_center_x) >= 1 ):
+                                                left_up_x_left = int((grip_center_x_left) - grip_width_left+10)
+                                                left_up_y_left = int((grip_center_y_left+10) - (grip_width_left/2.0))
+                                                right_down_x_left = int(grip_center_x_left +grip_width_left)
+                                                right_down_y_left = int(grip_center_y_left + (grip_width_left/2.0))
+
+                                                left_up_x_right = int((grip_center_x_right) - grip_width_right+10)
+                                                left_up_y_right = int((grip_center_y_right+10) - (grip_width_right/2.0))
+                                                right_down_x_right = int(grip_center_x_right +grip_width_right)
+                                                right_down_y_right = int(grip_center_y_right + (grip_width_right/2.0))
+
+                                                cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
+                                                center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
+                                                # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                                real_angle_left = roct_result_left
+                                                number_left = 33331111129
+
+                                                cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
+                                                center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
+                                                # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                                real_angle_right = roct_result_right
+                                                number_right = 33331111128
+                                            
+                                            cv2.circle(color_image,(int(center_left[0]),int(center_left[1])),2,(0,0,255),2)
+                                            cv2.circle(color_image1,(int(center_right[0]),int(center_right[1])),2,(0,0,255),2)
+
+                                            point3D_left = point_cloud.get_value(center_left[0],center_left[1])
+                                            x_left = point3D_left[1][0]
+                                            y_left = point3D_left[1][1]
+                                            z_left = point3D_left[1][2]
+                                            color_left = point3D_left[1][3]
+
+                                            point3D_right = point_cloud1.get_value(center_right[0],center_right[1])
+                                            x_right = point3D_right[1][0]
+                                            y_right = point3D_right[1][1]
+                                            z_right = point3D_right[1][2]
+                                            color_right = point3D_right[1][3]
+
+                                            # viewer.updateData(point_cloud1)
+                                            #depth
+                                            z_value_left = depth_image_zed.get_value(center_left[0],center_left[1])
+                                            z_value_right = depth_image_zed.get_value(center_right[0],center_right[1])
+
+                                            cv2.putText(color_image, "test: " + str(number_left) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(color_image, "Center: " + str(round(center_left[0],3)) +","+ str(round(center_left[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(color_image, "angle: "+ str(real_angle_left), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.imwrite(center_columnar+"columnar_grip_left_"+str(c)+'.jpg',color_image)  
+                                            cv2.imshow("finish_left",color_image) 
+
+                                            cv2.putText(color_image1, "test: " + str(number_right) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(color_image1, "Center: " + str(round(center_right[0],3)) +","+ str(round(center_right[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(color_image1, "angle: "+ str(real_angle_right), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.imwrite(center_columnar+"columnar_grip_right_"+str(c)+'.jpg',color_image1)  
+                                            cv2.imshow("finish_right",color_image1) 
+
+
+                                elif detections_right[1][0] == "grip" and detections_right[0][0]== "columnar":
+                                    grip_center_x_left = detections_left[1][2][0]
+                                    grip_center_y_left = detections_left[1][2][1] 
+                                    grip_width_left = detections_left[1][2][2]
+                                    grip_height_left = detections_left[1][2][3]
+
+                                    columnar_center_x_left = detections_left[0][2][0]
+                                    columnar_center_y_left = detections_left[0][2][1]
+                                    columnar_width_left = detections_left[0][2][2]
+                                    columnar_height_left = detections_left[0][2][3]
+
+                                    grip_center_x_right = detections_right[1][2][0]
+                                    grip_center_y_right = detections_right[1][2][1] 
+                                    grip_width_right = detections_right[1][2][2]
+                                    grip_height_right = detections_right[1][2][3]
+
+                                    columnar_center_x_right = detections_right[0][2][0]
+                                    columnar_center_y_right = detections_right[0][2][1]
+                                    columnar_width_right = detections_right[0][2][2]
+                                    columnar_height_right = detections_right[0][2][3]
+
+                                    roct_result_left = angle(grip_center_x_left, grip_center_y_left,columnar_center_x_left, columnar_center_y_left)
+                                    print(roct_result_left)
+                                    roct_result_right = angle(grip_center_x_right, grip_center_y_right,columnar_center_x_right, columnar_center_y_right)
+                                    print(roct_result_right)
+                                    if(columnar_center_x_left > grip_center_x_left):
+                                        if(roct_result_left <= 15) or (roct_result_right <= 15):
+                                            # if((columnar_center_x - grip_center_x) >= 70):
+                                            left_up_x_left = int((grip_center_x_left+10) - grip_width_left)
+                                            left_up_y_left = int((grip_center_y_left+10) - (grip_width_left/3.0))
+                                            right_down_x_left = int(grip_center_x_left)
+                                            right_down_y_left = int(left_up_y_left + (grip_width_left/3.0))
+
+                                            left_up_x_right = int((grip_center_x_right+10) - grip_width_right)
+                                            left_up_y_right = int((grip_center_y_right+10) - (grip_width_right/3.0))
+                                            right_down_x_right = int(grip_center_x_right)
+                                            right_down_y_right = int(left_up_y_right + (grip_width_right/3.0))
+
+                                            cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
+                                            center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
+                                            # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            real_angle_left = roct_result_left
+                                            number_left =11129
+
+                                            cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
+                                            center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
+                                            # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            real_angle_right = roct_result_right
+                                            number_right =11128
+
+                                        elif(roct_result_left >15 and roct_result_left <40) or (roct_result_right >15 and roct_result_right <40):
+                                            # elif((columnar_center_x - grip_center_x) < 70 and (columnar_center_x - grip_center_x) >= 1 ):
+                                            left_up_x_left = int((grip_center_x_left ) - (grip_height_left/2.0))
+                                            left_up_y_left = int((grip_center_y_left + 10) - (grip_width_left/3.0))
+                                            right_down_x_left = int(grip_center_x_left)
+                                            right_down_y_left = int(grip_center_y_left + (grip_height_left/4.0))
+
+                                            left_up_x_right = int((grip_center_x_right ) - (grip_height_right/2.0))
+                                            left_up_y_right = int((grip_center_y_right + 10) - (grip_width_right/3.0))
+                                            right_down_x_right = int(grip_center_x_right)
+                                            right_down_y_right = int(grip_center_y_right + (grip_height_right/4.0))
+
+                                            cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
+                                            center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
+                                            # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            real_angle_left = roct_result_left
+                                            number_left =22229
+
+                                            cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
+                                            center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
+                                            # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            real_angle_right = roct_result_right
+                                            number_right =22228
+                                        
+                                        elif(roct_result_left > 40) or (roct_result_right > 40):
+                                            # elif((columnar_center_x - grip_center_x) < 70 and (columnar_center_x - grip_center_x) >= 1 ):
+                                            left_up_x_left = int((grip_center_x_left) - grip_width_left+10)
+                                            left_up_y_left = int((grip_center_y_left+10) - (grip_width_left/2.0))
+                                            right_down_x_left = int(grip_center_x_left + grip_width_left-10)
+                                            right_down_y_left = int(grip_center_y_left + (grip_width_left/2.0))
+
+                                            left_up_x_right = int((grip_center_x_right) - grip_width_right+10)
+                                            left_up_y_right = int((grip_center_y_right+10) - (grip_width_right/2.0))
+                                            right_down_x_right = int(grip_center_x_right + grip_width_right-10)
+                                            right_down_y_right = int(grip_center_y_right + (grip_width_roght/2.0))
+
+                                            cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
+                                            center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
+                                            # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            real_angle_left = roct_result_left
+                                            number_left =33329
+
+                                            cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right,(right_down_x_right,right_down_y_right),(255,0,255),2))
+                                            center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
+                                            # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                            real_angle_right = roct_result_right
+                                            number_right =33328
+                                        
+                                        cv2.circle(color_image,(int(center_left[0]),int(center_left[1])),2,(0,0,255),2)
+                                        cv2.circle(color_image1,(int(center_right[0]),int(center_right[1])),2,(0,0,255),2)
+
+                                        point3D_left = point_cloud.get_value(center_left[0],center_left[1])
+                                        x_left = point3D_left[1][0]
+                                        y_left = point3D_left[1][1]
+                                        z_left = point3D_left[1][2]
+                                        color_left = point3D_left[1][3]
+
+                                        point3D_right = point_cloud1.get_value(center_right[0],center_right[1])
+                                        x_right = point3D_right[1][0]
+                                        y_right = point3D_right[1][1]
+                                        z_right = point3D_right[1][2]
+                                        color_right = point3D_right[1][3]
+
+                                        # viewer.updateData(point_cloud1)
+                                        #depth
+                                        z_value_left = depth_image_zed.get_value(center_left[0],center_left[1])
+                                        z_value_right = depth_image_zed.get_value(center_right[0],center_right[1])
+
+                                        cv2.putText(color_image, "test: " + str(number_left) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image, "Center: " + str(round(center_left[0],3)) +","+ str(round(center_left[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image, "angle: "+ str(real_angle_left), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.imwrite(center_columnar+"columnar_grip_left_"+str(c)+'.jpg',color_image)  
+                                        cv2.imshow("finish_left",color_image) 
+
+                                        cv2.putText(color_image1, "test: " + str(number_right) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "Center: " + str(round(center_right[0],3)) +","+ str(round(center_right[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "angle: "+ str(real_angle_right), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.imwrite(center_columnar+"columnar_grip_right"+str(c)+'.jpg',color_image1)  
+                                        cv2.imshow("finish_right",color_image1) 
+                                    #人生好難阿 看不到眼前的希望  am1:47
+                                    else: #grip right
+                                            if(roct_result_left >=-15) or (roct_result_right >=-15):
+                                                # if((columnar_center_x - grip_center_x) >= 70):
+                                                left_up_x_left = int(grip_center_x_left)
+                                                left_up_y_left = int((grip_center_y_left+10) - (grip_width_left/3.0))
+                                                right_down_x_left = int(grip_center_x_left + grip_width_left)
+                                                right_down_y_left = int(grip_center_y_left + (grip_width_left/3.0))
+
+                                                left_up_x_right = int(grip_center_x_right)
+                                                left_up_y_right = int((grip_center_y_right+10) - (grip_width_right/3.0))
+                                                right_down_x_right = int(grip_center_x_right + grip_width_right)
+                                                right_down_y_right = int(grip_center_y_right + (grip_height_right/3.0))
+
+                                                cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
+                                                center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
+                                                # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                                real_angle_left = roct_result_left
+                                                number_left = 1111111111129
+
+                                                cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
+                                                center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
+                                                # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                                real_angle_right = roct_result_right
+                                                number_right = 1111111111128
+
+                                            elif(roct_result_left <-15 and roct_result_left >-40) or (roct_result_right <-15 and roct_result_right >-40):
+                                                # elif((columnar_center_x - grip_center_x) < 70 and (columnar_center_x - grip_center_x) >= 1 ):
+                                                left_up_x_left = int(grip_center_x_left)
+                                                left_up_y_left = int((grip_center_y_left+15) - (grip_width_left/3.0))
+                                                right_down_x_left = int(grip_center_x_left-10 +grip_width_left)
+                                                # right_down_x_left = int(grip_center_x_left-10 +(grip_height_left/2.0))
+                                                right_down_y_left = int(grip_center_y_left + (grip_width_left/3.0))
+
+                                                left_up_x_right = int(grip_center_x_right)
+                                                left_up_y_right = int((grip_center_y_right+15) - (grip_width_right/3.0))
+                                                # right_down_x_right = int(grip_center_x_right-10 +(grip_height_right/2.0))
+                                                right_down_x_right = int(grip_center_x_right -10 +grip_width_right)
+                                                right_down_y_right = int(grip_center_y_right + (grip_width_right/3.0))
+
+
+                                                cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
+                                                center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
+                                                # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                                real_angle_left = roct_result_left
+                                                number_left = 222211111129
+
+                                                cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
+                                                center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
+                                                # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                                real_angle_right = roct_result_right
+                                                number_right = 222211111128
+                                            
+                                            elif(roct_result_left < -40) or (roct_result_right < -40):
+                                                # elif((columnar_center_x - grip_center_x) < 70 and (columnar_center_x - grip_center_x) >= 1 ):
+                                                left_up_x_left = int((grip_center_x_left) - grip_width_left+10)
+                                                left_up_y_left = int((grip_center_y_left+10) - (grip_width_left/2.0))
+                                                right_down_x_left = int(grip_center_x_left +grip_width_left)
+                                                right_down_y_left = int(grip_center_y_left + (grip_width_left/2.0))
+
+                                                left_up_x_right = int((grip_center_x_right) - grip_width_right+10)
+                                                left_up_y_right = int((grip_center_y_right+10) - (grip_width_right/2.0))
+                                                right_down_x_right = int(grip_center_x_right +grip_width_right)
+                                                right_down_y_right = int(grip_center_y_right + (grip_width_right/2.0))
+
+                                                cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
+                                                center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
+                                                # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                                real_angle_left = roct_result_left
+                                                number_left = 33331111129
+
+                                                cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
+                                                center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
+                                                # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
+                                                real_angle_right = roct_result_right
+                                                number_right = 33331111128
+                                            
+                                            cv2.circle(color_image,(int(center_left[0]),int(center_left[1])),2,(0,0,255),2)
+                                            cv2.circle(color_image1,(int(center_right[0]),int(center_right[1])),2,(0,0,255),2)
+
+                                            point3D_left = point_cloud.get_value(center_left[0],center_left[1])
+                                            x_left = point3D_left[1][0]
+                                            y_left = point3D_left[1][1]
+                                            z_left = point3D_left[1][2]
+                                            color_left = point3D_left[1][3]
+
+                                            point3D_right = point_cloud1.get_value(center_right[0],center_right[1])
+                                            x_right = point3D_right[1][0]
+                                            y_right = point3D_right[1][1]
+                                            z_right = point3D_right[1][2]
+                                            color_right = point3D_right[1][3]
+
+                                            # viewer.updateData(point_cloud1)
+                                            #depth
+                                            z_value_left = depth_image_zed.get_value(center_left[0],center_left[1])
+                                            z_value_right = depth_image_zed.get_value(center_right[0],center_right[1])
+
+                                            cv2.putText(color_image, "test: " + str(number_left) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(color_image, "Center: " + str(round(center_left[0],3)) +","+ str(round(center_left[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(color_image, "angle: "+ str(real_angle_left), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.imwrite(center_columnar+"columnar_grip_left_"+str(c)+'.jpg',color_image)  
+                                            cv2.imshow("finish_left",color_image) 
+
+                                            cv2.putText(color_image1, "test: " + str(number_right) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(color_image1, "Center: " + str(round(center_right[0],3)) +","+ str(round(center_right[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(color_image1, "angle: "+ str(real_angle_right), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            cv2.imwrite(center_columnar+"columnar_grip_right_"+str(c)+'.jpg',color_image1)  
+                                            cv2.imshow("finish_right",color_image1) 
+
 
                 elif detections_left[0][0] == "blade" or detections_left[0][0] == "grasp" or detections_left[0][0] == "round_grasp": 
                     if key == 114:
                         d += 1
-                        orig_blade = save_path_blade+str(d) +'.jpg'
-                        cv2.imwrite(orig_blade,color_image)
-                        new_obj_name = str(d) +'.jpg'
-                        shutil.copy(local_img_name, bgrblade_path + new_obj_name)
-                        matimg = handle(orig_blade,bgrblade_path + new_obj_name)
+                        orig_blade_left = save_path_blade_left+str(d) +'.jpg'
+                        cv2.imwrite(orig_blade_left,color_image)
+                        orig_blade_right = save_path_blade_right+str(d) +'.jpg'
+                        cv2.imwrite(orig_blade_right,color_image1)
+
+                        shutil.copy(local_img_name, bgrblade_path_left + str(d) +'.jpg')
+                        shutil.copy(local_img_name, bgrblade_path_right + str(d) +'.jpg')
+
+                        matimg_left = handle(orig_blade_left,bgrblade_path_left + str(d) +'.jpg')
+                        matimg_right = handle(orig_blade_right,bgrblade_path_right + str(d) +'.jpg')
                         
-                        process = post_processing(matimg[2])
-                        process_blade = save_process_blade + "blade_" + str(d) + ".jpg"
-                        cv2.imwrite(process_blade,process)  
+                        process_left = post_processing(matimg_left[2])
+                        process_blade_left = save_process_blade + "left_blade_" + str(d) + ".jpg"
+                        cv2.imwrite(process_blade_left,process_left)
+
+                        process_right = post_processing(matimg_right[2])
+                        process_blade_right = save_process_blade + "right_blade_" + str(d) + ".jpg"
+                        cv2.imwrite(process_blade_right,process_right)   
+
+                        #剪刀1
+                        if detections_left[1][0] == "round_grasp" and detections_left[0][0] == "blade":
+                            if detections_right[1][0] == "round_grasp" and detections_right[0][0] == "blade":
+                                round_grasp_center_x_left = round(detections_left[1][2][0])
+                                round_grasp_center_y_left = round(detections_left[1][2][1])
+                                round_grasp_width_left = round(detections_left[1][2][2])
+                                round_grasp_height_left = round(detections_left[1][2][3])
+                                blade_center_x_left = round(detections_left[0][2][0])
+                                blade_center_y_left = round(detections_left[0][2][1])
+                                blade_width_left = round(detections_left[0][2][2])
+                                blade_height_left = round(detections_left[0][2][3])
+
+                                round_grasp_center_x_right = round(detections_right[1][2][0])
+                                round_grasp_center_y_right = round(detections_right[1][2][1])
+                                round_grasp_width_right = round(detections_right[1][2][2])
+                                round_grasp_height_right = round(detections_right[1][2][3])
+                                blade_center_x_right = round(detections_right[0][2][0])
+                                blade_center_y_right = round(detections_right[0][2][1])
+                                blade_width_right = round(detections_right[0][2][2])
+                                blade_height_right = round(detections_right[0][2][3])
+
+                                left_up_x_left = round(round_grasp_center_x_left - (round_grasp_width_left/2.0))
+                                left_up_y_left = round(round_grasp_center_y_left - (round_grasp_height_left/2.0))
+                                right_down_x_left = round(round_grasp_center_x_left + (round_grasp_width_left/2.0))
+                                right_down_y_left = round(round_grasp_center_y_left + (round_grasp_height_left/2.0))
+                                blade_left_up_x_left = round(blade_center_x_left - (blade_width_left/2.0))
+                                blade_left_up_y_left = round(blade_center_y_left - (blade_height_left/2.0))
+                                blade_right_down_x_left = round(blade_center_x_left + blade_width_left/2.0)
+                                blade_right_down_y_left = round(blade_center_y_left + (blade_height_left/2.0))
+
+                                left_up_x_right = round(round_grasp_center_x_right - (round_grasp_width_right/2.0))
+                                left_up_y_right = round(round_grasp_center_y_right - (round_grasp_height_right/2.0))
+                                right_down_x_right = round(round_grasp_center_x_right + (round_grasp_width_right/2.0))
+                                right_down_y_right = round(round_grasp_center_y_right + (round_grasp_height_right/2.0))
+                                blade_left_up_x_right = round(blade_center_x_right - (blade_width_right/2.0))
+                                blade_left_up_y_right = round(blade_center_y_right - (blade_height_right/2.0))
+                                blade_right_down_x_right = round(blade_center_x_right + blade_width_right/2.0)
+                                blade_right_down_y_right = round(blade_center_y_right + (blade_height_right/2.0))
+
+                                #quadrant 1 , cut right up
+                                if( blade_center_x_left > round_grasp_center_x_left and blade_center_y_left < round_grasp_center_y_left): 
+                                    # cv2.putText(color_image, "distance: " + str(round(blade_center_x - round_grasp_center_x,3)) , (10, 125), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "cut right up" , (10, 155), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    if((blade_center_x_left - round_grasp_center_x_left) < 115 and (blade_center_x_left - round_grasp_center_x_left) >= 25) 
+                                        or ((blade_center_x_right - round_grasp_center_x_right) < 115 and (blade_center_x_right - round_grasp_center_x_right) >= 25): 
+                                        cv2.putText(color_image, "cut right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20
+                                        height = 40
+
+                                        # cv2.line(img_org,(int(right_down_x),int(left_up_y)),(int(blade_left_up_x),int(blade_right_down_y)),(255, 0, 255),2,cv2.LINE_AA)
+                                        real_grasp_center_x_left = (right_down_x_left + blade_left_up_x_left)/2.0 
+                                        real_grasp_center_y_left = (left_up_y_left + blade_right_down_y_left)/2.0
+
+                                        real_grasp_center_x_right = (right_down_x_right + blade_left_up_x_right)/2.0 
+                                        real_grasp_center_y_right = (left_up_y_right + blade_right_down_y_right)/2.0
+                                            
+                                        # cv2.circle(color_image,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(img_org, (int(real_grasp_center_x-width/2.0), int(real_grasp_center_y-height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
+                                        result_left = angle(right_down_x_left ,left_up_y_left,left_up_x_left ,right_down_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
+                                                    (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
+                                        rota_left = rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+
+                                        result_right = angle(right_down_x_right ,left_up_y_right,left_up_x_right ,right_down_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                            (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x + width/2.0,real_grasp_center_y + height/2.0)]
+                                        rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+                                    
+                                    elif((blade_center_x_left - round_grasp_center_x_left) >= 115) or ((blade_center_x_right - round_grasp_center_x_right) >= 115):
+                                        cv2.putText(color_image, "cut right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20
+                                        height = 40
+
+                                        # cv2.circle(color_image,(int(blade_center_x - blade_width/2.0),int(blade_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(color_image, (int(blade_center_x - blade_width/2.0 - width/2.0), int(blade_center_y - height/2.0)), (int(blade_center_x - blade_width/2.0 + width/2.0), int(blade_center_y + height/2.0)),(255, 0, 255), 2)
+                                        real_grasp_center_x_left = blade_center_x_left - blade_width_left/2.0
+                                        real_grasp_center_y_left = blade_center_y_left
+                                        
+                                        real_grasp_center_x_right = blade_center_x_right - blade_width_right/2.0
+                                        real_grasp_center_y_right = blade_center_y_right
+
+                                        result_left = angle(blade_left_up_x_left ,blade_left_up_y_left,blade_center_x_left ,blade_center_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
+                                            (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x + width/2.0,real_grasp_center_y + height/2.0)]
+                                        rota_left = rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+
+                                        result_right = angle(blade_left_up_x_right ,blade_left_up_y_right,blade_center_x_right ,blade_center_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                            (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+                                        
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(2, 202, 119),2)
+
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(2, 202, 119),2)
+                                    
+                                    elif((blade_center_x - round_grasp_center_x) < 25): 
+                                        cv2.putText(color_image, "cut right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 40
+                                        height = 20
+
+                                        real_grasp_center_x_left = blade_center_x_left
+                                        real_grasp_center_y_left = blade_center_y_left + blade_height_left/2.0
+
+                                        real_grasp_center_x_right = blade_center_x_right
+                                        real_grasp_center_y_right = blade_center_y_right + blade_height_right/2.0
+
+                                        result_left = angle(real_grasp_center_x_left,real_grasp_center_y_left,blade_right_down_x_left,blade_right_down_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
+                                            (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left + height/2.0)]
+                                        rota_left = rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+
+                                        result_right = angle(real_grasp_center_x_right,real_grasp_center_y_right,blade_right_down_x_right,blade_right_down_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                            (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+                                        
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        real_grasp_center_x = (rota[0][0] + rota[2][0])/2.0 
+                                        real_grasp_center_y = (rota[0][1] + rota[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(2, 202, 119),2)
+                                    
+                                     # quadrant 2 , cut right down
+                                
+                                /*----------------------------------------------------------------*/
+                                elif(blade_center_x > round_grasp_center_x and blade_center_y > round_grasp_center_y): #右下角
+                                    # cv2.putText(color_image, "distance: " + str(round(blade_center_x - grasp_center_x,3)) , (10, 125), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "cut right down" , (10, 155), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    if((blade_center_x - round_grasp_center_x) < 115 and(blade_center_x - round_grasp_center_x) >= 25):
+                                        cv2.putText(color_image, "cut right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20 
+                                        height = 40
+
+                                        # cv2.line(img_org,(int(right_down_x),int(right_down_y)),(int(blade_left_up_x),int(blade_left_up_y)),(255, 0, 255),2,cv2.LINE_AA)
+                                        real_grasp_center_x = (right_down_x + blade_left_up_x)/2.0 
+                                        real_grasp_center_y = (right_down_y + blade_left_up_y)/2.0
+
+                                        # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                        # cv2.rec tangle(img_org, (int(real_grasp_center_x-width/2.0), int(real_grasp_center_y-height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
+                                        result = angle(left_up_x ,left_up_y,right_down_x ,right_down_y)
+                                        box = [(real_grasp_center_x + width/2.0,real_grasp_center_y - height/2.0),(real_grasp_center_x - width/2.0,real_grasp_center_y - height/2.0),
+                                                (real_grasp_center_x - width/2,real_grasp_center_y + height/2.0),(real_grasp_center_x + width/2.0,real_grasp_center_y + height/2.0)]
+                                        rota = rota_rect(box,result,int(real_grasp_center_x),int(real_grasp_center_y))
+
+                                        cv2.line(color_image,(int(rota[0][0]),int(rota[0][1])),(int(rota[1][0]),int(rota[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota[1][0]),int(rota[1][1])),(int(rota[2][0]),int(rota[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota[2][0]),int(rota[2][1])),(int(rota[3][0]),int(rota[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota[3][0]),int(rota[3][1])),(int(rota[0][0]),int(rota[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        
+                                        real_grasp_center_x = (rota[0][0] + rota[2][0])/2.0 
+                                        real_grasp_center_y = (rota[0][1] + rota[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+
+
+
+
+
+
+
+
+                            elif detections_right[0][0] == "round_grasp" and detections_right[1][0] == "blade":
+
+                        #剪刀2
+                        elif detections_left[0][0] == "round_grasp" and detections_left[1][0] == "blade":
+                            if detections_right[1][0] == "round_grasp" and detections_right[0][0] == "blade":
+
+                            elif detections_right[0][0] == "round_grasp" and detections_right[1][0] == "blade":
+
+
+
+
+
+
+
+
 
                         #剪刀1
                         if detections[1][0] == "round_grasp" and detections[0][0] == "blade":
