@@ -2,10 +2,19 @@ import os
 import glob
 
 #blade
-blade_bgr = glob.glob("/home/user/shape_detection/blade/bgr/*.jpg")
-blade_bgr_path = "/home/user/shape_detection/blade/bgr"
-print('Sample Folder: ', os.listdir(blade_bgr_path))
-for t in blade_bgr:
+blade_bgr_left = glob.glob("/home/user/shape_detection/blade/bgr/bgr_left/*.jpg")
+blade_bgr_path_left = "/home/user/shape_detection/blade/bgr/bgr_left"
+print('Sample Folder: ', os.listdir(blade_bgr_path_left))
+for t in blade_bgr_left:
+  try:
+    os.remove(t)
+  except OSError as e:
+    print('Delete Problem: ', e)
+
+blade_bgr_right = glob.glob("/home/user/shape_detection/blade/bgr/bgr_right/*.jpg")
+blade_bgr_path_right = "/home/user/shape_detection/blade/bgr/bgr_right"
+print('Sample Folder: ', os.listdir(blade_bgr_path_right))
+for t in blade_bgr_right:
   try:
     os.remove(t)
   except OSError as e:
@@ -20,10 +29,19 @@ for t in blade_center:
   except OSError as e:
     print('Delete Problem: ', e)
 
-blade_orig = glob.glob("/home/user/shape_detection/blade/orig/*.jpg")
-blade_orig_path = "/home/user/shape_detection/blade/orig"
-print('Sample Folder: ', os.listdir(blade_orig_path))
-for t in blade_orig:
+blade_orig_left = glob.glob("/home/user/shape_detection/blade/orig/orig_left/*.jpg")
+blade_orig_path_left = "/home/user/shape_detection/blade/orig/orig_left"
+print('Sample Folder: ', os.listdir(blade_orig_path_left))
+for t in blade_orig_left:
+  try:
+    os.remove(t)
+  except OSError as e:
+    print('Delete Problem: ', e)
+
+blade_orig_right = glob.glob("/home/user/shape_detection/blade/orig/orig_right/*.jpg")
+blade_orig_path_right= "/home/user/shape_detection/blade/orig/orig_right"
+print('Sample Folder: ', os.listdir(blade_orig_path_right))
+for t in blade_orig_right:
   try:
     os.remove(t)
   except OSError as e:
@@ -38,20 +56,38 @@ for t in blade_process:
   except OSError as e:
     print('Delete Problem: ', e)
 
-blade_mat = glob.glob("/home/user/shape_detection/blade/mat/*.jpg")
-blade_mat_path = "/home/user/shape_detection/blade/mat"
-print('Sample Folder: ', os.listdir(blade_mat_path))
-for t in blade_mat:
+blade_mat_left = glob.glob("/home/user/shape_detection/blade/mat/mat_left/*.jpg")
+blade_mat_path_left = "/home/user/shape_detection/blade/mat/mat_left"
+print('Sample Folder: ', os.listdir(blade_mat_path_left))
+for t in blade_mat_left:
+  try:
+    os.remove(t)
+  except OSError as e:
+    print('Delete Problem: ', e)
+
+blade_mat_right = glob.glob("/home/user/shape_detection/blade/mat/mat_right/*.jpg")
+blade_mat_path_right = "/home/user/shape_detection/blade/mat/mat_right"
+print('Sample Folder: ', os.listdir(blade_mat_path_right))
+for t in blade_mat_right:
   try:
     os.remove(t)
   except OSError as e:
     print('Delete Problem: ', e)
 
 #circle
-circle_bgr = glob.glob("/home/user/shape_detection/circle/bgr/*.jpg")
-circle_bgr_path = "/home/user/shape_detection/circle/bgr"
-print('Sample Folder: ', os.listdir(circle_bgr_path))
-for t in circle_bgr:
+circle_bgr_left = glob.glob("/home/user/shape_detection/circle/bgr/bgr_left/*.jpg")
+circle_bgr_path_left = "/home/user/shape_detection/circle/bgr/bgr_left"
+print('Sample Folder: ', os.listdir(circle_bgr_path_left))
+for t in circle_bgr_left:
+  try:
+    os.remove(t)
+  except OSError as e:
+    print('Delete Problem: ', e)
+
+circle_bgr_right = glob.glob("/home/user/shape_detection/circle/bgr/bgr_right/*.jpg")
+circle_bgr_path_right = "/home/user/shape_detection/circle/bgr/bgr_right"
+print('Sample Folder: ', os.listdir(circle_bgr_path_right))
+for t in circle_bgr_right:
   try:
     os.remove(t)
   except OSError as e:
@@ -66,10 +102,19 @@ for t in circle_center:
   except OSError as e:
     print('Delete Problem: ', e)
 
-circle_orig = glob.glob("/home/user/shape_detection/circle/orig/*.jpg")
-circle_orig_path = "/home/user/shape_detection/circle/orig"
-print('Sample Folder: ', os.listdir(circle_orig_path))
-for t in circle_orig:
+circle_orig_left = glob.glob("/home/user/shape_detection/circle/orig/orig_left/*.jpg")
+circle_orig_path_left = "/home/user/shape_detection/circle/orig/orig_left"
+print('Sample Folder: ', os.listdir(circle_orig_path_left))
+for t in circle_orig_left:
+  try:
+    os.remove(t)
+  except OSError as e:
+    print('Delete Problem: ', e)
+
+circle_orig_right = glob.glob("/home/user/shape_detection/circle/orig/orig_right/*.jpg")
+circle_orig_path_right = "/home/user/shape_detection/circle/orig/orig_right"
+print('Sample Folder: ', os.listdir(circle_orig_path_right))
+for t in circle_orig_right:
   try:
     os.remove(t)
   except OSError as e:
@@ -84,20 +129,38 @@ for t in circle_process:
   except OSError as e:
     print('Delete Problem: ', e)
 
-circle_mat = glob.glob("/home/user/shape_detection/circle/mat/*.jpg")
-circle_mat_path = "/home/user/shape_detection/circle/mat"
-print('Sample Folder: ', os.listdir(circle_mat_path))
-for t in circle_mat:
+circle_mat_left = glob.glob("/home/user/shape_detection/circle/mat/mat_left/*.jpg")
+circle_mat_path_left = "/home/user/shape_detection/circle/mat/mat_left"
+print('Sample Folder: ', os.listdir(circle_mat_path_left))
+for t in circle_mat_left:
+  try:
+    os.remove(t)
+  except OSError as e:
+    print('Delete Problem: ', e)
+
+circle_mat_right = glob.glob("/home/user/shape_detection/circle/mat/mat_right/*.jpg")
+circle_mat_path_right = "/home/user/shape_detection/circle/mat/mat_right"
+print('Sample Folder: ', os.listdir(circle_mat_path_right))
+for t in circle_mat_right:
   try:
     os.remove(t)
   except OSError as e:
     print('Delete Problem: ', e)
 
 #columnar
-columnar_bgr = glob.glob("/home/user/shape_detection/columnar/bgr/*.jpg")
-columnar_bgr_path = "/home/user/shape_detection/columnar/bgr"
-print('Sample Folder: ', os.listdir(columnar_bgr_path))
-for t in columnar_bgr:
+columnar_bgr_left = glob.glob("/home/user/shape_detection/columnar/bgr/bgr_left/*.jpg")
+columnar_bgr_path_left = "/home/user/shape_detection/columnar/bgr/bgr_left"
+print('Sample Folder: ', os.listdir(columnar_bgr_path_left))
+for t in columnar_bgr_left:
+  try:
+    os.remove(t)
+  except OSError as e:
+    print('Delete Problem: ', e)
+
+columnar_bgr_right = glob.glob("/home/user/shape_detection/columnar/bgr/bgr_right/*.jpg")
+columnar_bgr_path_right = "/home/user/shape_detection/columnar/bgr/bgr_right"
+print('Sample Folder: ', os.listdir(columnar_bgr_path_right))
+for t in columnar_bgr_right:
   try:
     os.remove(t)
   except OSError as e:
@@ -112,10 +175,19 @@ for t in columnar_center:
   except OSError as e:
     print('Delete Problem: ', e)
 
-columnar_orig = glob.glob("/home/user/shape_detection/columnar/orig/*.jpg")
-columnar_orig_path = "/home/user/shape_detection/columnar/orig"
-print('Sample Folder: ', os.listdir(columnar_orig_path))
-for t in columnar_orig:
+columnar_orig_left = glob.glob("/home/user/shape_detection/columnar/orig/orig_left/*.jpg")
+columnar_orig_path_left = "/home/user/shape_detection/columnar/orig/orig_left"
+print('Sample Folder: ', os.listdir(columnar_orig_path_left))
+for t in columnar_orig_left:
+  try:
+    os.remove(t)
+  except OSError as e:
+    print('Delete Problem: ', e)
+
+columnar_orig_right = glob.glob("/home/user/shape_detection/columnar/orig/orig_right/*.jpg")
+columnar_orig_path_right = "/home/user/shape_detection/columnar/orig/orig_right"
+print('Sample Folder: ', os.listdir(columnar_orig_path_right))
+for t in columnar_orig_right:
   try:
     os.remove(t)
   except OSError as e:
@@ -130,20 +202,38 @@ for t in columnar_process:
   except OSError as e:
     print('Delete Problem: ', e)
 
-columnar_mat = glob.glob("/home/user/shape_detection/columnar/mat/*.jpg")
-columnar_mat_path = "/home/user/shape_detection/columnar/mat"
-print('Sample Folder: ', os.listdir(columnar_mat_path))
-for t in columnar_mat:
+columnar_mat_right = glob.glob("/home/user/shape_detection/columnar/mat//mat_right/*.jpg")
+columnar_mat_path_right = "/home/user/shape_detection/columnar/mat/mat_right"
+print('Sample Folder: ', os.listdir(columnar_mat_path_right))
+for t in columnar_mat_right:
+  try:
+    os.remove(t)
+  except OSError as e:
+    print('Delete Problem: ', e)
+
+columnar_mat_left = glob.glob("/home/user/shape_detection/columnar/mat/mat_left/*.jpg")
+columnar_mat_path_left = "/home/user/shape_detection/columnar/mat/mat_left"
+print('Sample Folder: ', os.listdir(columnar_mat_path_left))
+for t in columnar_mat_left:
   try:
     os.remove(t)
   except OSError as e:
     print('Delete Problem: ', e)
 
 #long
-long_bgr = glob.glob("/home/user/shape_detection/long/bgr/*.jpg")
-long_bgr_path = "/home/user/shape_detection/long/bgr"
-print('Sample Folder: ', os.listdir(long_bgr_path))
-for t in long_bgr:
+long_bgr_left = glob.glob("/home/user/shape_detection/long/bgr/bgr_left/*.jpg")
+long_bgr_path_left = "/home/user/shape_detection/long/bgr/bgr_left"
+print('Sample Folder: ', os.listdir(long_bgr_path_left))
+for t in long_bgr_left:
+  try:
+    os.remove(t)
+  except OSError as e:
+    print('Delete Problem: ', e)
+
+long_bgr_right = glob.glob("/home/user/shape_detection/long/bgr/bgr_right/*.jpg")
+long_bgr_path_right = "/home/user/shape_detection/long/bgr/bgr_right"
+print('Sample Folder: ', os.listdir(long_bgr_path_right))
+for t in long_bgr_right:
   try:
     os.remove(t)
   except OSError as e:
@@ -158,10 +248,19 @@ for t in long_center:
   except OSError as e:
     print('Delete Problem: ', e)
 
-long_orig = glob.glob("/home/user/shape_detection/long/orig/*.jpg")
-long_orig_path = "/home/user/shape_detection/long/orig"
-print('Sample Folder: ', os.listdir(long_orig_path))
-for t in long_orig:
+long_orig_left = glob.glob("/home/user/shape_detection/long/orig/orig_left/*.jpg")
+long_orig_path_left = "/home/user/shape_detection/long/orig/orig_left"
+print('Sample Folder: ', os.listdir(long_orig_path_left))
+for t in long_orig_left:
+  try:
+    os.remove(t)
+  except OSError as e:
+    print('Delete Problem: ', e)
+
+long_orig_right = glob.glob("/home/user/shape_detection/long/orig/orig_right/*.jpg")
+long_orig_path_right = "/home/user/shape_detection/long/orig/orig_right"
+print('Sample Folder: ', os.listdir(long_orig_path_right))
+for t in long_orig_right:
   try:
     os.remove(t)
   except OSError as e:
@@ -176,10 +275,19 @@ for t in long_process:
   except OSError as e:
     print('Delete Problem: ', e)
 
-long_mat = glob.glob("/home/user/shape_detection/long/mat/*.jpg")
-long_mat_path = "/home/user/shape_detection/long/mat"
-print('Sample Folder: ', os.listdir(long_mat_path))
-for t in long_mat:
+long_mat_left = glob.glob("/home/user/shape_detection/long/mat/mat_left/*.jpg")
+long_mat_path_left = "/home/user/shape_detection/long/mat/mat_left"
+print('Sample Folder: ', os.listdir(long_mat_path_left))
+for t in long_mat_left:
+  try:
+    os.remove(t)
+  except OSError as e:
+    print('Delete Problem: ', e)
+
+long_mat_right = glob.glob("/home/user/shape_detection/long/mat/mat_right/*.jpg")
+long_mat_path_right = "/home/user/shape_detection/long/mat/mat_right"
+print('Sample Folder: ', os.listdir(long_mat_path_right))
+for t in long_mat_right:
   try:
     os.remove(t)
   except OSError as e:
