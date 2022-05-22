@@ -1129,8 +1129,8 @@ def line_Segment(mat,orig):
         # cv2.drawContours(object_Image, [box], 0, (0, 0, 255), 2)
         # cv2.imshow("1111",object_Image)
 
-    width = 90
-    height = 20
+    width = 20
+    height = 90
 
     grasp_left_x = int(circle_x - (width/2.0))
     grasp_left_y = int(circle_y - (height/2.0))
@@ -1141,11 +1141,23 @@ def line_Segment(mat,orig):
 
     box = [(grasp_left_x,grasp_left_y),(grasp_right_x,grasp_left_y),(grasp_left_x,grasp_right_y),(grasp_right_x,grasp_right_y)]
     
-    #手臂旋轉角度(以90度為界)
-    real_angle = (angle1[0] + angle1[1])/2.0 + 90
-    if real_angle > 90:
-        real_angle = (angle1[0] + angle1[1])/2.0-90
     
+    print(angle1[0], angle1[1])
+    print("222222222222222222222222222222")
+    
+    
+    #手臂旋轉角度(以90度為界)
+    # if (angle1[0] and angle1[1])<0 and (angle1[0] and angle1[1])>-90:
+    #     real_angle = (angle1[0] + angle1[1])/2.0 -90
+    # if (angle1[0] and angle1[1]) > 0 and (angle1[0] and angle1[1]) < 90:
+
+    if (angle1[0]>0 and angle1[1]<0):
+        real_angle = angle1[0]
+    elif(angle1[0]<0 and angle1[1]>0):
+        real_angle = angle1[1]
+    else:
+        real_angle = (angle1[0] + angle1[1])/2.0
+
     aa = rota_rect(box,real_angle,circle_x,circle_y)
 
     cv2.line(orig_img,(int(aa[0][0]),int(aa[0][1])),(int(aa[2][0]),int(aa[2][1])),(255, 0, 255),2,cv2.LINE_AA)
@@ -1225,9 +1237,6 @@ def line_Segment_cup(mat,orig):
     circle_X = center_x1 
     circle_Y = center_y1 +20
 
-    # print(circle_X,circle_Y)
-    # print("1111111111111111111111111")
-
     # 直线拟合
     rows, cols = object_Image.shape[:2]
     [vx, vy, x, y] = cv2.fitLine(cnt, cv2.DIST_L2, 0, 0.01, 0.01)
@@ -1236,17 +1245,10 @@ def line_Segment_cup(mat,orig):
     cv2.line(object_Image, (cols - 1, righty), (0, lefty), (0, 255, 255), 2)
     # cv2.imshow("test",object_Image)
     roct_result = angle(cols - 1, righty,0, lefty)
+    print(roct_result)
 
-
-    # width = w
-    # height = 10
-    # grasp_left_x = int(circle_x - (width/2.0))
-    # grasp_left_y = int(circle_y - (height/2.0))
-    # grasp_right_x = int(circle_x + (width/2.0))
-    # grasp_right_y = int(circle_y + (height/2.0))
-
-    width = w + 20
-    height = 20
+    width = 20
+    height = w+20
     grasp_left_x = int(circle_X - (width/2.0))
     grasp_left_y = int(circle_Y - (height/2.0))
     grasp_right_x = int(circle_X + (width/2.0))
@@ -1259,21 +1261,6 @@ def line_Segment_cup(mat,orig):
     
     print(angle1[0],angle1[1])
     print("123456789")
-
-    
-
-    # if angle1[0]+angle1[1] <15 and angle1[0]+angle1[1] >0 : #旋轉角度不超過15度角
-    #     real_angle = (angle1[0]+angle1[1])/2.0
-
-    # elif angle1[0]+angle1[1] <0 and angle1[0]+angle1[1] >-100:
-    #     real_angle = 180 + (angle1[0]+angle1[1])/2.0
-    # else :
-    #     real_angle = 90 - (angle1[0]+angle1[1])/2.0
-    if roct_result >0 :
-        roct_result = 90 - roct_result
-    else:
-        roct_result = 90 + roct_result
-    
 
     aa = rota_rect(box,roct_result,circle_X,circle_Y)
 
@@ -1303,15 +1290,6 @@ def circle_transform(mat,orig,detections_number):
     max_id = areas.index(max(areas))
     cnt = contours[max_id] #max contours
 
-    # M_point = cv2.moments(cnt)
-    # cv2.drawContours(orig_img, cnt, -1, (0, 0, 255), 2)
-    # center_x = int(M_point['m10']/M_point['m00'])
-    # center_y = int(M_point['m01']/M_point['m00'])
-    # center_x = int(centerX)
-    # center_y = int(centerY)
-    # drawCenter = cv2.circle(orig_img,(int(center_x),int(center_y)),2,(255,0,0),2)
-    # cv2.drawContours(orig_img, contours, -1, (255, 0, 255), 2)
-
     #計算物體長寬用
     object_Image = orig_img.copy()
     x, y, w, h = cv2.boundingRect(cnt)
@@ -1322,8 +1300,8 @@ def circle_transform(mat,orig,detections_number):
     # cv2.imshow("11111",object_Image)
 
     if w < 90: #小於一定大小直接抓全部
-        width = w + 20
-        height = 20
+        width = 20
+        height = w+30
         grasp_left_x = int(center_x - (width/2.0))
         grasp_left_y = int(center_y - (height/2.0))
         grasp_right_x = int(center_x + (width/2.0))
@@ -1338,24 +1316,22 @@ def circle_transform(mat,orig,detections_number):
         cv2.line(object_Image, (cols - 1, righty), (0, lefty), (0, 255, 255), 2)
         # cv2.imshow("area",object_Image)
         roct_result = angle(cols - 1, righty,0, lefty)
+       
         box = [(grasp_right_x,grasp_left_y),(grasp_left_x,grasp_left_y),
                 (grasp_left_x,grasp_right_y),(grasp_right_x,grasp_right_y)]
         # box = [(grasp_right_x,grasp_left_y),(grasp_left_x,grasp_left_y),
         #             (grasp_left_x,grasp_right_y),(grasp_right_x,grasp_right_y)]
         rota = rota_rect(box,roct_result,int(center_x),int(center_y))
 
-        # cv2.line(orig_img,(int(rota[0][0]), int(rota[0][1])),(int(rota[1][0]),int(rota[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-        # cv2.line(orig_img,(int(rota[1][0]),int(rota[1][1])),(int(rota[2][0]),int(rota[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-        # cv2.line(orig_img,(int(rota[2][0]),int(rota[2][1])),(int(rota[3][0]),int(rota[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-        # cv2.line(orig_img,(int(rota[3][0]),int(rota[3][1])),(int(rota[0][0]),int(rota[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+        cv2.line(orig_img,(int(rota[0][0]), int(rota[0][1])),(int(rota[1][0]),int(rota[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+        cv2.line(orig_img,(int(rota[1][0]),int(rota[1][1])),(int(rota[2][0]),int(rota[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+        cv2.line(orig_img,(int(rota[2][0]),int(rota[2][1])),(int(rota[3][0]),int(rota[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+        cv2.line(orig_img,(int(rota[3][0]),int(rota[3][1])),(int(rota[0][0]),int(rota[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-        # circle_centerX = (rota[0][0] + rota[2][0])/2.0
-        # circle_centerY = (rota[0][1] + rota[2][1])/2.0
-        # cv2.circle(orig_img,(int(circle_centerX),int(circle_centerY)),2,(255,255,0),2)
+        circle_centerX = (rota[0][0] + rota[2][0])/2.0
+        circle_centerY = (rota[0][1] + rota[2][1])/2.0
+        cv2.circle(orig_img,(int(circle_centerX),int(circle_centerY)),2,(255,255,0),2)
         # # cv2.imshow("orig_img",orig_img)
-
-
-        
         result = roct_result
 
     else:
@@ -1381,12 +1357,13 @@ def circle_transform(mat,orig,detections_number):
                     (center_x - width/2.0,center_y + height),(center_x + width/2.0,center_y + height)]
             rota = rota_rect(box,roct_result,int(center_x),int(center_y))
             
-            if roct_result > 0:
-                result = -(90 - roct_result)
-            else:
-                result = (90 + roct_result)
+            # if roct_result > 0:
+            #     result = -(90 - roct_result)
+            # else:
+            #     result = (90 + roct_result)
 
-            print(result)
+            # print(result)
+            result = roct_result
 
             cv2.line(orig_img,(int(rota[0][0]), int(rota[0][1])),(int(rota[1][0]),int(rota[1][1])),(255, 0, 255),2,cv2.LINE_AA)
             cv2.line(orig_img,(int(rota[1][0]),int(rota[1][1])),(int(rota[2][0]),int(rota[2][1])),(255, 0, 255),2,cv2.LINE_AA)
@@ -1399,8 +1376,8 @@ def circle_transform(mat,orig,detections_number):
 
         elif detections_num == 1:
             print("Solid") #實心圓
-            width = w + 20
-            height = 20
+            width = 20
+            height = w + 20
             grasp_left_x = int(center_x - (width/2.0))
             grasp_left_y = int(center_y - (height/2.0))
             grasp_right_x = int(center_x + (width/2.0))
@@ -1418,6 +1395,7 @@ def circle_transform(mat,orig,detections_number):
             cv2.imshow("area",object_Image)
 
             roct_result = angle(cols - 1, righty,0, lefty)
+            print(roct_result)
             box = [(grasp_right_x,grasp_left_y),(grasp_left_x,grasp_left_y),
                         (grasp_left_x,grasp_right_y),(grasp_right_x,grasp_right_y)]
             rota = rota_rect(box,roct_result,int(center_x),int(center_y))
@@ -1444,62 +1422,6 @@ def calculate_center(left_x,left_y,right_x,right_y):
     center_x = left_x + (width/2.0)
     center_y = left_y + (height/2.0)
     return center_x,center_y
-# ------------------------------------------------------- detection -------------------------------------------------
-# def detect(net, meta, image, thresh=.5, hier_thresh=.5, nms=.45, debug=False):
-#     """
-#     Performs the detection
-#     """
-#     custom_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-#     custom_image = cv2.resize(custom_image, (lib.network_width(net), lib.network_height(net)), interpolation=cv2.INTER_LINEAR)
-#     im, arr = array_to_image(custom_image)
-#     num = c_int(0)
-#     pnum = pointer(num)
-#     predict_image(net, im)
-#     dets = get_network_boxes(net, image.shape[1], image.shape[0], thresh, hier_thresh, None, 0, pnum, 0)
-#     num = pnum[0]
-#     if nms:
-#         do_nms_sort(dets, num, meta.classes, nms)
-#     res = []
-#     if debug:
-#         log.debug("about to range")
-#     for j in range(num):
-#         for i in range(meta.classes):
-#             if dets[j].prob[i] > 0:
-#                 b = dets[j].bbox
-#                 if altNames is None:
-#                     name_tag = meta.names[i]
-#                 else:
-#                     name_tag = altNames[i]
-#                 res.append((name_tag, dets[j].prob[i], (b.x, b.y, b.w, b.h), i))
-#     res = sorted(res, key=lambda x: -x[1])
-#     free_detections(dets, num)
-#     return res
-
-# def array_to_image(arr):
-#     import numpy as np
-#     # need to return old values to avoid python freeing memory
-#     arr = arr.transpose(2, 0, 1)
-#     c = arr.shape[0]
-#     h = arr.shape[1]
-#     w = arr.shape[2]
-#     arr = np.ascontiguousarray(arr.flat, dtype=np.float32) / 255.0
-#     data = arr.ctypes.data_as(POINTER(c_float))
-#     im = IMAGE(w, h, c, data)
-#     return im, arr
-
-
-# def classify(net, meta, im):
-#     out = predict_image(net, im)
-#     res = []
-#     for i in range(meta.classes):
-#         if altNames is None:
-#             name_tag = meta.names[i]
-#         else:
-#             name_tag = altNames[i]
-#         res.append((name_tag, out[i]))
-#     res = sorted(res, key=lambda x: -x[1])
-#     return res
-
 
 def get_object_depth(depth, bounds):
     '''
@@ -1626,10 +1548,6 @@ center_long = "/home/user/shape_detection/long/center/"
 center_blade = "/home/user/shape_detection/blade/center/"
 center_columnar = "/home/user/shape_detection/columnar/center/"
 
-
-#depthai
-# resized_intrinsics = 431.74859619
-# left_to_right_distance_cm = 7.5
 curr_time = datetime.datetime.now()
 
 if __name__ == '__main__':
@@ -1739,7 +1657,6 @@ if __name__ == '__main__':
         frame_rgb_right = cv2.cvtColor(color_image1, cv2.COLOR_BGR2RGB)
         frame_resized_right = cv2.resize(frame_rgb_right, (width_right, height_right))
 
-
         darknet_image_left = darknet.make_image(width_left, height_left, 3)
         darknet.copy_image_from_bytes(darknet_image_left, frame_resized_left.tobytes()) 
         detections_left = darknet.detect_image(network, class_names, darknet_image_left, thresh=thresh)
@@ -1765,41 +1682,41 @@ if __name__ == '__main__':
         cv2.imshow("image_right", image_right)
         fps = int(1/(time.time()-t_prev))
 
-        point3D_A = point_cloud.get_value(319,477)
-        A_x = point3D_A[1][0]
-        A_y = point3D_A[1][1]
-        A_z = point3D_A[1][2]
-        color = point3D_A[1][3]
+        # point3D_A = point_cloud.get_value(319,477)
+        # A_x = point3D_A[1][0]
+        # A_y = point3D_A[1][1]
+        # A_z = point3D_A[1][2]
+        # color = point3D_A[1][3]
 
-        point3D_B = point_cloud1.get_value(176,473)
-        B_x = point3D_B[1][0]
-        B_y = point3D_B[1][1]
-        B_z = point3D_B[1][2]
-        color = point3D_B[1][3]
+        # point3D_B = point_cloud1.get_value(176,473)
+        # B_x = point3D_B[1][0]
+        # B_y = point3D_B[1][1]
+        # B_z = point3D_B[1][2]
+        # color = point3D_B[1][3]
 
-        point3D_C = point_cloud.get_value(412,477)
-        C_x = point3D_C[1][0]
-        C_y = point3D_C[1][1]
-        C_z = point3D_C[1][2]
-        color = point3D_C[1][3]
+        # point3D_C = point_cloud.get_value(412,477)
+        # C_x = point3D_C[1][0]
+        # C_y = point3D_C[1][1]
+        # C_z = point3D_C[1][2]
+        # color = point3D_C[1][3]
 
-        point3D_D = point_cloud1.get_value(268,476)
-        D_x = point3D_D[1][0]
-        D_y = point3D_D[1][1]
-        D_z = point3D_D[1][2]
-        color = point3D_D[1][3]
+        # point3D_D = point_cloud1.get_value(268,476)
+        # D_x = point3D_D[1][0]
+        # D_y = point3D_D[1][1]
+        # D_z = point3D_D[1][2]
+        # color = point3D_D[1][3]
 
-        point3D_check = point_cloud.get_value(570,383)
-        check_x = point3D_check[1][0]
-        check_y = point3D_check[1][1]
-        check_z = point3D_check[1][2]
-        color = point3D_check[1][3]
+        # point3D_check = point_cloud.get_value(570,383)
+        # check_x = point3D_check[1][0]
+        # check_y = point3D_check[1][1]
+        # check_z = point3D_check[1][2]
+        # color = point3D_check[1][3]
 
-        print("point3D_A: "+ str(A_x)+ " ," + str(A_y) + " ," + str(A_z))
-        print("point3D_B: "+ str(B_x)+ " ," + str(B_y) + " ," + str(B_z))
-        print("point3D_C: "+ str(C_x)+ " ," + str(C_y) + " ," + str(C_z))
-        print("point3D_D: "+ str(D_x)+ " ," + str(D_y) + " ," + str(D_z))
-        print("point3D_check: "+ str(check_x)+ " ," + str(check_y) + " ," + str(check_z))
+        # print("point3D_A: "+ str(A_x)+ " ," + str(A_y) + " ," + str(A_z))
+        # print("point3D_B: "+ str(B_x)+ " ," + str(B_y) + " ," + str(B_z))
+        # print("point3D_C: "+ str(C_x)+ " ," + str(C_y) + " ," + str(C_z))
+        # print("point3D_D: "+ str(D_x)+ " ," + str(D_y) + " ," + str(D_z))
+        # print("point3D_check: "+ str(check_x)+ " ," + str(check_y) + " ," + str(check_z))
 
         #好想睡覺.....
         if  len(detections_left) != 0:
@@ -2069,13 +1986,13 @@ if __name__ == '__main__':
                                             cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
                                             center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_left = roct_result_left
+                                            real_angle_left = 90
                                             number_left =1119
 
                                             cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
                                             center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_right = roct_result_right
+                                            real_angle_right = 90
                                             number_right =1118
 
                                         elif(roct_result_left >15 and roct_result_left <40) or (roct_result_right >15 and roct_result_right <40):
@@ -2093,13 +2010,13 @@ if __name__ == '__main__':
                                             cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
                                             center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_left = roct_result_left
+                                            real_angle_left = 90
                                             number_left =2229
 
                                             cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
                                             center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_right = roct_result_right
+                                            real_angle_right = 90
                                             number_right =2228
                                         
                                         elif(roct_result_left > 40) or (roct_result_right > 40):
@@ -2117,13 +2034,13 @@ if __name__ == '__main__':
                                             cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
                                             center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_left = roct_result_left
+                                            real_angle_left = 90
                                             number_left =3339
 
                                             cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right,(right_down_x_right,right_down_y_right),(255,0,255),2))
                                             center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_right = roct_result_right
+                                            real_angle_right = 90
                                             number_right =3338
                 
                                         cv2.circle(color_image,(int(center_left[0]),int(center_left[1])),2,(0,0,255),2)
@@ -2165,7 +2082,6 @@ if __name__ == '__main__':
                                         cv2.imshow("finish_right",color_image1) 
 
                                     else: #grip right
-
                                         if(roct_result_left >=-15) or (roct_result_right >=-15):
                                             # if((columnar_center_x - grip_center_x) >= 70):
                                             left_up_x_left = int(grip_center_x_left)
@@ -2181,13 +2097,13 @@ if __name__ == '__main__':
                                             cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
                                             center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_left = roct_result_left
+                                            real_angle_left = 90
                                             number_left = 111111111119
 
                                             cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
                                             center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_right = roct_result_right
+                                            real_angle_right = 90
                                             number_right = 111111111118
 
                                         elif(roct_result_left <-15 and roct_result_left >-40) or (roct_result_right <-15 and roct_result_right >-40):
@@ -2208,13 +2124,13 @@ if __name__ == '__main__':
                                             cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
                                             center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_left = roct_result_left
+                                            real_angle_left = 90
                                             number_left = 22221111119
 
                                             cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
                                             center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_right = roct_result_right
+                                            real_angle_right = 90
                                             number_right = 22221111118
                                     
                                         elif(roct_result_left < -40) or (roct_result_right < -40):
@@ -2232,13 +2148,13 @@ if __name__ == '__main__':
                                             cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
                                             center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_left = roct_result_left
+                                            real_angle_left = 90
                                             number = 3333111119
 
                                             cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
                                             center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_right = roct_result_right
+                                            real_angle_right = 90
                                             number = 3333111118
                                     
                                         cv2.circle(color_image,(int(center_left[0]),int(center_left[1])),2,(0,0,255),2)
@@ -2321,13 +2237,13 @@ if __name__ == '__main__':
                                             cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
                                             center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_left = roct_result_left
+                                            real_angle_left = 90
                                             number_left =1119
 
                                             cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
                                             center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_right = roct_result_right
+                                            real_angle_right = 90
                                             number_right =1118
 
                                         elif(roct_result_left >15 and roct_result_left <40) or (roct_result_right >15 and roct_result_right <40):
@@ -2345,13 +2261,13 @@ if __name__ == '__main__':
                                             cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
                                             center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_left = roct_result_left
+                                            real_angle_left = 90
                                             number_left =2229
 
                                             cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
                                             center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_right = roct_result_right
+                                            real_angle_right = 90
                                             number_right =2228
                                         
                                         elif(roct_result_left > 40) or (roct_result_right > 40):
@@ -2369,13 +2285,13 @@ if __name__ == '__main__':
                                             cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
                                             center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_left = roct_result_left
+                                            real_angle_left = 90
                                             number_left =3339
 
                                             cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right,(right_down_x_right,right_down_y_right),(255,0,255),2))
                                             center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_right = roct_result_right
+                                            real_angle_right = 90
                                             number_right =3338
                 
                                         cv2.circle(color_image,(int(center_left[0]),int(center_left[1])),2,(0,0,255),2)
@@ -2432,13 +2348,13 @@ if __name__ == '__main__':
                                             cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
                                             center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_left = roct_result_left
+                                            real_angle_left = 90
                                             number_left = 111111111119
 
                                             cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
                                             center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_right = roct_result_right
+                                            real_angle_right = 90
                                             number_right = 111111111118
 
                                         elif(roct_result_left <-15 and roct_result_left >-40) or (roct_result_right <-15 and roct_result_right >-40):
@@ -2459,13 +2375,13 @@ if __name__ == '__main__':
                                             cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
                                             center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_left = roct_result_left
+                                            real_angle_left = 90
                                             number_left = 22221111119
 
                                             cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
                                             center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_right = roct_result_right
+                                            real_angle_right = 90
                                             number_right = 22221111118
                                     
                                         elif(roct_result_left < -40) or (roct_result_right < -40):
@@ -2483,13 +2399,13 @@ if __name__ == '__main__':
                                             cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
                                             center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_left = roct_result_left
+                                            real_angle_left = 90
                                             number = 3333111119
 
                                             cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
                                             center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_right = roct_result_right
+                                            real_angle_right = 90
                                             number = 3333111118
                                     
                                         cv2.circle(color_image,(int(center_left[0]),int(center_left[1])),2,(0,0,255),2)
@@ -2573,13 +2489,13 @@ if __name__ == '__main__':
                                             cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
                                             center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_left = roct_result_left
+                                            real_angle_left = 90
                                             number_left =11129
 
                                             cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
                                             center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_right = roct_result_right
+                                            real_angle_right = 90
                                             number_right =11128
 
                                         elif(roct_result_left >15 and roct_result_left <40) or (roct_result_right >15 and roct_result_right <40):
@@ -2597,13 +2513,13 @@ if __name__ == '__main__':
                                             cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
                                             center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_left = roct_result_left
+                                            real_angle_left = 90
                                             number_left =22229
 
                                             cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
                                             center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_right = roct_result_right
+                                            real_angle_right = 90
                                             number_right =22228
                                         
                                         elif(roct_result_left > 40) or (roct_result_right > 40):
@@ -2621,13 +2537,13 @@ if __name__ == '__main__':
                                             cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
                                             center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_left = roct_result_left
+                                            real_angle_left = 90
                                             number_left =33329
 
                                             cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right,(right_down_x_right,right_down_y_right),(255,0,255),2))
                                             center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_right = roct_result_right
+                                            real_angle_right = 90
                                             number_right =33328
                                         
                                         cv2.circle(color_image,(int(center_left[0]),int(center_left[1])),2,(0,0,255),2)
@@ -2684,13 +2600,13 @@ if __name__ == '__main__':
                                                 cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
                                                 center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
                                                 # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                                real_angle_left = roct_result_left
+                                                real_angle_left = 90
                                                 number_left = 1111111111129
 
                                                 cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
                                                 center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
                                                 # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                                real_angle_right = roct_result_right
+                                                real_angle_right = 90
                                                 number_right = 1111111111128
 
                                             elif(roct_result_left <-15 and roct_result_left >-40) or (roct_result_right <-15 and roct_result_right >-40):
@@ -2711,13 +2627,13 @@ if __name__ == '__main__':
                                                 cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
                                                 center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
                                                 # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                                real_angle_left = roct_result_left
+                                                real_angle_left = 90
                                                 number_left = 222211111129
 
                                                 cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
                                                 center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
                                                 # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                                real_angle_right = roct_result_right
+                                                real_angle_right = 90
                                                 number_right = 222211111128
                                             
                                             elif(roct_result_left < -40) or (roct_result_right < -40):
@@ -2735,13 +2651,13 @@ if __name__ == '__main__':
                                                 cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
                                                 center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
                                                 # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                                real_angle_left = roct_result_left
+                                                real_angle_left = 90
                                                 number_left = 33331111129
 
                                                 cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
                                                 center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
                                                 # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                                real_angle_right = roct_result_right
+                                                real_angle_right = 90
                                                 number_right = 33331111128
                                             
                                             cv2.circle(color_image,(int(center_left[0]),int(center_left[1])),2,(0,0,255),2)
@@ -2824,13 +2740,13 @@ if __name__ == '__main__':
                                             cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
                                             center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_left = roct_result_left
+                                            real_angle_left = 90
                                             number_left =11129
 
                                             cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
                                             center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_right = roct_result_right
+                                            real_angle_right = 90
                                             number_right =11128
 
                                         elif(roct_result_left >15 and roct_result_left <40) or (roct_result_right >15 and roct_result_right <40):
@@ -2848,13 +2764,13 @@ if __name__ == '__main__':
                                             cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
                                             center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_left = roct_result_left
+                                            real_angle_left = 90
                                             number_left =22229
 
                                             cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
                                             center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_right = roct_result_right
+                                            real_angle_right = 90
                                             number_right =22228
                                         
                                         elif(roct_result_left > 40) or (roct_result_right > 40):
@@ -2872,13 +2788,13 @@ if __name__ == '__main__':
                                             cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
                                             center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_left = roct_result_left
+                                            real_angle_left = 90
                                             number_left =33329
 
                                             cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right,(right_down_x_right,right_down_y_right),(255,0,255),2))
                                             center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
                                             # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                            real_angle_right = roct_result_right
+                                            real_angle_right = 90
                                             number_right =33328
                                         
                                         cv2.circle(color_image,(int(center_left[0]),int(center_left[1])),2,(0,0,255),2)
@@ -2935,13 +2851,13 @@ if __name__ == '__main__':
                                                 cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
                                                 center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
                                                 # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                                real_angle_left = roct_result_left
+                                                real_angle_left = 90
                                                 number_left = 1111111111129
 
                                                 cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
                                                 center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
                                                 # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                                real_angle_right = roct_result_right
+                                                real_angle_right = 90
                                                 number_right = 1111111111128
 
                                             elif(roct_result_left <-15 and roct_result_left >-40) or (roct_result_right <-15 and roct_result_right >-40):
@@ -2962,13 +2878,13 @@ if __name__ == '__main__':
                                                 cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
                                                 center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
                                                 # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                                real_angle_left = roct_result_left
+                                                real_angle_left = 90
                                                 number_left = 222211111129
 
-                                                cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
+                                                cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_do0wn_x_right,right_down_y_right),(255,0,255),2)
                                                 center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
                                                 # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                                real_angle_right = roct_result_right
+                                                real_angle_right = 90
                                                 number_right = 222211111128
                                             
                                             elif(roct_result_left < -40) or (roct_result_right < -40):
@@ -2986,13 +2902,13 @@ if __name__ == '__main__':
                                                 cv2.rectangle(color_image,(left_up_x_left,left_up_y_left),(right_down_x_left,right_down_y_left),(255,0,255),2)
                                                 center_left = calculate_center(left_up_x_left,left_up_y_left,right_down_x_left,right_down_y_left)
                                                 # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                                real_angle_left = roct_result_left
+                                                real_angle_left = 90
                                                 number_left = 33331111129
 
                                                 cv2.rectangle(color_image1,(left_up_x_right,left_up_y_right),(right_down_x_right,right_down_y_right),(255,0,255),2)
                                                 center_right = calculate_center(left_up_x_right,left_up_y_right,right_down_x_right,right_down_y_right)
                                                 # real_angle = angle(left_up_x,left_up_y,left_up_x+grip_width,left_up_y)
-                                                real_angle_right = roct_result_right
+                                                real_angle_right = 90
                                                 number_right = 33331111128
                                             
                                             cv2.circle(color_image,(int(center_left[0]),int(center_left[1])),2,(0,0,255),2)
@@ -3109,8 +3025,8 @@ if __name__ == '__main__':
                                     cv2.putText(color_image, "cut right up 0101" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     cv2.putText(color_image1, "cut right up 0101 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
 
-                                    # if(roct_result_left >=15 and roct_result_left <=80) or (roct_result_right >=15 and roct_result_right <=80):
-                                    if((blade_center_x_left - round_grasp_center_x_left) < 100 and (blade_center_x_left - round_grasp_center_x_left) >= 20) or ((blade_center_x_right - round_grasp_center_x_right) < 100 and (blade_center_x_right - round_grasp_center_x_right) >= 20): 
+                                    if(roct_result_left >=15 and roct_result_left <=70) or (roct_result_right >=15 and roct_result_right <=70):
+                                    # if((blade_center_x_left - round_grasp_center_x_left) < 100 and (blade_center_x_left - round_grasp_center_x_left) >= 20) or ((blade_center_x_right - round_grasp_center_x_right) < 100 and (blade_center_x_right - round_grasp_center_x_right) >= 20): 
                                         cv2.putText(color_image, "cut right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image1, "cut right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
@@ -3156,8 +3072,8 @@ if __name__ == '__main__':
                                         real_rota_left = roct_result_left
                                         real_rota_right = roct_result_right
                                     
-                                    # elif(roct_result_left < 15 ) or (roct_result_right <15 ):
-                                    elif((blade_center_x_left - round_grasp_center_x_left) >= 100) or ((blade_center_x_right - round_grasp_center_x_right) >= 100):
+                                    elif(roct_result_left < 15 ) or (roct_result_right <15 ):
+                                    # elif((blade_center_x_left - round_grasp_center_x_left) >= 100) or ((blade_center_x_right - round_grasp_center_x_right) >= 100):
                                         cv2.putText(color_image, "cut right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image1, "cut right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
@@ -3166,8 +3082,8 @@ if __name__ == '__main__':
                                         # cv2.circle(color_image,(int(blade_center_x - blade_width/2.0),int(blade_center_y)),2,(255,0,0),2)
                                         # cv2.rectangle(color_image, (int(blade_center_x - blade_width/2.0 - width/2.0), int(blade_center_y - height/2.0)), (int(blade_center_x - blade_width/2.0 + width/2.0), int(blade_center_y + height/2.0)),(255, 0, 255), 2)
                                         real_grasp_center_x_left = blade_center_x_left - blade_width_left/2.0
-                                        real_grasp_center_y_left = blade_center_y_left
-                                        
+                                        real_grasp_center_y_left  = blade_center_y_left 
+
                                         real_grasp_center_x_right = blade_center_x_right - blade_width_right/2.0
                                         real_grasp_center_y_right = blade_center_y_right
 
@@ -3200,16 +3116,16 @@ if __name__ == '__main__':
                                         cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(2, 202, 119),2)
 
                                         
-                                        real_rota_left = 90 - roct_result_left
-                                        real_rota_right = 90 - roct_result_right
+                                        real_rota_left = roct_result_left
+                                        real_rota_right = roct_result_right
 
                                         # if (real_rota_left <0):
                                         #     real_rota_left = -90 - real_rota_left
                                         # if (real_rota_right <0):
                                         #     real_rota_right = -90 - real_rota_right
                                     
-                                    # elif (roct_result_left > 80) or (roct_result_right >80):
-                                    elif((blade_center_x_left - round_grasp_center_x_left) < 20) or ((blade_center_x_right - round_grasp_center_x_right) < 20): 
+                                    elif (roct_result_left > 70) or (roct_result_right >70):
+                                    # elif((blade_center_x_left - round_grasp_center_x_left) < 20) or ((blade_center_x_right - round_grasp_center_x_right) < 20): 
                                         cv2.putText(color_image, "cut right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image1, "cut right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
@@ -3276,9 +3192,9 @@ if __name__ == '__main__':
                                     z_value_right = depth_image_zed.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
 
                                     cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     cv2.putText(color_image, "center: " + "("+ str(round(real_grasp_center_x_left,3)) +","+ str(round(real_grasp_center_y_left,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "angle: " + str(round(real_rota_left,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     cv2.imwrite(center_blade + "left_blade_grasp_"+str(d)+'.jpg',color_image) 
                                     cv2.imshow("finish_left",color_image)
@@ -3297,8 +3213,9 @@ if __name__ == '__main__':
                                     cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     cv2.putText(color_image, "cut right down 0101" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     cv2.putText(color_image1, "cut right down 0101 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    # if(roct_result_left >=-15 and roct_result_left <=-70) or (roct_result_right >=-15 and roct_result_right <=-70):
-                                    if((blade_center_x_left - round_grasp_center_x_left) < 100 and (blade_center_x_left - round_grasp_center_x_left) >= 20) or ((blade_center_x_right - round_grasp_center_x_right) < 100 and (blade_center_x_right - round_grasp_center_x_right) >= 20):
+                                    
+                                    if(roct_result_left <-15 and roct_result_left >=-70) or (roct_result_right <-15 and roct_result_right >=-70):
+                                    # if((blade_center_x_left - round_grasp_center_x_left) < 100 and (blade_center_x_left - round_grasp_center_x_left) >= 20) or ((blade_center_x_right - round_grasp_center_x_right) < 100 and (blade_center_x_right - round_grasp_center_x_right) >= 20):
                                         cv2.putText(color_image, "cut right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image1, "cut right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20 
@@ -3345,18 +3262,18 @@ if __name__ == '__main__':
                                         real_rota_right = roct_result_right
 
 
-                                    # elif(roct_result_left <-15) or (roct_result_right <-15):
-                                    elif((blade_center_x_left - round_grasp_center_x_left) >= 100) or ((blade_center_x_right - round_grasp_center_x_right) >= 100):
+                                    elif(roct_result_left >=-15 ) or (roct_result_right >=-15 ):
+                                    # elif((blade_center_x_left - round_grasp_center_x_left) >= 100) or ((blade_center_x_right - round_grasp_center_x_right) >= 100):
                                         cv2.putText(color_image, "cut right down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image1, "cut right down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
                                 
-                                        real_grasp_center_x_left = blade_center_x_left - blade_width_left/2.0
-                                        real_grasp_center_y_left = blade_center_y_left
+                                        real_grasp_center_x_left = blade_center_x_left + blade_width_left/2.0
+                                        real_grasp_center_y_left  = blade_center_y_left
 
-                                        real_grasp_center_x_right = blade_center_x_right - blade_width_right/2.0
-                                        real_grasp_center_y_right = blade_center_y_right
+                                        real_grasp_center_x_right = blade_center_x_right  + blade_width_right/2.0
+                                        real_grasp_center_y_right = blade_center_y_right 
 
                                         # cv2.circle(color_image,(int(real_grasp_center_x),int(blade_center_y)),2,(255,0,0),2)
                                         # cv2.rectangle(color_image, (int(real_grasp_center_x - width/2.0), int(real_grasp_center_y - height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
@@ -3391,8 +3308,8 @@ if __name__ == '__main__':
                                         real_rota_left = roct_result_left
                                         real_rota_right = roct_result_right
                                     
-                                    # elif(roct_result_left >-70) or (roct_result_right >-70):
-                                    elif((blade_center_x_left - round_grasp_center_x_left) < 20) or ((blade_center_x_right - round_grasp_center_x_right) < 20): 
+                                    elif(roct_result_left < -70) or (roct_result_right < -70):
+                                        # elif((blade_center_x_left - round_grasp_center_x_left) < 20) or ((blade_center_x_right - round_grasp_center_x_right) < 20): 
                                         cv2.putText(color_image, "cut right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image1, "cut right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
@@ -3446,8 +3363,6 @@ if __name__ == '__main__':
                                         #     real_rota_right = 90-roct_result_right
                                         # elif roct_result_right <0:
                                         #     real_rota_right = 90+roct_result_right
-
-
                                     
                                     point3D_left = point_cloud.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
                                     x_left = point3D_left[1][0]
@@ -3488,11 +3403,12 @@ if __name__ == '__main__':
                                     cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     cv2.putText(color_image, "cut left up 0101" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     cv2.putText(color_image1, "cut left up 0101 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    if((round_grasp_center_x_left - blade_center_x_left) < 115 and(round_grasp_center_x_left - blade_center_x_left)>=25) or ((round_grasp_center_x_right - blade_center_x_right) < 115 and(round_grasp_center_x_right - blade_center_x_right)>=25):
+                                    if(roct_result_left <-15 and roct_result_left >=-70) or (roct_result_right <-15 and roct_result_right >=-70):
+                                    # if((round_grasp_center_x_left - blade_center_x_left) < 115 and(round_grasp_center_x_left - blade_center_x_left)>=25) or ((round_grasp_center_x_right - blade_center_x_right) < 115 and(round_grasp_center_x_right - blade_center_x_right)>=25):
                                         cv2.putText(color_image, "cut left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image1, "cut left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
-                                        height = 40
+                                        height = 50
 
                                         # cv2.line(img_org,(int(right_down_x),int(right_down_y)),(int(blade_left_up_x),int(blade_left_up_y)),(255, 0, 255),2,cv2.LINE_AA)
                                         real_grasp_center_x_left = (left_up_x_left + blade_right_down_x_left)/2.0 
@@ -3502,61 +3418,16 @@ if __name__ == '__main__':
                                         real_grasp_center_y_right = (left_up_y_right + blade_right_down_y_right)/2.0
 
                                         # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
-                                        # cv2.rectangle(img_org, (int(real_grasp_center_x-width/2.0), int(real_grasp_center_y-height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
-                                        result_left = angle(blade_left_up_x_left ,blade_left_up_y_left,blade_right_down_x_left ,blade_right_down_y_left)
+                                        # cv2.rectangle(color_image, (int(real_grasp_center_x_left-width/2.0), int(real_grasp_center_y_left-height/2.0)), (int(real_grasp_center_x_left + width/2.0), int(real_grasp_center_y_left + height/2.0)),(255, 0, 255), 2)
+                                        result_left = angle(blade_left_up_x_left ,blade_left_up_y_left ,blade_right_down_x_left  ,blade_right_down_y_left)
                                         box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
                                                 (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
-                                        rota_left = rota_rect(box_left,real_rota_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+                                        rota_left = rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
 
                                         result_right = angle(blade_left_up_x_right ,blade_left_up_y_right ,blade_right_down_x_right  ,blade_right_down_y_right)
                                         box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
                                                 (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
-                                        rota_right = rota_rect(box_right,r,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
-
-                                        cv2.line(color_image,(int(box_left[0][0]),int(box_left[0][1])),(int(box_left[1][0]),int(box_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                                        cv2.line(color_image,(int(box_left[1][0]),int(box_left[1][1])),(int(box_left[2][0]),int(box_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                                        cv2.line(color_image,(int(box_left[2][0]),int(box_left[2][1])),(int(box_left[3][0]),int(box_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                                        cv2.line(color_image,(int(box_left[3][0]),int(box_left[3][1])),(int(box_left[0][0]),int(box_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
-
-                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
-
-                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
-
-                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
-
-                                        real_rota_left = roct_result_left
-                                        real_rota_right = roct_result_right
-                                        
-                                    elif((round_grasp_center_x_left - blade_center_x_left) >= 115) or ((round_grasp_center_x_right - blade_center_x_right) >= 115):
-                                        cv2.putText(color_image, "cut left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut left up 2222r 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        width = 20
-                                        height = 40
-
-                                        real_grasp_center_x_left = blade_center_x_left  + blade_width_left /2.0
-                                        real_grasp_center_y_left  = blade_center_y_left 
-
-                                        real_grasp_center_x_right = blade_center_x_right + blade_width_right/2.0
-                                        real_grasp_center_y_right = blade_center_y_right
-
-                                        # cv2.circle(color_image,(int(real_grasp_center_x),int(blade_center_y)),2,(255,0,0),2)
-                                        # cv2.rectangle(img_org, (int(real_grasp_center_x - width/2.0), int(real_grasp_center_y - height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
-                                        result_left = angle(real_grasp_center_x_left ,real_grasp_center_y_left,blade_center_x_left ,blade_center_y_left)
-                                        box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
-                                            (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
-                                        rota_left= rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
-
-                                        result_right = angle(real_grasp_center_x_right ,real_grasp_center_y,blade_center_x_right ,blade_center_y_right)
-                                        box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
-                                            (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
-                                        rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+                                        rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
 
                                         cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
                                         cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
@@ -3578,12 +3449,59 @@ if __name__ == '__main__':
 
                                         real_rota_left = roct_result_left
                                         real_rota_right = roct_result_right
+                                        
+                                    elif(roct_result_left >=-15 ) or (roct_result_right >=-15 ):
+                                    # elif((round_grasp_center_x_left - blade_center_x_left) >= 115) or ((round_grasp_center_x_right - blade_center_x_right) >= 115):
+                                        cv2.putText(color_image, "cut left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20
+                                        height = 40
 
-                                    elif((round_grasp_center_x_left - blade_center_x_left) < 25) or ((round_grasp_center_x_right - blade_center_x_right) < 25):
+                                        real_grasp_center_x_left = blade_center_x_left  + blade_width_left/2.0
+                                        real_grasp_center_y_left  = blade_center_y_left
+
+                                        real_grasp_center_x_right = blade_center_x_right + blade_width_right/2.0
+                                        real_grasp_center_y_right = blade_center_y_right 
+
+                                        # cv2.circle(color_image,(int(real_grasp_center_x),int(blade_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(img_org, (int(real_grasp_center_x - width/2.0), int(real_grasp_center_y - height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
+                                        result_left = angle(real_grasp_center_x_left ,real_grasp_center_y_left,blade_center_x_left ,blade_center_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
+                                            (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
+                                        rota_left= rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+
+                                        result_right = angle(real_grasp_center_x_right ,real_grasp_center_y_right,blade_center_x_right ,blade_center_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                            (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+
+                                        real_rota_left = roct_result_left
+                                        real_rota_right = roct_result_right
+                                    
+                                    elif(roct_result_left < -70) or (roct_result_right < -70):
+                                    # elif((round_grasp_center_x_left - blade_center_x_left) < 25) or ((round_grasp_center_x_right - blade_center_x_right) < 25):
                                         cv2.putText(color_image, "cut left up 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image1, "cut left up 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        width = 40
-                                        height = 20
+                                        width = 20
+                                        height = 40
 
                                         real_grasp_center_x_left = blade_center_x_left 
                                         real_grasp_center_y_left = blade_center_y_left + blade_height_left/2.0
@@ -3596,11 +3514,598 @@ if __name__ == '__main__':
                                         result_left = angle(real_grasp_center_x_left,real_grasp_center_y_left,blade_right_down_x_left,blade_right_down_y_left)
                                         box_left= [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
                                             (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left + height/2.0)]
-                                        rota_left = rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+                                        rota_left = rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
 
                                         result_right = angle(real_grasp_center_x_right,real_grasp_center_y_right,blade_right_down_x_right,blade_right_down_y_right)
                                         box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),
                                                 (real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+                                        
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+
+                                        real_rota_left = roct_result_left
+                                        real_rota_right = roct_result_right
+                                    
+                                    point3D_left = point_cloud.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
+                                    x_left = point3D_left[1][0]
+                                    y_left = point3D_left[1][1]
+                                    z_left = point3D_left[1][2]
+                                    color_right = point3D_left[1][3]
+
+                                    point3D_right = point_cloud1.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
+                                    x_right = point3D_right[1][0]
+                                    y_right = point3D_right[1][1]
+                                    z_right = point3D_right[1][2]
+                                    color_right = point3D_right[1][3]
+
+                                    # viewer.updateData(point_cloud1)
+                                    #depth
+                                    z_value_left = depth_image_zed.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
+                                    z_value_right = depth_image_zed.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
+
+                                    cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "center: " + "("+ str(round(real_grasp_center_x_left,3)) +","+ str(round(real_grasp_center_y_left,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "angle: " + str(round(real_rota_left,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.imwrite(center_blade + "left_blade_grasp_"+str(d)+'.jpg',color_image) 
+                                    cv2.imshow("finish_left",color_image)
+
+                                    cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "center: " + "("+ str(round(real_grasp_center_x_right,3)) +","+ str(round(real_grasp_center_y_right,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "angle: " + str(round(real_rota_right,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.imwrite(center_blade + "right_blade_grasp_"+str(d)+'.jpg',color_image1) 
+                                    cv2.imshow("finish_right",color_image1)
+                                
+                                #quadrant 4 , cut left down
+                                elif(round_grasp_center_x_left > blade_center_x_left and blade_center_y_left > round_grasp_center_y_left) or (round_grasp_center_x_right > blade_center_x_right and blade_center_y_right > round_grasp_center_y_right): 
+                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "cut left down 0101" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "cut left down 0101 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    if(roct_result_left >=15 and roct_result_left <=70) or (roct_result_right >=15 and roct_result_right <=70):
+                                    # if((round_grasp_center_x_left - blade_center_x_left) < 115 and(round_grasp_center_x_left - blade_center_x_left)>=25) or ((round_grasp_center_x_right - blade_center_x_right) < 115 and(round_grasp_center_x_right - blade_center_x_right)>=25):
+                                        cv2.putText(color_image, "cut left down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut left down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20
+                                        height = 40
+
+                                        real_grasp_center_x_left = (blade_right_down_x_left + left_up_x_left)/2.0 
+                                        real_grasp_center_y_left = (blade_left_up_y_left + right_down_y_left)/2.0
+
+                                        real_grasp_center_x_right = (blade_right_down_x_right + left_up_x_right)/2.0 
+                                        real_grasp_center_y_right = (blade_left_up_y_right + right_down_y_right)/2.0
+
+                                        # cv2.circle(color_image,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(img_org,(int(grasp_center_x-width/2.0), int(grasp_center_y)), (int(grasp_center_x + width/2.0), int(grasp_center_y + height)),(0, 127, 255), 2)
+                                        result_left = angle(blade_left_up_x_left,blade_right_down_y_left,blade_right_down_x_left,blade_left_up_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
+                                            (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left + height/2.0)]
+                                        rota_left = rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+
+                                        result_right = angle(blade_left_up_x_right,blade_right_down_y_right,blade_right_down_x_right,blade_left_up_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                            (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+
+                                        real_rota_left = roct_result_left
+                                        real_rota_right = roct_result_right
+
+                                    elif(roct_result_left < 15) or (roct_result_right <15):
+                                    # elif((round_grasp_center_x_left - blade_center_x_left) >= 115) or ((round_grasp_center_x_right - blade_center_x_right) >= 115):
+                                        cv2.putText(color_image, "cut left down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut left down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20
+                                        height = 40
+                                        
+                                        real_grasp_center_x_left = blade_center_x_left + blade_width_left/2.0
+                                        real_grasp_center_y_left  = blade_center_y_left 
+                                        real_grasp_center_x_right = blade_center_x_right+ blade_width_right/2.0
+                                        real_grasp_center_y_right = blade_center_y_right
+
+                                        # cv2.circle(color_image,(int(real_grasp_center_x),int(blade_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(img_org, (int(real_grasp_center_x - width/2.0), int(real_grasp_center_y - height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
+                                        result_left = angle(real_grasp_center_x_left,real_grasp_center_y_left ,blade_center_x_left  ,blade_center_y_left )
+                                        box_left  = [(real_grasp_center_x_left  + width/2.0,real_grasp_center_y_left  - height/2.0),(real_grasp_center_x_left  - width/2.0,real_grasp_center_y_left  - height/2.0),
+                                            (real_grasp_center_x_left  - width/2.0,real_grasp_center_y_left  + height/2.0),(real_grasp_center_x_left  + width/2.0,real_grasp_center_y_left  + height/2.0)]
+                                        rota_left  = rota_rect(box_left ,roct_result_left ,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+
+                                        result_right = angle(real_grasp_center_x_right ,real_grasp_center_y_right,blade_center_x_right ,blade_center_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                            (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+
+                                        real_rota_left = roct_result_left
+                                        real_rota_right = roct_result_right
+
+                                    elif (roct_result_left > 70) or (roct_result_right >70):
+                                    # elif((round_grasp_center_x_left - blade_center_x_left) < 25) or ((round_grasp_center_x_right - blade_center_x_right) < 25):
+                                        cv2.putText(color_image, "cut left down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut left down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20
+                                        height = 40
+
+                                        real_grasp_center_x_left = blade_center_x_left 
+                                        real_grasp_center_y_left = blade_center_y_left - blade_height_left/2.0
+
+                                        real_grasp_center_x_right = blade_center_x_right
+                                        real_grasp_center_y_right = blade_center_y_right - blade_height_right/2.0
+
+                                        # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(img_org,(int(grasp_center_x-width), int(grasp_center_y - height/2.0)), (int(grasp_center_x), int(grasp_center_y + height/2.0)),(0, 127, 255), 2)
+                                        result_left = angle(real_grasp_center_x_left,real_grasp_center_y_left,blade_left_up_x_left,blade_right_down_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),
+                                                (real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left + height/2.0)]
+                                        rota_left = rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+
+                                        result_right = angle(real_grasp_center_x_right,real_grasp_center_y_right,blade_left_up_x_right,blade_right_down_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                            (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+                                        
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+
+                                        real_rota_left = roct_result_left
+                                        real_rota_right = roct_result_right
+ 
+                                    point3D_left = point_cloud.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
+                                    x_left = point3D_left[1][0]
+                                    y_left = point3D_left[1][1]
+                                    z_left = point3D_left[1][2]
+                                    color_right = point3D_left[1][3]
+
+                                    point3D_right = point_cloud1.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
+                                    x_right = point3D_right[1][0]
+                                    y_right = point3D_right[1][1]
+                                    z_right = point3D_right[1][2]
+                                    color_right = point3D_right[1][3]
+
+                                    # viewer.updateData(point_cloud1)
+                                    #depth
+                                    z_value_left = depth_image_zed.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
+                                    z_value_right = depth_image_zed.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
+
+                                    cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "center: " + "("+ str(round(real_grasp_center_x_left,3)) +","+ str(round(real_grasp_center_y_left,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "angle: " + str(round(real_rota_left,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.imwrite(center_blade + "left_blade_grasp_"+str(d)+'.jpg',color_image) 
+                                    cv2.imshow("finish_left",color_image)
+
+                                    cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "center: " + "("+ str(round(real_grasp_center_x_right,3)) +","+ str(round(real_grasp_center_y_right,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "angle: " + str(round(real_rota_right,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.imwrite(center_blade + "right_blade_grasp_"+str(d)+'.jpg',color_image1) 
+                                    cv2.imshow("finish_right",color_image1)
+
+                            elif detections_right[0][0] == "round_grasp" and detections_right[1][0] == "blade":
+                                round_grasp_center_x_left = round(detections_left[1][2][0])
+                                round_grasp_center_y_left = round(detections_left[1][2][1])
+                                round_grasp_width_left = round(detections_left[1][2][2])
+                                round_grasp_height_left = round(detections_left[1][2][3])
+                                blade_center_x_left = round(detections_left[0][2][0])
+                                blade_center_y_left = round(detections_left[0][2][1])
+                                blade_width_left = round(detections_left[0][2][2])
+                                blade_height_left = round(detections_left[0][2][3])
+
+                                round_grasp_center_x_right = round(detections_right[0][2][0])
+                                round_grasp_center_y_right = round(detections_right[0][2][1])
+                                round_grasp_width_right = round(detections_right[0][2][2])
+                                round_grasp_height_right = round(detections_right[0][2][3])
+                                blade_center_x_right = round(detections_right[1][2][0])
+                                blade_center_y_right = round(detections_right[1][2][1])
+                                blade_width_right = round(detections_right[1][2][2])
+                                blade_height_right = round(detections_right[1][2][3])
+
+                                left_up_x_left = round(round_grasp_center_x_left - (round_grasp_width_left/2.0))
+                                left_up_y_left = round(round_grasp_center_y_left - (round_grasp_height_left/2.0))
+                                right_down_x_left = round(round_grasp_center_x_left + (round_grasp_width_left/2.0))
+                                right_down_y_left = round(round_grasp_center_y_left + (round_grasp_height_left/2.0))
+                                blade_left_up_x_left = round(blade_center_x_left - (blade_width_left/2.0))
+                                blade_left_up_y_left = round(blade_center_y_left - (blade_height_left/2.0))
+                                blade_right_down_x_left = round(blade_center_x_left + blade_width_left/2.0)
+                                blade_right_down_y_left = round(blade_center_y_left + (blade_height_left/2.0))
+
+                                left_up_x_right = round(round_grasp_center_x_right - (round_grasp_width_right/2.0))
+                                left_up_y_right = round(round_grasp_center_y_right - (round_grasp_height_right/2.0))
+                                right_down_x_right = round(round_grasp_center_x_right + (round_grasp_width_right/2.0))
+                                right_down_y_right = round(round_grasp_center_y_right + (round_grasp_height_right/2.0))
+                                blade_left_up_x_right = round(blade_center_x_right - (blade_width_right/2.0))
+                                blade_left_up_y_right = round(blade_center_y_right - (blade_height_right/2.0))
+                                blade_right_down_x_right = round(blade_center_x_right + blade_width_right/2.0)
+                                blade_right_down_y_right = round(blade_center_y_right + (blade_height_right/2.0))
+
+                                roct_result_left = angle(round_grasp_center_x_left, round_grasp_center_y_left,blade_center_x_left, blade_center_y_left)
+                                print(roct_result_left)
+                                print("2222222222222222222222")
+                                roct_result_right = angle(round_grasp_center_x_right, round_grasp_center_y_right,blade_center_x_right, blade_center_y_right)
+                                print(roct_result_right)
+                                print("22222222222222222222222222222")
+
+                                #quadrant 1 , cut right up
+                                if(blade_center_x_left > round_grasp_center_x_left and blade_center_y_left < round_grasp_center_y_left) and (blade_center_x_right > round_grasp_center_x_right and blade_center_y_right < round_grasp_center_y_right): 
+                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "cut right up 0110" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "cut right up 0110 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    
+                                    if(roct_result_left >=15 and roct_result_left <=70) or (roct_result_right >=15 and roct_result_right <=70):
+                                        # if((blade_center_x_left - round_grasp_center_x_left) < 115 and (blade_center_x_left - round_grasp_center_x_left) >= 25) or ((blade_center_x_right - round_grasp_center_x_right) < 115 and (blade_center_x_right - round_grasp_center_x_right) >= 25): 
+                                        cv2.putText(color_image, "cut right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20
+                                        height = 40
+
+                                        # cv2.line(img_org,(int(right_down_x),int(left_up_y)),(int(blade_left_up_x),int(blade_right_down_y)),(255, 0, 255),2,cv2.LINE_AA)
+                                        real_grasp_center_x_left = (right_down_x_left + blade_left_up_x_left)/2.0 
+                                        real_grasp_center_y_left = (left_up_y_left + blade_right_down_y_left)/2.0
+
+                                        real_grasp_center_x_right = (right_down_x_right + blade_left_up_x_right)/2.0 
+                                        real_grasp_center_y_right = (left_up_y_right + blade_right_down_y_right)/2.0
+                                            
+                                        # cv2.circle(color_image,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(img_org, (int(real_grasp_center_x-width/2.0), int(real_grasp_center_y-height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
+                                        result_left = angle(right_down_x_left ,left_up_y_left,left_up_x_left ,right_down_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
+                                                    (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
+                                        rota_left = rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+
+                                        result_right = angle(right_down_x_right ,left_up_y_right,left_up_x_right ,right_down_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                            (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+                                        
+                                        real_rota_left = roct_result_left
+                                        real_rota_right = roct_result_right
+                                    
+                                    elif(roct_result_left < 15 ) or (roct_result_right <15):
+                                        # elif((blade_center_x_left - round_grasp_center_x_left) >= 115) or ((blade_center_x_right - round_grasp_center_x_right) >= 115):
+                                        cv2.putText(color_image, "cut right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20
+                                        height = 40
+
+                                        # cv2.circle(color_image,(int(blade_center_x - blade_width/2.0),int(blade_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(color_image, (int(blade_center_x - blade_width/2.0 - width/2.0), int(blade_center_y - height/2.0)), (int(blade_center_x - blade_width/2.0 + width/2.0), int(blade_center_y + height/2.0)),(255, 0, 255), 2)
+                                        real_grasp_center_x_left = blade_center_x_left - blade_width_left/2.0
+                                        real_grasp_center_y_left  = blade_center_y_left
+
+                                        real_grasp_center_x_right = blade_center_x_right - blade_width_right/2.0
+                                        real_grasp_center_y_right = blade_center_y_right
+
+                                        result_left = angle(blade_left_up_x_left ,blade_left_up_y_left,blade_center_x_left ,blade_center_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
+                                            (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
+                                        rota_left = rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+
+                                        result_right = angle(blade_left_up_x_right ,blade_left_up_y_right,blade_center_x_right ,blade_center_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                            (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+                                        
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(2, 202, 119),2)
+
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(2, 202, 119),2)
+
+                                        
+                                        real_rota_left = roct_result_left
+                                        real_rota_right = roct_result_right
+
+                                        # if (real_rota_left <0):
+                                        #     real_rota_left = -90 - real_rota_left
+                                        # if (real_rota_right <0):
+                                        #     real_rota_right = -90 - real_rota_right
+                                    
+                                    elif (roct_result_left > 70) or (roct_result_right >70):
+                                        # elif((blade_center_x_left - round_grasp_center_x_left) < 25) or ((blade_center_x_right - round_grasp_center_x_right) < 25): 
+                                        cv2.putText(color_image, "cut right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20
+                                        height = 40
+
+                                        real_grasp_center_x_left = blade_center_x_left
+                                        real_grasp_center_y_left = blade_center_y_left + blade_height_left/2.0
+
+                                        real_grasp_center_x_right = blade_center_x_right
+                                        real_grasp_center_y_right = blade_center_y_right + blade_height_right/2.0
+
+                                        result_left = angle(real_grasp_center_x_left,real_grasp_center_y_left,blade_right_down_x_left,blade_right_down_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
+                                            (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left + height/2.0)]
+                                        rota_left = rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+
+                                        result_right = angle(real_grasp_center_x_right,real_grasp_center_y_right,blade_right_down_x_right,blade_right_down_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                            (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,result_left,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+                                        
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        real_grasp_center_x = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(2, 202, 119),2)
+
+                                        real_rota_left = 90 - roct_result_left
+                                        real_rota_right = 90 - roct_result_right
+
+                                        # if (real_rota_left <0):
+                                        #     real_rota_left = -90 - real_rota_left
+                                        # if (real_rota_right <0):
+                                        #     real_rota_right = -90 - real_rota_right
+
+
+                                    point3D_left = point_cloud.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
+                                    x_left = point3D_left[1][0]
+                                    y_left = point3D_left[1][1]
+                                    z_left = point3D_left[1][2]
+                                    color_right = point3D_left[1][3]
+
+                                    point3D_right = point_cloud1.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
+                                    x_right = point3D_right[1][0]
+                                    y_right = point3D_right[1][1]
+                                    z_right = point3D_right[1][2]
+                                    color_right = point3D_right[1][3]
+
+                                    # viewer.updateData(point_cloud1)
+                                    #depth
+                                    z_value_left = depth_image_zed.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
+                                    z_value_right = depth_image_zed.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
+
+                                    cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "center: " + "("+ str(round(real_grasp_center_x_left,3)) +","+ str(round(real_grasp_center_y_left,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "angle: " + str(round(real_rota_left,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.imwrite(center_blade + "left_blade_grasp_"+str(d)+'.jpg',color_image) 
+                                    cv2.imshow("finish_left",color_image)
+
+                                    cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "center: " + "("+ str(round(real_grasp_center_x_right,3)) +","+ str(round(real_grasp_center_y_right,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "angle: " + str(round(real_rota_right,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.imwrite(center_blade + "right_blade_grasp_"+str(d)+'.jpg',color_image1) 
+                                    cv2.imshow("finish_right",color_image1)
+                                
+                                #quadrant 2 , cut right down
+                                elif(blade_center_x_left > round_grasp_center_x_left and blade_center_y_left > round_grasp_center_y_left) or (blade_center_x_right > round_grasp_center_x_right and blade_center_y_right > round_grasp_center_y_right): #右下角
+                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "cut right down 0110" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "cut right down 0110 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    if(roct_result_left <-15 and roct_result_left >=-70) or (roct_result_right <-15 and roct_result_right >=-70):
+                                    # if((blade_center_x_left - round_grasp_center_x_left) < 115 and (blade_center_x_left - round_grasp_center_x_left) >= 25) or ((blade_center_x_right - round_grasp_center_x_right) < 115 and (blade_center_x_right - round_grasp_center_x_right) >= 25):
+                                        cv2.putText(color_image, "cut right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20 
+                                        height = 40
+
+                                        # cv2.line(img_org,(int(right_down_x),int(right_down_y)),(int(blade_left_up_x),int(blade_left_up_y)),(255, 0, 255),2,cv2.LINE_AA)
+                                        real_grasp_center_x_left = (right_down_x_left + blade_left_up_x_left)/2.0 
+                                        real_grasp_center_y_left = (right_down_y_left + blade_left_up_y_left)/2.0
+
+                                        real_grasp_center_x_right = (right_down_x_right + blade_left_up_x_right)/2.0 
+                                        real_grasp_center_y_right = (right_down_y_right + blade_left_up_y_right)/2.0
+
+                                        # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                        # cv2.rec tangle(img_org, (int(real_grasp_center_x-width/2.0), int(real_grasp_center_y-height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
+                                        result_left = angle(left_up_x_left ,left_up_y_left,right_down_x_left ,right_down_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
+                                                (real_grasp_center_x_left - width/2,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
+                                        rota_left = rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+
+                                        result_right = angle(left_up_x_right ,left_up_y_right,right_down_x_right ,right_down_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                                (real_grasp_center_x_right - width/2,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+                                        
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+
+                                        real_rota_left = roct_result_left
+                                        real_rota_right = roct_result_right
+                                    
+                                    elif(roct_result_left >=-15) or (roct_result_right >=-15):
+                                        # elif((blade_center_x_left - round_grasp_center_x_left) >= 115) or ((blade_center_x_right - round_grasp_center_x_right) >= 115):
+                                        cv2.putText(color_image, "cut right down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut right down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20
+                                        height = 40
+                                
+                                        real_grasp_center_x_left = blade_center_x_left - blade_width_left/2.0
+                                        real_grasp_center_y_left  = blade_center_y_left
+
+                                        real_grasp_center_x_right = blade_center_x_right - blade_width_right/2.0
+                                        real_grasp_center_y_right = blade_center_y_right
+
+                                        # cv2.circle(color_image,(int(real_grasp_center_x),int(blade_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(color_image, (int(real_grasp_center_x - width/2.0), int(real_grasp_center_y - height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
+                                        result_left = angle(real_grasp_center_x_left ,real_grasp_center_y_left,blade_center_x_left ,blade_center_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,
+                                            real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
+                                        rota_left = rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+
+                                        result_right = angle(real_grasp_center_x_right ,real_grasp_center_y_right ,blade_center_x_right ,blade_center_y_right)
+                                        box_right = [(real_grasp_center_x_right+ width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,
+                                            real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+
+                                        real_rota_left = roct_result_left
+                                        real_rota_right = roct_result_right
+                                    
+                                    elif(roct_result_left < -70) or (roct_result_right < -70):
+                                        # elif((blade_center_x_left - round_grasp_center_x_left) < 25) or ((blade_center_x_right - round_grasp_center_x_right) < 25): 
+                                        cv2.putText(color_image, "cut right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 40
+                                        height = 20
+
+                                        real_grasp_center_x_left = blade_center_x_left 
+                                        real_grasp_center_y_left = blade_center_y_left - blade_height_left/2.0
+
+                                        real_grasp_center_x_right = blade_center_x_right
+                                        real_grasp_center_y_right = blade_center_y_right - blade_height_right/2.0
+
+                                        # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(img_org,(int(grasp_center_x-width), int(grasp_center_y - height/2.0)), (int(grasp_center_x), int(grasp_center_y + height/2.0)),(0, 127, 255), 2)
+                                        result_left = angle(blade_left_up_x_left, blade_left_up_y_left, real_grasp_center_x_left, real_grasp_center_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
+                                            (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left + height/2.0)]
+                                        rota_left = rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+
+                                        result_right = angle(blade_left_up_x_right,blade_left_up_y_right,real_grasp_center_x_right,real_grasp_center_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                            (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right + height/2.0)]
                                         rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
                                         
                                         cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
@@ -3620,6 +4125,9 @@ if __name__ == '__main__':
                                         real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
                                         real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
                                         cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+
+                                        real_rota_left =roct_result_left
+                                        real_rota_right = roct_result_right
                                     
                                     point3D_left = point_cloud.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
                                     x_left = point3D_left[1][0]
@@ -3653,2338 +4161,1887 @@ if __name__ == '__main__':
                                     cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     cv2.imwrite(center_blade + "right_blade_grasp_"+str(d)+'.jpg',color_image1) 
                                     cv2.imshow("finish_right",color_image1)
+
+                                #quadrant 3 , cut left up
+                                elif(blade_center_x_left < round_grasp_center_x_left and blade_center_y_left < round_grasp_center_y_left) or (blade_center_x_right < round_grasp_center_x_right and blade_center_y_right < round_grasp_center_y_right): 
+                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "cut left up 0110" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "cut left up 0110 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    if(roct_result_left <-15 and roct_result_left >=-70) or (roct_result_right <-15 and roct_result_right >=-70):
+                                    # if((round_grasp_center_x_left - blade_center_x_left) < 115 and(round_grasp_center_x_left - blade_center_x_left)>=25) or ((round_grasp_center_x_right - blade_center_x_right) < 115 and(round_grasp_center_x_right - blade_center_x_right)>=25):
+                                        cv2.putText(color_image, "cut left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20
+                                        height = 40
+
+                                        # cv2.line(img_org,(int(right_down_x),int(right_down_y)),(int(blade_left_up_x),int(blade_left_up_y)),(255, 0, 255),2,cv2.LINE_AA)
+                                        real_grasp_center_x_left = (left_up_x_left + blade_right_down_x_left)/2.0 
+                                        real_grasp_center_y_left = (left_up_y_left + blade_right_down_y_left)/2.0
+                                        real_grasp_center_x_right = (left_up_x_right + blade_right_down_x_right)/2.0 
+                                        real_grasp_center_y_right = (left_up_y_right + blade_right_down_y_right)/2.0
+
+                                        # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(img_org, (int(real_grasp_center_x-width/2.0), int(real_grasp_center_y-height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
+                                        result_left = angle(blade_left_up_x_left ,blade_left_up_y_left,blade_right_down_x_left ,blade_right_down_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
+                                                (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
+                                        rota_left = rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+
+                                        result_right = angle(blade_left_up_x_right ,blade_left_up_y_right ,blade_right_down_x_right  ,blade_right_down_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                                (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+
+                                        cv2.line(color_image,(int(box_left[0][0]),int(box_left[0][1])),(int(box_left[1][0]),int(box_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(box_left[1][0]),int(box_left[1][1])),(int(box_left[2][0]),int(box_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(box_left[2][0]),int(box_left[2][1])),(int(box_left[3][0]),int(box_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(box_left[3][0]),int(box_left[3][1])),(int(box_left[0][0]),int(box_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+
+                                        real_rota_left = roct_result_left
+                                        real_rota_right = roct_result_right
+                                        
+                                    elif(roct_result_left >=-15 ) or (roct_result_right >=-15 ):
+                                    # elif((round_grasp_center_x_left - blade_center_x_left) >= 115) or ((round_grasp_center_x_right - blade_center_x_right) >= 115):
+                                        cv2.putText(color_image, "cut left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20
+                                        height = 40
+
+                                        real_grasp_center_x_left = blade_center_x_left + blade_width_left/2.0
+                                        real_grasp_center_y_left  = blade_center_y_left
+
+                                        real_grasp_center_x_right = blade_center_x_right + blade_width_right/2.0
+                                        real_grasp_center_y_right = blade_center_y_right 
+
+                                        # cv2.circle(color_image,(int(real_grasp_center_x),int(blade_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(img_org, (int(real_grasp_center_x - width/2.0), int(real_grasp_center_y - height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
+                                        result_left = angle(real_grasp_center_x_left ,real_grasp_center_y_left,blade_center_x_left ,blade_center_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
+                                            (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
+                                        rota_left= rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+
+                                        result_right = angle(real_grasp_center_x_right ,real_grasp_center_y,blade_center_x_right ,blade_center_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                            (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+
+                                        real_rota_left = roct_result_left
+                                        real_rota_right = roct_result_right
+
+                                    elif(roct_result_left < -70) or (roct_result_right < -70):
+                                    # elif((round_grasp_center_x_left - blade_center_x_left) < 25) or ((round_grasp_center_x_right - blade_center_x_right) < 25):
+                                        cv2.putText(color_image, "cut left up 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut left up 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20
+                                        height = 40
+
+                                        real_grasp_center_x_left = blade_center_x_left 
+                                        real_grasp_center_y_left = blade_center_y_left + blade_height_left/2.0
+
+                                        real_grasp_center_x_right = blade_center_x_right 
+                                        real_grasp_center_y_right = blade_center_y_right + blade_height_right/2.0
+
+                                        # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(img_org,(int(grasp_center_x-width), int(grasp_center_y - height/2.0)), (int(grasp_center_x), int(grasp_center_y + height/2.0)),(0, 127, 255), 2)
+                                        result_left = angle(real_grasp_center_x_left,real_grasp_center_y_left,blade_right_down_x_left,blade_right_down_y_left)
+                                        box_left= [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
+                                            (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left + height/2.0)]
+                                        rota_left = rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+
+                                        result_right = angle(real_grasp_center_x_right,real_grasp_center_y_right,blade_right_down_x_right,blade_right_down_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),
+                                                (real_grasp_center_x + width/2.0 ,real_grasp_center_y + height/2.0)]
+                                        rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+                                        
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+
+                                    point3D_left = point_cloud.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
+                                    x_left = point3D_left[1][0]
+                                    y_left = point3D_left[1][1]
+                                    z_left = point3D_left[1][2]
+                                    color_right = point3D_left[1][3]
+
+                                    point3D_right = point_cloud1.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
+                                    x_right = point3D_right[1][0]
+                                    y_right = point3D_right[1][1]
+                                    z_right = point3D_right[1][2]
+                                    color_right = point3D_right[1][3]
+
+                                    # viewer.updateData(point_cloud1)
+                                    #depth
+                                    z_value_left = depth_image_zed.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
+                                    z_value_right = depth_image_zed.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
+
+                                    cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "center: " + "("+ str(round(real_grasp_center_x_left,3)) +","+ str(round(real_grasp_center_y_left,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "angle: " + str(round(roct_result_left,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.imwrite(center_blade + "left_blade_grasp_"+str(d)+'.jpg',color_image) 
+                                    cv2.imshow("finish_left",color_image)
+
+                                    cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "center: " + "("+ str(round(real_grasp_center_x_right,3)) +","+ str(round(real_grasp_center_y_right,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "angle: " + str(round(roct_result_right,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.imwrite(center_blade + "right_blade_grasp_"+str(d)+'.jpg',color_image1) 
+                                    cv2.imshow("finish_right",color_image1)
                                 
-                        #         #quadrant 4 , cut left down
-                        #         elif(round_grasp_center_x_left > blade_center_x_left and blade_center_y_left > round_grasp_center_y_left) or (round_grasp_center_x_right > blade_center_x_right and blade_center_y_right > round_grasp_center_y_right): 
-                        #             # cv2.putText(color_image, "distance: " + str(round(blade_center_x - grasp_center_x,3)) , (10, 125), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             # cv2.putText(color_image, "cut left down" , (10, 155), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             if((round_grasp_center_x_left - blade_center_x_left) < 115 and(round_grasp_center_x_left - blade_center_x_left)>=25) or ((round_grasp_center_x_right - blade_center_x_right) < 115 and(round_grasp_center_x_right - blade_center_x_right)>=25):
-                        #                 cv2.putText(color_image, "cut left down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut left down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 20
-                        #                 height = 50
+                                #quadrant 4 , cut left down
+                                elif(round_grasp_center_x_left > blade_center_x_left and blade_center_y_left > round_grasp_center_y_left) or (round_grasp_center_x_right > blade_center_x_right and blade_center_y_right > round_grasp_center_y_right): 
+                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "cut left down 0110" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "cut left down 0110 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    if(roct_result_left >=15 and roct_result_left <=70) or (roct_result_right >=15 and roct_result_right <=70):
+                                    # if((round_grasp_center_x_left - blade_center_x_left) < 115 and(round_grasp_center_x_left - blade_center_x_left)>=25) or ((round_grasp_center_x_right - blade_center_x_right) < 115 and(round_grasp_center_x_right - blade_center_x_right)>=25):
+                                        cv2.putText(color_image, "cut left down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut left down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20
+                                        height = 40
 
-                        #                 real_grasp_center_x_left = (blade_right_down_x_left + left_up_x_left)/2.0 
-                        #                 real_grasp_center_y_left = (blade_left_up_y_left + right_down_y_left)/2.0
+                                        real_grasp_center_x_left = (blade_right_down_x_left + left_up_x_left)/2.0 
+                                        real_grasp_center_y_left = (blade_left_up_y_left + right_down_y_left)/2.0
 
-                        #                 real_grasp_center_x_right = (blade_right_down_x_right + left_up_x_right)/2.0 
-                        #                 real_grasp_center_y_right = (blade_left_up_y_right + right_down_y_right)/2.0
+                                        real_grasp_center_x_right = (blade_right_down_x_right + left_up_x_right)/2.0 
+                                        real_grasp_center_y_right = (blade_left_up_y_right + right_down_y_right)/2.0
 
-                        #                 # cv2.circle(color_image,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rectangle(img_org,(int(grasp_center_x-width/2.0), int(grasp_center_y)), (int(grasp_center_x + width/2.0), int(grasp_center_y + height)),(0, 127, 255), 2)
-                        #                 result_left = angle(blade_left_up_x_left,blade_right_down_y_left,blade_right_down_x_left,blade_left_up_y_left)
-                        #                 box_left = [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
-                        #                     (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left + height/2.0)]
-                        #                 rota_left = rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+                                        # cv2.circle(color_image,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(img_org,(int(grasp_center_x-width/2.0), int(grasp_center_y)), (int(grasp_center_x + width/2.0), int(grasp_center_y + height)),(0, 127, 255), 2)
+                                        result_left = angle(blade_left_up_x_left,blade_right_down_y_left,blade_right_down_x_left,blade_left_up_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
+                                            (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left + height/2.0)]
+                                        rota_left = rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
 
-                        #                 result_right = angle(blade_left_up_x_right,blade_right_down_y_right,blade_right_down_x_right,blade_left_up_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
-                        #                     (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+                                        result_right = angle(blade_left_up_x_right,blade_right_down_y_right,blade_right_down_x_right,blade_left_up_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                            (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
 
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
 
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+
+                                        real_rota_left = roct_result_left
+                                        real_rota_right = roct_result_right
         
-                        #             elif((round_grasp_center_x_left - blade_center_x_left) >= 115) or ((round_grasp_center_x_right - blade_center_x_right) >= 115):
-                        #                 cv2.putText(color_image, "cut left down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut left down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 20
-                        #                 height = 40
+                                    elif(roct_result_left < 15) or (roct_result_right <15):
+                                    # elif((round_grasp_center_x_left - blade_center_x_left) >= 115) or ((round_grasp_center_x_right - blade_center_x_right) >= 115):
+                                        cv2.putText(color_image, "cut left down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut left down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20
+                                        height = 40
                                         
-                        #                 real_grasp_center_x_left = blade_center_x_left + blade_width_left/2.0
-                        #                 real_grasp_center_y_left = blade_center_y_left
+                                        real_grasp_center_x_left = blade_center_x_left + blade_width_left/2.0
+                                        real_grasp_center_y_left  = blade_center_y_left 
 
-                        #                 real_grasp_center_x_right = blade_center_x_right + blade_width_right/2.0
-                        #                 real_grasp_center_y_right = blade_center_y_right
+                                        real_grasp_center_x_right = blade_center_x_right + blade_width_right/2.0
+                                        real_grasp_center_y_right = blade_center_y_right
 
-                        #                 # cv2.circle(color_image,(int(real_grasp_center_x),int(blade_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rectangle(img_org, (int(real_grasp_center_x - width/2.0), int(real_grasp_center_y - height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
-                        #                 result_left = angle(real_grasp_center_x_left  ,real_grasp_center_y_left ,blade_center_x_left  ,blade_center_y_left )
-                        #                 box_left  = [(real_grasp_center_x_left  + width/2.0,real_grasp_center_y_left  - height/2.0),(real_grasp_center_x_left  - width/2.0,real_grasp_center_y_left  - height/2.0),
-                        #                     (real_grasp_center_x_left  - width/2.0,real_grasp_center_y_left  + height/2.0),(real_grasp_center_x_left  + width/2.0,real_grasp_center_y_left  + height/2.0)]
-                        #                 rota_left  = rota_rect(box_left ,result_left ,int(real_grasp_center_x),int(real_grasp_center_y))
+                                        # cv2.circle(color_image,(int(real_grasp_center_x),int(blade_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(img_org, (int(real_grasp_center_x - width/2.0), int(real_grasp_center_y - height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
+                                        result_left = angle(real_grasp_center_x_left  ,real_grasp_center_y_left ,blade_center_x_left  ,blade_center_y_left )
+                                        box_left  = [(real_grasp_center_x_left  + width/2.0,real_grasp_center_y_left  - height/2.0),(real_grasp_center_x_left  - width/2.0,real_grasp_center_y_left  - height/2.0),
+                                            (real_grasp_center_x_left  - width/2.0,real_grasp_center_y_left  + height/2.0),(real_grasp_center_x_left  + width/2.0,real_grasp_center_y_left  + height/2.0)]
+                                        rota_left  = rota_rect(box_left ,roct_result_left ,int(real_grasp_center_x),int(real_grasp_center_y))
 
-                        #                 result_right = angle(real_grasp_center_x_right ,real_grasp_center_y_right,blade_center_x_right ,blade_center_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
-                        #                     (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+                                        result_right = angle(real_grasp_center_x_right ,real_grasp_center_y_right,blade_center_x_right ,blade_center_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                            (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
 
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
 
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
 
-                        #             elif((round_grasp_center_x_left - blade_center_x_left) < 25) or ((round_grasp_center_x_right - blade_center_x_right) < 25):
-                        #                 cv2.putText(color_image, "cut left down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut left down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 20
-                        #                 height = 40
+                                        real_rota_left = roct_result_left
+                                        real_rota_right = roct_result_right
 
-                        #                 real_grasp_center_x_left = blade_center_x_left 
-                        #                 real_grasp_center_y_left = blade_center_y_left - blade_height_left/2.0
+                                    elif (roct_result_left > 70) or (roct_result_right >70):
+                                    # elif((round_grasp_center_x_left - blade_center_x_left) < 25) or ((round_grasp_center_x_right - blade_center_x_right) < 25):
+                                        cv2.putText(color_image, "cut left down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut left down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20
+                                        height = 40
 
-                        #                 real_grasp_center_x_right = blade_center_x_right
-                        #                 real_grasp_center_y_right = blade_center_y_right - blade_height_right/2.0
+                                        real_grasp_center_x_left = blade_center_x_left 
+                                        real_grasp_center_y_left = blade_center_y_left - blade_height_left/2.0
 
-                        #                 # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rectangle(img_org,(int(grasp_center_x-width), int(grasp_center_y - height/2.0)), (int(grasp_center_x), int(grasp_center_y + height/2.0)),(0, 127, 255), 2)
-                        #                 result_left = angle(real_grasp_center_x_left,real_grasp_center_y_left,blade_left_up_x_left,blade_right_down_y_left)
-                        #                 box_left = [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),
-                        #                         (real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left + height/2.0)]
-                        #                 rota_left = rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+                                        real_grasp_center_x_right = blade_center_x_right
+                                        real_grasp_center_y_right = blade_center_y_right - blade_height_right/2.0
 
-                        #                 result_right = angle(real_grasp_center_x_right,real_grasp_center_y_right,blade_left_up_x_right,blade_right_down_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
-                        #                     (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+                                        # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(img_org,(int(grasp_center_x-width), int(grasp_center_y - height/2.0)), (int(grasp_center_x), int(grasp_center_y + height/2.0)),(0, 127, 255), 2)
+                                        result_left = angle(real_grasp_center_x_left,real_grasp_center_y_left,blade_left_up_x_left,blade_right_down_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),
+                                                (real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left + height/2.0)]
+                                        rota_left = rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+
+                                        result_right = angle(real_grasp_center_x_right,real_grasp_center_y_right,blade_left_up_x_right,blade_right_down_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                            (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
                                         
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
 
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
- 
-                        #             point3D_left = point_cloud.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
-                        #             x_left = point3D_left[1][0]
-                        #             y_left = point3D_left[1][1]
-                        #             z_left = point3D_left[1][2]
-                        #             color_right = point3D_left[1][3]
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
 
-                        #             point3D_right = point_cloud1.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
-                        #             x_right = point3D_right[1][0]
-                        #             y_right = point3D_right[1][1]
-                        #             z_right = point3D_right[1][2]
-                        #             color_right = point3D_right[1][3]
+                                        real_rota_left = roct_result_left
+                                        real_rota_right = roct_result_right
 
-                        #             # viewer.updateData(point_cloud1)
-                        #             #depth
-                        #             z_value_left = depth_image_zed.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
-                        #             z_value_right = depth_image_zed.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
+                                    point3D_left = point_cloud.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
+                                    x_left = point3D_left[1][0]
+                                    y_left = point3D_left[1][1]
+                                    z_left = point3D_left[1][2]
+                                    color_right = point3D_left[1][3]
 
-                        #             cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "center: " + "("+ str(round(real_grasp_center_x_left,3)) +","+ str(round(real_grasp_center_y_left,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "angle: " + str(round(result_left,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.imwrite(center_blade + "left_blade_grasp_"+str(d)+'.jpg',color_image) 
-                        #             cv2.imshow("finish_left",color_image)
+                                    point3D_right = point_cloud1.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
+                                    x_right = point3D_right[1][0]
+                                    y_right = point3D_right[1][1]
+                                    z_right = point3D_right[1][2]
+                                    color_right = point3D_right[1][3]
 
-                        #             cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "center: " + "("+ str(round(real_grasp_center_x_right,3)) +","+ str(round(real_grasp_center_y_right,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "angle: " + str(round(result_right,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.imwrite(center_blade + "right_blade_grasp_"+str(d)+'.jpg',color_image1) 
-                        #             cv2.imshow("finish_right",color_image1)
+                                    # viewer.updateData(point_cloud1)
+                                    #depth
+                                    z_value_left = depth_image_zed.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
+                                    z_value_right = depth_image_zed.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
 
-                        #     elif detections_right[0][0] == "round_grasp" and detections_right[1][0] == "blade":
-                        #         print("bbbbbbbbbbbbbbbbbbbbb")
-                        #         round_grasp_center_x_left = round(detections_left[1][2][0])
-                        #         round_grasp_center_y_left = round(detections_left[1][2][1])
-                        #         round_grasp_width_left = round(detections_left[1][2][2])
-                        #         round_grasp_height_left = round(detections_left[1][2][3])
-                        #         blade_center_x_left = round(detections_left[0][2][0])
-                        #         blade_center_y_left = round(detections_left[0][2][1])
-                        #         blade_width_left = round(detections_left[0][2][2])
-                        #         blade_height_left = round(detections_left[0][2][3])
+                                    cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "center: " + "("+ str(round(real_grasp_center_x_left,3)) +","+ str(round(real_grasp_center_y_left,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "angle: " + str(round(real_rota_left,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.imwrite(center_blade + "left_blade_grasp_"+str(d)+'.jpg',color_image) 
+                                    cv2.imshow("finish_left",color_image)
 
-                        #         round_grasp_center_x_right = round(detections_right[0][2][0])
-                        #         round_grasp_center_y_right = round(detections_right[0][2][1])
-                        #         round_grasp_width_right = round(detections_right[0][2][2])
-                        #         round_grasp_height_right = round(detections_right[0][2][3])
-                        #         blade_center_x_right = round(detections_right[1][2][0])
-                        #         blade_center_y_right = round(detections_right[1][2][1])
-                        #         blade_width_right = round(detections_right[1][2][2])
-                        #         blade_height_right = round(detections_right[1][2][3])
+                                    cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "center: " + "("+ str(round(real_grasp_center_x_right,3)) +","+ str(round(real_grasp_center_y_right,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "angle: " + str(round(real_rota_right,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.imwrite(center_blade + "right_blade_grasp_"+str(d)+'.jpg',color_image1) 
+                                    cv2.imshow("finish_right",color_image1)
 
-                        #         left_up_x_left = round(round_grasp_center_x_left - (round_grasp_width_left/2.0))
-                        #         left_up_y_left = round(round_grasp_center_y_left - (round_grasp_height_left/2.0))
-                        #         right_down_x_left = round(round_grasp_center_x_left + (round_grasp_width_left/2.0))
-                        #         right_down_y_left = round(round_grasp_center_y_left + (round_grasp_height_left/2.0))
-                        #         blade_left_up_x_left = round(blade_center_x_left - (blade_width_left/2.0))
-                        #         blade_left_up_y_left = round(blade_center_y_left - (blade_height_left/2.0))
-                        #         blade_right_down_x_left = round(blade_center_x_left + blade_width_left/2.0)
-                        #         blade_right_down_y_left = round(blade_center_y_left + (blade_height_left/2.0))
+                        #剪刀2
+                        elif detections_left[0][0] == "round_grasp" and detections_left[1][0] == "blade":
+                            if detections_right[1][0] == "round_grasp" and detections_right[0][0] == "blade":
+                                round_grasp_center_x_left = round(detections_left[0][2][0])
+                                round_grasp_center_y_left = round(detections_left[0][2][1])
+                                round_grasp_width_left = round(detections_left[0][2][2])
+                                round_grasp_height_left = round(detections_left[0][2][3])
+                                blade_center_x_left = round(detections_left[1][2][0])
+                                blade_center_y_left = round(detections_left[1][2][1])
+                                blade_width_left = round(detections_left[1][2][2])
+                                blade_height_left = round(detections_left[1][2][3])
 
-                        #         left_up_x_right = round(round_grasp_center_x_right - (round_grasp_width_right/2.0))
-                        #         left_up_y_right = round(round_grasp_center_y_right - (round_grasp_height_right/2.0))
-                        #         right_down_x_right = round(round_grasp_center_x_right + (round_grasp_width_right/2.0))
-                        #         right_down_y_right = round(round_grasp_center_y_right + (round_grasp_height_right/2.0))
-                        #         blade_left_up_x_right = round(blade_center_x_right - (blade_width_right/2.0))
-                        #         blade_left_up_y_right = round(blade_center_y_right - (blade_height_right/2.0))
-                        #         blade_right_down_x_right = round(blade_center_x_right + blade_width_right/2.0)
-                        #         blade_right_down_y_right = round(blade_center_y_right + (blade_height_right/2.0))
+                                round_grasp_center_x_right = round(detections_right[1][2][0])
+                                round_grasp_center_y_right = round(detections_right[1][2][1])
+                                round_grasp_width_right = round(detections_right[1][2][2])
+                                round_grasp_height_right = round(detections_right[1][2][3])
+                                blade_center_x_right = round(detections_right[0][2][0])
+                                blade_center_y_right = round(detections_right[0][2][1])
+                                blade_width_right = round(detections_right[0][2][2])
+                                blade_height_right = round(detections_right[0][2][3])
 
-                        #         roct_result_left = angle(round_grasp_center_x_left, round_grasp_center_y_left,blade_center_x_left, blade_center_y_left)
-                        #         print(roct_result_left)
-                        #         print("2222222222222222222222")
-                        #         roct_result_right = angle(round_grasp_center_x_right, round_grasp_center_y_right,blade_center_x_right, blade_center_y_right)
-                        #         print(roct_result_right)
-                        #         print("22222222222222222222222222222")
+                                left_up_x_left = round(round_grasp_center_x_left - (round_grasp_width_left/2.0))
+                                left_up_y_left = round(round_grasp_center_y_left - (round_grasp_height_left/2.0))
+                                right_down_x_left = round(round_grasp_center_x_left + (round_grasp_width_left/2.0))
+                                right_down_y_left = round(round_grasp_center_y_left + (round_grasp_height_left/2.0))
+                                blade_left_up_x_left = round(blade_center_x_left - (blade_width_left/2.0))
+                                blade_left_up_y_left = round(blade_center_y_left - (blade_height_left/2.0))
+                                blade_right_down_x_left = round(blade_center_x_left + blade_width_left/2.0)
+                                blade_right_down_y_left = round(blade_center_y_left + (blade_height_left/2.0))
 
-                        #         #quadrant 1 , cut right up
-                        #         if(blade_center_x_left > round_grasp_center_x_left and blade_center_y_left < round_grasp_center_y_left) and (blade_center_x_right > round_grasp_center_x_right and blade_center_y_right < round_grasp_center_y_right): 
-                        #             cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 125), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 125), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "cut right up 0110" , (10, 155), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "cut right up 0110 " , (10, 155), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             if(roct_result_left >=15 and roct_result_left <=75) or (roct_result_right >=15 and roct_result_right <=75):
-                        #                 # if((blade_center_x_left - round_grasp_center_x_left) < 115 and (blade_center_x_left - round_grasp_center_x_left) >= 25) or ((blade_center_x_right - round_grasp_center_x_right) < 115 and (blade_center_x_right - round_grasp_center_x_right) >= 25): 
-                        #                 cv2.putText(color_image, "cut right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 20
-                        #                 height = 40
+                                left_up_x_right = round(round_grasp_center_x_right - (round_grasp_width_right/2.0))
+                                left_up_y_right = round(round_grasp_center_y_right - (round_grasp_height_right/2.0))
+                                right_down_x_right = round(round_grasp_center_x_right + (round_grasp_width_right/2.0))
+                                right_down_y_right = round(round_grasp_center_y_right + (round_grasp_height_right/2.0))
+                                blade_left_up_x_right = round(blade_center_x_right - (blade_width_right/2.0))
+                                blade_left_up_y_right = round(blade_center_y_right - (blade_height_right/2.0))
+                                blade_right_down_x_right = round(blade_center_x_right + blade_width_right/2.0)
+                                blade_right_down_y_right = round(blade_center_y_right + (blade_height_right/2.0))
 
-                        #                 # cv2.line(img_org,(int(right_down_x),int(left_up_y)),(int(blade_left_up_x),int(blade_right_down_y)),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 real_grasp_center_x_left = (right_down_x_left + blade_left_up_x_left)/2.0 
-                        #                 real_grasp_center_y_left = (left_up_y_left + blade_right_down_y_left)/2.0
+                                roct_result_left = angle(round_grasp_center_x_left, round_grasp_center_y_left,blade_center_x_left, blade_center_y_left)
+                                print(roct_result_left)
+                                print("3333333333333333333333333")
+                                roct_result_right = angle(round_grasp_center_x_right, round_grasp_center_y_right,blade_center_x_right, blade_center_y_right)
+                                print(roct_result_right)
+                                print("333333333333333333333333333")
 
-                        #                 real_grasp_center_x_right = (right_down_x_right + blade_left_up_x_right)/2.0 
-                        #                 real_grasp_center_y_right = (left_up_y_right + blade_right_down_y_right)/2.0
+                                #quadrant 1 , cut right up
+                                if(blade_center_x_left > round_grasp_center_x_left and blade_center_y_left < round_grasp_center_y_left) and (blade_center_x_right > round_grasp_center_x_right and blade_center_y_right < round_grasp_center_y_right): 
+                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "cut right up 1001" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "cut right up 1001 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    if(roct_result_left >=15 and roct_result_left <=70) or (roct_result_right >=15 and roct_result_right <=70):
+                                        # if((blade_center_x_left - round_grasp_center_x_left) < 115 and (blade_center_x_left - round_grasp_center_x_left) >= 25) or ((blade_center_x_right - round_grasp_center_x_right) < 115 and (blade_center_x_right - round_grasp_center_x_right) >= 25): 
+                                        cv2.putText(color_image, "cut right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20
+                                        height = 40
+
+                                        # cv2.line(img_org,(int(right_down_x),int(left_up_y)),(int(blade_left_up_x),int(blade_right_down_y)),(255, 0, 255),2,cv2.LINE_AA)
+                                        real_grasp_center_x_left = (right_down_x_left + blade_left_up_x_left)/2.0 
+                                        real_grasp_center_y_left = (left_up_y_left + blade_right_down_y_left)/2.0
+
+                                        real_grasp_center_x_right = (right_down_x_right + blade_left_up_x_right)/2.0 
+                                        real_grasp_center_y_right = (left_up_y_right + blade_right_down_y_right)/2.0
                                             
-                        #                 # cv2.circle(color_image,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rectangle(img_org, (int(real_grasp_center_x-width/2.0), int(real_grasp_center_y-height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
-                        #                 result_left = angle(right_down_x_left ,left_up_y_left,left_up_x_left ,right_down_y_left)
-                        #                 box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
-                        #                             (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
-                        #                 rota_left = rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+                                        # cv2.circle(color_image,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(img_org, (int(real_grasp_center_x-width/2.0), int(real_grasp_center_y-height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
+                                        result_left = angle(right_down_x_left ,left_up_y_left,left_up_x_left ,right_down_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
+                                                    (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
+                                        rota_left = rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
 
-                        #                 result_right = angle(right_down_x_right ,left_up_y_right,left_up_x_right ,right_down_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
-                        #                     (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+                                        result_right = angle(right_down_x_right ,left_up_y_right,left_up_x_right ,right_down_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                            (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
 
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
 
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
                                         
-                        #                 real_rota_left = roct_result_left
-                        #                 real_rota_right = roct_result_right
+                                        real_rota_left = roct_result_left
+                                        real_rota_right = roct_result_right
                                     
-                        #             elif(roct_result_left < 15 ) or (roct_result_right <15):
-                        #                 # elif((blade_center_x_left - round_grasp_center_x_left) >= 115) or ((blade_center_x_right - round_grasp_center_x_right) >= 115):
-                        #                 cv2.putText(color_image, "cut right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 20
-                        #                 height = 40
+                                    elif(roct_result_left < 15 ) or (roct_result_right <15):
+                                        # elif((blade_center_x_left - round_grasp_center_x_left) >= 115) or ((blade_center_x_right - round_grasp_center_x_right) >= 115):
+                                        cv2.putText(color_image, "cut right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20
+                                        height = 40
 
-                        #                 # cv2.circle(color_image,(int(blade_center_x - blade_width/2.0),int(blade_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rectangle(color_image, (int(blade_center_x - blade_width/2.0 - width/2.0), int(blade_center_y - height/2.0)), (int(blade_center_x - blade_width/2.0 + width/2.0), int(blade_center_y + height/2.0)),(255, 0, 255), 2)
-                        #                 real_grasp_center_x_left = blade_center_x_left - blade_width_left/2.0
-                        #                 real_grasp_center_y_left = blade_center_y_left
+                                        # cv2.circle(color_image,(int(blade_center_x - blade_width/2.0),int(blade_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(color_image, (int(blade_center_x - blade_width/2.0 - width/2.0), int(blade_center_y - height/2.0)), (int(blade_center_x - blade_width/2.0 + width/2.0), int(blade_center_y + height/2.0)),(255, 0, 255), 2)
+                                        real_grasp_center_x_left = blade_center_x_left  - blade_width_left/2.0
+                                        real_grasp_center_y_left  = blade_center_y_left 
+
+                                        real_grasp_center_x_right = blade_center_x_right - blade_width_right/2.0
+                                        real_grasp_center_y_right = blade_center_y_right
+
+                                        result_left = angle(blade_left_up_x_left ,blade_left_up_y_left,blade_center_x_left ,blade_center_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
+                                            (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
+                                        rota_left = rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+
+                                        result_right = angle(blade_left_up_x_right ,blade_left_up_y_right,blade_center_x_right ,blade_center_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                            (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
                                         
-                        #                 real_grasp_center_x_right = blade_center_x_right - blade_width_right/2.0
-                        #                 real_grasp_center_y_right = blade_center_y_right
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 result_left = angle(blade_left_up_x_left ,blade_left_up_y_left,blade_center_x_left ,blade_center_y_left)
-                        #                 box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
-                        #                     (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
-                        #                 rota_left = rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 result_right = angle(blade_left_up_x_right ,blade_left_up_y_right,blade_center_x_right ,blade_center_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
-                        #                     (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
-                                        
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(2, 202, 119),2)
 
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
-
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(2, 202, 119),2)
-
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(2, 202, 119),2)
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(2, 202, 119),2)
 
                                         
-                        #                 real_rota_left = 90 - roct_result_left
-                        #                 real_rota_right = 90 - roct_result_right
+                                        real_rota_left = roct_result_left
+                                        real_rota_right = roct_result_right
 
-                        #                 # if (real_rota_left <0):
-                        #                 #     real_rota_left = -90 - real_rota_left
-                        #                 # if (real_rota_right <0):
-                        #                 #     real_rota_right = -90 - real_rota_right
+                                        # if (real_rota_left <0):
+                                        #     real_rota_left = -90 - real_rota_left
+                                        # if (real_rota_right <0):
+                                        #     real_rota_right = -90 - real_rota_right
                                     
-                        #             elif (roct_result_left > 75 and roct_result_left< 90 ) or (roct_result_right >75 and roct_result_right< 90):
-                        #                 # elif((blade_center_x_left - round_grasp_center_x_left) < 25) or ((blade_center_x_right - round_grasp_center_x_right) < 25): 
-                        #                 cv2.putText(color_image, "cut right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 20
-                        #                 height = 40
+                                    elif (roct_result_left > 75) or (roct_result_right >75):
+                                        # elif((blade_center_x_left - round_grasp_center_x_left) < 25) or ((blade_center_x_right - round_grasp_center_x_right) < 25): 
+                                        cv2.putText(color_image, "cut right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 40
+                                        height = 20
 
-                        #                 real_grasp_center_x_left = blade_center_x_left
-                        #                 real_grasp_center_y_left = blade_center_y_left + blade_height_left/2.0
+                                        real_grasp_center_x_left = blade_center_x_left
+                                        real_grasp_center_y_left = blade_center_y_left + blade_height_left/2.0
 
-                        #                 real_grasp_center_x_right = blade_center_x_right
-                        #                 real_grasp_center_y_right = blade_center_y_right + blade_height_right/2.0
+                                        real_grasp_center_x_right = blade_center_x_right
+                                        real_grasp_center_y_right = blade_center_y_right + blade_height_right/2.0
 
-                        #                 result_left = angle(real_grasp_center_x_left,real_grasp_center_y_left,blade_right_down_x_left,blade_right_down_y_left)
-                        #                 box_left = [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
-                        #                     (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left + height/2.0)]
-                        #                 rota_left = rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+                                        result_left = angle(real_grasp_center_x_left,real_grasp_center_y_left,blade_right_down_x_left,blade_right_down_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
+                                            (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left + height/2.0)]
+                                        rota_left = rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
 
-                        #                 result_right = angle(real_grasp_center_x_right,real_grasp_center_y_right,blade_right_down_x_right,blade_right_down_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
-                        #                     (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,result_left,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+                                        result_right = angle(real_grasp_center_x_right,real_grasp_center_y_right,blade_right_down_x_right,blade_right_down_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                            (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,result_left,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
                                         
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 real_grasp_center_x = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                        real_grasp_center_x = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
 
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(2, 202, 119),2)
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(2, 202, 119),2)
 
-                        #                 # real_rota_left = 90 - roct_result_left
-                        #                 # real_rota_right = 90 - roct_result_right
+                                        real_rota_left = 90 - roct_result_left
+                                        real_rota_right = 90 - roct_result_right
 
-                        #                 # if (real_rota_left <0):
-                        #                 #     real_rota_left = -90 - real_rota_left
-                        #                 # if (real_rota_right <0):
-                        #                 #     real_rota_right = -90 - real_rota_right
+                                        # if (real_rota_left <0):
+                                        #     real_rota_left = -90 - real_rota_left
+                                        # if (real_rota_right <0):
+                                        #     real_rota_right = -90 - real_rota_right
 
 
-                        #             point3D_left = point_cloud.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
-                        #             x_left = point3D_left[1][0]
-                        #             y_left = point3D_left[1][1]
-                        #             z_left = point3D_left[1][2]
-                        #             color_right = point3D_left[1][3]
+                                    point3D_left = point_cloud.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
+                                    x_left = point3D_left[1][0]
+                                    y_left = point3D_left[1][1]
+                                    z_left = point3D_left[1][2]
+                                    color_right = point3D_left[1][3]
 
-                        #             point3D_right = point_cloud1.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
-                        #             x_right = point3D_right[1][0]
-                        #             y_right = point3D_right[1][1]
-                        #             z_right = point3D_right[1][2]
-                        #             color_right = point3D_right[1][3]
+                                    point3D_right = point_cloud1.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
+                                    x_right = point3D_right[1][0]
+                                    y_right = point3D_right[1][1]
+                                    z_right = point3D_right[1][2]
+                                    color_right = point3D_right[1][3]
 
-                        #             # viewer.updateData(point_cloud1)
-                        #             #depth
-                        #             z_value_left = depth_image_zed.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
-                        #             z_value_right = depth_image_zed.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
+                                    # viewer.updateData(point_cloud1)
+                                    #depth
+                                    z_value_left = depth_image_zed.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
+                                    z_value_right = depth_image_zed.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
 
-                        #             cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "center: " + "("+ str(round(real_grasp_center_x_left,3)) +","+ str(round(real_grasp_center_y_left,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "angle: " + str(round(real_rota_left,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.imwrite(center_blade + "left_blade_grasp_"+str(d)+'.jpg',color_image) 
-                        #             cv2.imshow("finish_left",color_image)
+                                    cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "center: " + "("+ str(round(real_grasp_center_x_left,3)) +","+ str(round(real_grasp_center_y_left,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "angle: " + str(round(real_rota_left,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.imwrite(center_blade + "left_blade_grasp_"+str(d)+'.jpg',color_image) 
+                                    cv2.imshow("finish_left",color_image)
 
-                        #             cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "center: " + "("+ str(round(real_grasp_center_x_right,3)) +","+ str(round(real_grasp_center_y_right,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "angle: " + str(round(real_rota_right,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.imwrite(center_blade + "right_blade_grasp_"+str(d)+'.jpg',color_image1) 
-                        #             cv2.imshow("finish_right",color_image1)
+                                    cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "center: " + "("+ str(round(real_grasp_center_x_right,3)) +","+ str(round(real_grasp_center_y_right,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "angle: " + str(round(real_rota_right,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.imwrite(center_blade + "right_blade_grasp_"+str(d)+'.jpg',color_image1) 
+                                    cv2.imshow("finish_right",color_image1)
                                 
-                        #         #quadrant 2 , cut right down
-                        #         elif(blade_center_x_left > round_grasp_center_x_left and blade_center_y_left > round_grasp_center_y_left) or (blade_center_x_right > round_grasp_center_x_right and blade_center_y_right > round_grasp_center_y_right): #右下角
-                        #             # cv2.putText(color_image, "distance: " + str(round(blade_center_x - grasp_center_x,3)) , (10, 125), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             # cv2.putText(color_image, "cut right down" , (10, 155), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             if((blade_center_x_left - round_grasp_center_x_left) < 115 and (blade_center_x_left - round_grasp_center_x_left) >= 25) or ((blade_center_x_right - round_grasp_center_x_right) < 115 and (blade_center_x_right - round_grasp_center_x_right) >= 25):
-                        #                 cv2.putText(color_image, "cut right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 20 
-                        #                 height = 40
+                                #quadrant 2 , cut right down
+                                elif(blade_center_x_left > round_grasp_center_x_left and blade_center_y_left > round_grasp_center_y_left) or (blade_center_x_right > round_grasp_center_x_right and blade_center_y_right > round_grasp_center_y_right): #右下角
+                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "cut right down 1001" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "cut right down 1001 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    if(roct_result_left <-15 and roct_result_left >=-70) or (roct_result_right <-15 and roct_result_right >=-70):
+                                        # if((blade_center_x_left - round_grasp_center_x_left) < 115 and (blade_center_x_left - round_grasp_center_x_left) >= 25) or ((blade_center_x_right - round_grasp_center_x_right) < 115 and (blade_center_x_right - round_grasp_center_x_right) >= 25):
+                                        cv2.putText(color_image, "cut right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20 
+                                        height = 40
 
-                        #                 # cv2.line(img_org,(int(right_down_x),int(right_down_y)),(int(blade_left_up_x),int(blade_left_up_y)),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 real_grasp_center_x_left = (right_down_x_left + blade_left_up_x_left)/2.0 
-                        #                 real_grasp_center_y_left = (right_down_y_left + blade_left_up_y_left)/2.0
+                                        # cv2.line(img_org,(int(right_down_x),int(right_down_y)),(int(blade_left_up_x),int(blade_left_up_y)),(255, 0, 255),2,cv2.LINE_AA)
+                                        real_grasp_center_x_left = (right_down_x_left + blade_left_up_x_left)/2.0 
+                                        real_grasp_center_y_left = (right_down_y_left + blade_left_up_y_left)/2.0
 
-                        #                 real_grasp_center_x_right = (right_down_x_right + blade_left_up_x_right)/2.0 
-                        #                 real_grasp_center_y_right = (right_down_y_right + blade_left_up_y_right)/2.0
+                                        real_grasp_center_x_right = (right_down_x_right + blade_left_up_x_right)/2.0 
+                                        real_grasp_center_y_right = (right_down_y_right + blade_left_up_y_right)/2.0
 
-                        #                 # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rec tangle(img_org, (int(real_grasp_center_x-width/2.0), int(real_grasp_center_y-height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
-                        #                 result_left = angle(left_up_x_left ,left_up_y_left,right_down_x_left ,right_down_y_left)
-                        #                 box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
-                        #                         (real_grasp_center_x_left - width/2,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
-                        #                 rota_left = rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+                                        # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                        # cv2.rec tangle(img_org, (int(real_grasp_center_x-width/2.0), int(real_grasp_center_y-height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
+                                        result_left = angle(left_up_x_left ,left_up_y_left,right_down_x_left ,right_down_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
+                                                (real_grasp_center_x_left - width/2,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
+                                        rota_left = rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
 
-                        #                 result_right = angle(left_up_x_right ,left_up_y_right,right_down_x_right ,right_down_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
-                        #                         (real_grasp_center_x_right - width/2,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+                                        result_right = angle(left_up_x_right ,left_up_y_right,right_down_x_right ,right_down_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                                (real_grasp_center_x_right - width/2,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
 
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
                                         
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
                                         
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+
+                                        real_rota_left = roct_result_left
+                                        real_rota_right = roct_result_right
                                     
-                        #             elif((blade_center_x_left - round_grasp_center_x_left) >= 115) or ((blade_center_x_right - round_grasp_center_x_right) >= 115):
-                        #                 cv2.putText(color_image, "cut right down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut right down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 20
-                        #                 height = 40
+                                    elif(roct_result_left >=-15) or (roct_result_right >=-15):
+                                        # elif((blade_center_x_left - round_grasp_center_x_left) >= 115) or ((blade_center_x_right - round_grasp_center_x_right) >= 115):
+                                        cv2.putText(color_image, "cut right down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut right down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20
+                                        height = 40
                                 
-                        #                 real_grasp_center_x_left = blade_center_x_left - blade_width_left/2.0
-                        #                 real_grasp_center_y_left = blade_center_y_left
+                                        real_grasp_center_x_left = blade_center_x_left - blade_width_left/2.0
+                                        real_grasp_center_y_left = blade_center_y_left
 
-                        #                 real_grasp_center_x_right = blade_center_x_right - blade_width_right/2.0
-                        #                 real_grasp_center_y_right = blade_center_y_right
+                                        real_grasp_center_x_right = blade_center_x_right - blade_width_right/2.0
+                                        real_grasp_center_y_right = blade_center_y_right
 
-                        #                 # cv2.circle(color_image,(int(real_grasp_center_x),int(blade_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rectangle(color_image, (int(real_grasp_center_x - width/2.0), int(real_grasp_center_y - height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
-                        #                 result_left = angle(real_grasp_center_x_left ,real_grasp_center_y_left,blade_center_x_left ,blade_center_y_left)
-                        #                 box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),
-                        #                         (real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
-                        #                 rota_left = rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+                                        # cv2.circle(color_image,(int(real_grasp_center_x),int(blade_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(color_image, (int(real_grasp_center_x - width/2.0), int(real_grasp_center_y - height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
+                                        result_left = angle(real_grasp_center_x_left ,real_grasp_center_y_left,blade_center_x_left ,blade_center_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),
+                                                (real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
+                                        rota_left = rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
 
-                        #                 result_right = angle(real_grasp_center_x_right ,real_grasp_center_y_right ,blade_center_x_right ,blade_center_y_right)
-                        #                 box_right = [(real_grasp_center_x_right+ width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),
-                        #                         (real_grasp_center_x + width/2.0,real_grasp_center_y + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+                                        result_right = angle(real_grasp_center_x_right ,real_grasp_center_y_right ,blade_center_x_right ,blade_center_y_right)
+                                        box_right = [(real_grasp_center_x_right+ width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),
+                                                (real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
 
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
 
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+                                        
+                                        real_rota_left = roct_result_left
+                                        real_rota_right = roct_result_right
                                     
-                        #             elif((blade_center_x_left - round_grasp_center_x_left) < 25) or ((blade_center_x_right - round_grasp_center_x_right) < 25): 
-                        #                 cv2.putText(color_image, "cut right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 40
-                        #                 height = 20
+                                    elif(roct_result_left < -70) or (roct_result_right < -70):
+                                        # elif((blade_center_x_left - round_grasp_center_x_left) < 25) or ((blade_center_x_right - round_grasp_center_x_right) < 25): 
+                                        cv2.putText(color_image, "cut right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 40
+                                        height = 20
 
-                        #                 real_grasp_center_x_left = blade_center_x_left 
-                        #                 real_grasp_center_y_left = blade_center_y_left - blade_height_left/2.0
+                                        real_grasp_center_x_left = blade_center_x_left 
+                                        real_grasp_center_y_left = blade_center_y_left - blade_height_left/2.0
 
-                        #                 real_grasp_center_x_right = blade_center_x_right
-                        #                 real_grasp_center_y_right = blade_center_y_right - blade_height_right/2.0
+                                        real_grasp_center_x_right = blade_center_x_right
+                                        real_grasp_center_y_right = blade_center_y_right - blade_height_right/2.0
 
-                        #                 # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rectangle(img_org,(int(grasp_center_x-width), int(grasp_center_y - height/2.0)), (int(grasp_center_x), int(grasp_center_y + height/2.0)),(0, 127, 255), 2)
-                        #                 result_left = angle(blade_left_up_x_left, blade_left_up_y_left, real_grasp_center_x_left, real_grasp_center_y_left)
-                        #                 box_left = [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
-                        #                     (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x + width/2.0 ,real_grasp_center_y + height/2.0)]
-                        #                 rota_left = rota_rect(box,result,int(real_grasp_center_x),int(real_grasp_center_y))
+                                        # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(img_org,(int(grasp_center_x-width), int(grasp_center_y - height/2.0)), (int(grasp_center_x), int(grasp_center_y + height/2.0)),(0, 127, 255), 2)
+                                        result_left = angle(blade_left_up_x_left, blade_left_up_y_left, real_grasp_center_x_left, real_grasp_center_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
+                                            (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left + height/2.0)]
+                                        rota_left = rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
 
-                        #                 result_right = angle(blade_left_up_x_right,blade_left_up_y_right,real_grasp_center_x_right,real_grasp_center_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
-                        #                     (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+                                        result_right = angle(blade_left_up_x_right,blade_left_up_y_right,real_grasp_center_x_right,real_grasp_center_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                            (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
                                         
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
 
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+                                        
+                                        real_rota_left =roct_result_left
+                                        real_rota_right = roct_result_right
                                     
-                        #             point3D_left = point_cloud.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
-                        #             x_left = point3D_left[1][0]
-                        #             y_left = point3D_left[1][1]
-                        #             z_left = point3D_left[1][2]
-                        #             color_right = point3D_left[1][3]
+                                    point3D_left = point_cloud.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
+                                    x_left = point3D_left[1][0]
+                                    y_left = point3D_left[1][1]
+                                    z_left = point3D_left[1][2]
+                                    color_right = point3D_left[1][3]
 
-                        #             point3D_right = point_cloud1.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
-                        #             x_right = point3D_right[1][0]
-                        #             y_right = point3D_right[1][1]
-                        #             z_right = point3D_right[1][2]
-                        #             color_right = point3D_right[1][3]
+                                    point3D_right = point_cloud1.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
+                                    x_right = point3D_right[1][0]
+                                    y_right = point3D_right[1][1]
+                                    z_right = point3D_right[1][2]
+                                    color_right = point3D_right[1][3]
 
-                        #             # viewer.updateData(point_cloud1)
-                        #             #depth
-                        #             z_value_left = depth_image_zed.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
-                        #             z_value_right = depth_image_zed.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
+                                    # viewer.updateData(point_cloud1)
+                                    #depth
+                                    z_value_left = depth_image_zed.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
+                                    z_value_right = depth_image_zed.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
 
-                        #             cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "center: " + "("+ str(round(real_grasp_center_x_left,3)) +","+ str(round(real_grasp_center_y_left,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "angle: " + str(round(result_left,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.imwrite(center_blade + "left_blade_grasp_"+str(d)+'.jpg',color_image) 
-                        #             cv2.imshow("finish_left",color_image)
+                                    cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "center: " + "("+ str(round(real_grasp_center_x_left,3)) +","+ str(round(real_grasp_center_y_left,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "angle: " + str(round(roct_result_left,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.imwrite(center_blade + "left_blade_grasp_"+str(d)+'.jpg',color_image) 
+                                    cv2.imshow("finish_left",color_image)
 
-                        #             cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "center: " + "("+ str(round(real_grasp_center_x_right,3)) +","+ str(round(real_grasp_center_y_right,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "angle: " + str(round(result_right,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.imwrite(center_blade + "right_blade_grasp_"+str(d)+'.jpg',color_image1) 
-                        #             cv2.imshow("finish_right",color_image1)
+                                    cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "center: " + "("+ str(round(real_grasp_center_x_right,3)) +","+ str(round(real_grasp_center_y_right,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "angle: " + str(round(roct_result_right,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.imwrite(center_blade + "right_blade_grasp_"+str(d)+'.jpg',color_image1) 
+                                    cv2.imshow("finish_right",color_image1)
+                                    
+                                #quadrant 3 , cut left up
+                                elif(blade_center_x_left < round_grasp_center_x_left and blade_center_y_left < round_grasp_center_y_left) or (blade_center_x_right < round_grasp_center_x_right and blade_center_y_right < round_grasp_center_y_right): 
+                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "cut left up 1001" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "cut left up 1001 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    if(roct_result_left <-15 and roct_result_left >=-70) or (roct_result_right <-15 and roct_result_right >=-70):
+                                    # if((round_grasp_center_x_left - blade_center_x_left) < 115 and(round_grasp_center_x_left - blade_center_x_left)>=25) or ((round_grasp_center_x_right - blade_center_x_right) < 115 and(round_grasp_center_x_right - blade_center_x_right)>=25):
+                                        cv2.putText(color_image, "cut left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20
+                                        height = 40
 
-                        #         #quadrant 3 , cut left up
-                        #         elif(blade_center_x_left < round_grasp_center_x_left and blade_center_y_left < round_grasp_center_y_left) or (blade_center_x_right < round_grasp_center_x_right and blade_center_y_right < round_grasp_center_y_right): 
-                        #             # cv2.putText(color_image, "distance: " + str(round(blade_center_x - grasp_center_x,3)) , (10, 125), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             # cv2.putText(color_image, "cut left up " , (10, 155), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             if((round_grasp_center_x_left - blade_center_x_left) < 115 and(round_grasp_center_x_left - blade_center_x_left)>=25) or ((round_grasp_center_x_right - blade_center_x_right) < 115 and(round_grasp_center_x_right - blade_center_x_right)>=25):
-                        #                 cv2.putText(color_image, "cut left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 20
-                        #                 height = 50
+                                        # cv2.line(img_org,(int(right_down_x),int(right_down_y)),(int(blade_left_up_x),int(blade_left_up_y)),(255, 0, 255),2,cv2.LINE_AA)
+                                        real_grasp_center_x_left = (left_up_x_left + blade_right_down_x_left)/2.0 
+                                        real_grasp_center_y_left = (left_up_y_left + blade_right_down_y_left)/2.0
 
-                        #                 # cv2.line(img_org,(int(right_down_x),int(right_down_y)),(int(blade_left_up_x),int(blade_left_up_y)),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 real_grasp_center_x_left = (left_up_x_left + blade_right_down_x_left)/2.0 
-                        #                 real_grasp_center_y_left = (left_up_y_left + blade_right_down_y_left)/2.0
+                                        real_grasp_center_x_right = (left_up_x_right + blade_right_down_x_right)/2.0 
+                                        real_grasp_center_y_right = (left_up_y_right + blade_right_down_y_right)/2.0
 
-                        #                 real_grasp_center_x_right = (left_up_x_right + blade_right_down_x_right)/2.0 
-                        #                 real_grasp_center_y_right = (left_up_y_right + blade_right_down_y_right)/2.0
+                                        # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(img_org, (int(real_grasp_center_x-width/2.0), int(real_grasp_center_y-height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
+                                        result_left = angle(blade_left_up_x_left ,blade_left_up_y_left,blade_right_down_x_left ,blade_right_down_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
+                                                (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
+                                        rota_left = rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
 
-                        #                 # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rectangle(img_org, (int(real_grasp_center_x-width/2.0), int(real_grasp_center_y-height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
-                        #                 result_left = angle(blade_left_up_x_left ,blade_left_up_y_left,blade_right_down_x_left ,blade_right_down_y_left)
-                        #                 box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
-                        #                         (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
-                        #                 rota_left = rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+                                        result_right = angle(blade_left_up_x_right ,blade_left_up_y_right ,blade_right_down_x_right  ,blade_right_down_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                                (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
 
-                        #                 result_right = angle(blade_left_up_x_right ,blade_left_up_y_right ,blade_right_down_x_right  ,blade_right_down_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
-                        #                         (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+                                        cv2.line(color_image,(int(box_left[0][0]),int(box_left[0][1])),(int(box_left[1][0]),int(box_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(box_left[1][0]),int(box_left[1][1])),(int(box_left[2][0]),int(box_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(box_left[2][0]),int(box_left[2][1])),(int(box_left[3][0]),int(box_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(box_left[3][0]),int(box_left[3][1])),(int(box_left[0][0]),int(box_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 cv2.line(color_image,(int(box_left[0][0]),int(box_left[0][1])),(int(box_left[1][0]),int(box_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(box_left[1][0]),int(box_left[1][1])),(int(box_left[2][0]),int(box_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(box_left[2][0]),int(box_left[2][1])),(int(box_left[3][0]),int(box_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(box_left[3][0]),int(box_left[3][1])),(int(box_left[0][0]),int(box_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
 
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
 
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+                                        real_rota_left = roct_result_left
+                                        real_rota_right = roct_result_right
                                         
-                        #             elif((round_grasp_center_x_left - blade_center_x_left) >= 115) or ((round_grasp_center_x_right - blade_center_x_right) >= 115):
-                        #                 cv2.putText(color_image, "cut left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 20
-                        #                 height = 40
+                                    elif(roct_result_left >=-15 ) or (roct_result_right >=-15 ):
+                                    # elif((round_grasp_center_x_left - blade_center_x_left) >= 115) or ((round_grasp_center_x_right - blade_center_x_right) >= 115):
+                                        cv2.putText(color_image, "cut left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20
+                                        height = 40
 
-                        #                 real_grasp_center_x_left = blade_center_x_left  + blade_width_left /2.0
-                        #                 real_grasp_center_y_left  = blade_center_y_left 
+                                        real_grasp_center_x_left = blade_center_x_left  + blade_width_left /2.0
+                                        real_grasp_center_y_left  = blade_center_y_left 
 
-                        #                 real_grasp_center_x_right = blade_center_x_right + blade_width_right/2.0
-                        #                 real_grasp_center_y_right = blade_center_y_right
+                                        real_grasp_center_x_right = blade_center_x_right + blade_width_right/2.0
+                                        real_grasp_center_y_right = blade_center_y_right
 
-                        #                 # cv2.circle(color_image,(int(real_grasp_center_x),int(blade_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rectangle(img_org, (int(real_grasp_center_x - width/2.0), int(real_grasp_center_y - height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
-                        #                 result_left = angle(real_grasp_center_x_left ,real_grasp_center_y_left,blade_center_x_left ,blade_center_y_left)
-                        #                 box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
-                        #                     (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
-                        #                 rota_left= rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+                                        # cv2.circle(color_image,(int(real_grasp_center_x),int(blade_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(img_org, (int(real_grasp_center_x - width/2.0), int(real_grasp_center_y - height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
+                                        result_left = angle(real_grasp_center_x_left ,real_grasp_center_y_left,blade_center_x_left ,blade_center_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
+                                            (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
+                                        rota_left= rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
 
-                        #                 result_right = angle(real_grasp_center_x_right ,real_grasp_center_y,blade_center_x_right ,blade_center_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
-                        #                     (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+                                        result_right = angle(real_grasp_center_x_right ,real_grasp_center_y,blade_center_x_right ,blade_center_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                            (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
 
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
 
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
 
-                        #             elif((round_grasp_center_x_left - blade_center_x_left) < 25) or ((round_grasp_center_x_right - blade_center_x_right) < 25):
-                        #                 cv2.putText(color_image, "cut left up 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut left up 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 40
-                        #                 height = 20
-
-                        #                 real_grasp_center_x_left = blade_center_x_left 
-                        #                 real_grasp_center_y_left = blade_center_y_left + blade_height_left/2.0
-
-                        #                 real_grasp_center_x_right = blade_center_x_right 
-                        #                 real_grasp_center_y_right = blade_center_y_right + blade_height_right/2.0
-
-                        #                 # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rectangle(img_org,(int(grasp_center_x-width), int(grasp_center_y - height/2.0)), (int(grasp_center_x), int(grasp_center_y + height/2.0)),(0, 127, 255), 2)
-                        #                 result_left = angle(real_grasp_center_x_left,real_grasp_center_y_left,blade_right_down_x_left,blade_right_down_y_left)
-                        #                 box_left= [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
-                        #                     (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left + height/2.0)]
-                        #                 rota_left = rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
-
-                        #                 result_right = angle(real_grasp_center_x_right,real_grasp_center_y_right,blade_right_down_x_right,blade_right_down_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),
-                        #                         (real_grasp_center_x + width/2.0 ,real_grasp_center_y + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+                                        real_rota_left = roct_result_left
+                                        real_rota_right = roct_result_right
                                         
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                    elif(roct_result_left < -70) or (roct_result_right < -70):
+                                    # elif((round_grasp_center_x_left - blade_center_x_left) < 25) or ((round_grasp_center_x_right - blade_center_x_right) < 25):
+                                        cv2.putText(color_image, "cut left up 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut left up 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20
+                                        height = 40
 
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        real_grasp_center_x_left = blade_center_x_left 
+                                        real_grasp_center_y_left = blade_center_y_left + blade_height_left/2.0
 
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+                                        real_grasp_center_x_right = blade_center_x_right 
+                                        real_grasp_center_y_right = blade_center_y_right + blade_height_right/2.0
 
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+                                        # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(img_org,(int(grasp_center_x-width), int(grasp_center_y - height/2.0)), (int(grasp_center_x), int(grasp_center_y + height/2.0)),(0, 127, 255), 2)
+                                        result_left = angle(real_grasp_center_x_left,real_grasp_center_y_left,blade_right_down_x_left,blade_right_down_y_left)
+                                        box_left= [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
+                                            (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left + height/2.0)]
+                                        rota_left = rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
 
-                        #             point3D_left = point_cloud.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
-                        #             x_left = point3D_left[1][0]
-                        #             y_left = point3D_left[1][1]
-                        #             z_left = point3D_left[1][2]
-                        #             color_right = point3D_left[1][3]
+                                        result_right = angle(real_grasp_center_x_right,real_grasp_center_y_right,blade_right_down_x_right,blade_right_down_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),
+                                                (real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+                                        
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #             point3D_right = point_cloud1.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
-                        #             x_right = point3D_right[1][0]
-                        #             y_right = point3D_right[1][1]
-                        #             z_right = point3D_right[1][2]
-                        #             color_right = point3D_right[1][3]
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #             # viewer.updateData(point_cloud1)
-                        #             #depth
-                        #             z_value_left = depth_image_zed.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
-                        #             z_value_right = depth_image_zed.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
 
-                        #             cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "center: " + "("+ str(round(real_grasp_center_x_left,3)) +","+ str(round(real_grasp_center_y_left,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "angle: " + str(round(result_left,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.imwrite(center_blade + "left_blade_grasp_"+str(d)+'.jpg',color_image) 
-                        #             cv2.imshow("finish_left",color_image)
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
 
-                        #             cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "center: " + "("+ str(round(real_grasp_center_x_right,3)) +","+ str(round(real_grasp_center_y_right,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "angle: " + str(round(result_right,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.imwrite(center_blade + "right_blade_grasp_"+str(d)+'.jpg',color_image1) 
-                        #             cv2.imshow("finish_right",color_image1)
-                                
-                        #         #quadrant 4 , cut left down
-                        #         elif(round_grasp_center_x_left > blade_center_x_left and blade_center_y_left > round_grasp_center_y_left) or (round_grasp_center_x_right > blade_center_x_right and blade_center_y_right > round_grasp_center_y_right): 
-                        #             # cv2.putText(color_image, "distance: " + str(round(blade_center_x - grasp_center_x,3)) , (10, 125), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             # cv2.putText(color_image, "cut left down" , (10, 155), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             if((round_grasp_center_x_left - blade_center_x_left) < 115 and(round_grasp_center_x_left - blade_center_x_left)>=25) or ((round_grasp_center_x_right - blade_center_x_right) < 115 and(round_grasp_center_x_right - blade_center_x_right)>=25):
-                        #                 cv2.putText(color_image, "cut left down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut left down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 20
-                        #                 height = 50
+                                        real_rota_left = roct_result_left
+                                        real_rota_right = roct_result_right
+                                    
+                                    point3D_left = point_cloud.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
+                                    x_left = point3D_left[1][0]
+                                    y_left = point3D_left[1][1]
+                                    z_left = point3D_left[1][2]
+                                    color_right = point3D_left[1][3]
 
-                        #                 real_grasp_center_x_left = (blade_right_down_x_left + left_up_x_left)/2.0 
-                        #                 real_grasp_center_y_left = (blade_left_up_y_left + right_down_y_left)/2.0
+                                    point3D_right = point_cloud1.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
+                                    x_right = point3D_right[1][0]
+                                    y_right = point3D_right[1][1]
+                                    z_right = point3D_right[1][2]
+                                    color_right = point3D_right[1][3]
 
-                        #                 real_grasp_center_x_right = (blade_right_down_x_right + left_up_x_right)/2.0 
-                        #                 real_grasp_center_y_right = (blade_left_up_y_right + right_down_y_right)/2.0
+                                    # viewer.updateData(point_cloud1)
+                                    #depth
+                                    z_value_left = depth_image_zed.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
+                                    z_value_right = depth_image_zed.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
 
-                        #                 # cv2.circle(color_image,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rectangle(img_org,(int(grasp_center_x-width/2.0), int(grasp_center_y)), (int(grasp_center_x + width/2.0), int(grasp_center_y + height)),(0, 127, 255), 2)
-                        #                 result_left = angle(blade_left_up_x_left,blade_right_down_y_left,blade_right_down_x_left,blade_left_up_y_left)
-                        #                 box_left = [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
-                        #                     (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left + height/2.0)]
-                        #                 rota_left = rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+                                    cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "center: " + "("+ str(round(real_grasp_center_x_left,3)) +","+ str(round(real_grasp_center_y_left,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "angle: " + str(round(roct_result_left,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.imwrite(center_blade + "left_blade_grasp_"+str(d)+'.jpg',color_image) 
+                                    cv2.imshow("finish_left",color_image)
 
-                        #                 result_right = angle(blade_left_up_x_right,blade_right_down_y_right,blade_right_down_x_right,blade_left_up_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
-                        #                     (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+                                    cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "center: " + "("+ str(round(real_grasp_center_x_right,3)) +","+ str(round(real_grasp_center_y_right,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "angle: " + str(round(roct_result_right,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.imwrite(center_blade + "right_blade_grasp_"+str(d)+'.jpg',color_image1) 
+                                    cv2.imshow("finish_right",color_image1)
+                                    
+                                #quadrant 4 , cut left down
+                                elif(round_grasp_center_x_left > blade_center_x_left and blade_center_y_left > round_grasp_center_y_left) or (round_grasp_center_x_right > blade_center_x_right and blade_center_y_right > round_grasp_center_y_right): 
+                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "cut left down 1001" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "cut left down 1001 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    if(roct_result_left >=15 and roct_result_left <=70) or (roct_result_right >=15 and roct_result_right <=70):
+                                    # if((round_grasp_center_x_left - blade_center_x_left) < 115 and(round_grasp_center_x_left - blade_center_x_left)>=25) or ((round_grasp_center_x_right - blade_center_x_right) < 115 and(round_grasp_center_x_right - blade_center_x_right)>=25):
+                                        cv2.putText(color_image, "cut left down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut left down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20
+                                        height = 40
 
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        real_grasp_center_x_left = (blade_right_down_x_left + left_up_x_left)/2.0 
+                                        real_grasp_center_y_left = (blade_left_up_y_left + right_down_y_left)/2.0
 
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        real_grasp_center_x_right = (blade_right_down_x_right + left_up_x_right)/2.0 
+                                        real_grasp_center_y_right = (blade_left_up_y_right + right_down_y_right)/2.0
 
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+                                        # cv2.circle(color_image,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(img_org,(int(grasp_center_x-width/2.0), int(grasp_center_y)), (int(grasp_center_x + width/2.0), int(grasp_center_y + height)),(0, 127, 255), 2)
+                                        result_left = angle(blade_left_up_x_left,blade_right_down_y_left,blade_right_down_x_left,blade_left_up_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
+                                            (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left + height/2.0)]
+                                        rota_left = rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
 
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+                                        result_right = angle(blade_left_up_x,blade_right_down_y,blade_right_down_x,blade_left_up_y)
+                                        box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                            (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+
+                                        real_rota_left = roct_result_left
+                                        real_rota_right = roct_result_right
         
-                        #             elif((round_grasp_center_x_left - blade_center_x_left) >= 115) or ((round_grasp_center_x_right - blade_center_x_right) >= 115):
-                        #                 cv2.putText(color_image, "cut left down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut left down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 20
-                        #                 height = 40
+                                    elif(roct_result_left < 15) or (roct_result_right <15):
+                                    # elif((round_grasp_center_x_left - blade_center_x_left) >= 115) or ((round_grasp_center_x_right - blade_center_x_right) >= 115):
+                                        cv2.putText(color_image, "cut left down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut left down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20
+                                        height = 40
                                         
-                        #                 real_grasp_center_x_left = blade_center_x_left + blade_width_left/2.0
-                        #                 real_grasp_center_y_left = blade_center_y_left
+                                        real_grasp_center_x_left = blade_center_x_left + blade_width_left/2.0
+                                        real_grasp_center_y_left = blade_center_y_left
 
-                        #                 real_grasp_center_x_right = blade_center_x_right + blade_width_right/2.0
-                        #                 real_grasp_center_y_right = blade_center_y_right
+                                        real_grasp_center_x_right = blade_center_x_right + blade_width_right/2.0
+                                        real_grasp_center_y_right = blade_center_y_right
 
-                        #                 # cv2.circle(color_image,(int(real_grasp_center_x),int(blade_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rectangle(img_org, (int(real_grasp_center_x - width/2.0), int(real_grasp_center_y - height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
-                        #                 result_left = angle(real_grasp_center_x_left  ,real_grasp_center_y_left ,blade_center_x_left  ,blade_center_y_left )
-                        #                 box_left  = [(real_grasp_center_x_left  + width/2.0,real_grasp_center_y_left  - height/2.0),(real_grasp_center_x_left  - width/2.0,real_grasp_center_y_left  - height/2.0),
-                        #                     (real_grasp_center_x_left  - width/2.0,real_grasp_center_y_left  + height/2.0),(real_grasp_center_x_left  + width/2.0,real_grasp_center_y_left  + height/2.0)]
-                        #                 rota_left  = rota_rect(box_left ,result_left ,int(real_grasp_center_x),int(real_grasp_center_y))
+                                        # cv2.circle(color_image,(int(real_grasp_center_x),int(blade_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(img_org, (int(real_grasp_center_x - width/2.0), int(real_grasp_center_y - height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
+                                        result_left = angle(real_grasp_center_x_left  ,real_grasp_center_y_left ,blade_center_x_left  ,blade_center_y_left )
+                                        box_left  = [(real_grasp_center_x_left  + width/2.0,real_grasp_center_y_left  - height/2.0),(real_grasp_center_x_left  - width/2.0,real_grasp_center_y_left  - height/2.0),
+                                            (real_grasp_center_x_left  - width/2.0,real_grasp_center_y_left  + height/2.0),(real_grasp_center_x_left  + width/2.0,real_grasp_center_y_left  + height/2.0)]
+                                        rota_left  = rota_rect(box_left ,roct_result_left ,int(real_grasp_center_x),int(real_grasp_center_y))
 
-                        #                 result_right = angle(real_grasp_center_x_right ,real_grasp_center_y_right,blade_center_x_right ,blade_center_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
-                        #                     (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+                                        result_right = angle(real_grasp_center_x_right ,real_grasp_center_y_right,blade_center_x_right ,blade_center_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                            (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
 
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
 
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
 
-                        #             elif((round_grasp_center_x_left - blade_center_x_left) < 25) or ((round_grasp_center_x_right - blade_center_x_right) < 25):
-                        #                 cv2.putText(color_image, "cut left down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut left down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 20
-                        #                 height = 40
+                                        real_rota_left = roct_result_left
+                                        real_rota_right = roct_result_right
 
-                        #                 real_grasp_center_x_left = blade_center_x_left 
-                        #                 real_grasp_center_y_left = blade_center_y_left - blade_height_left/2.0
+                                    elif (roct_result_left > 70) or (roct_result_right >70):
+                                    # elif((round_grasp_center_x_left - blade_center_x_left) < 25) or ((round_grasp_center_x_right - blade_center_x_right) < 25):
+                                        cv2.putText(color_image, "cut left down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut left down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20
+                                        height = 40
 
-                        #                 real_grasp_center_x_right = blade_center_x_right
-                        #                 real_grasp_center_y_right = blade_center_y_right - blade_height_right/2.0
+                                        real_grasp_center_x_left = blade_center_x_left 
+                                        real_grasp_center_y_left = blade_center_y_left - blade_height_left/2.0
 
-                        #                 # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rectangle(img_org,(int(grasp_center_x-width), int(grasp_center_y - height/2.0)), (int(grasp_center_x), int(grasp_center_y + height/2.0)),(0, 127, 255), 2)
-                        #                 result_left = angle(real_grasp_center_x_left,real_grasp_center_y_left,blade_left_up_x_left,blade_right_down_y_left)
-                        #                 box_left = [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),
-                        #                         (real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left + height/2.0)]
-                        #                 rota_left = rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+                                        real_grasp_center_x_right = blade_center_x_right
+                                        real_grasp_center_y_right = blade_center_y_right - blade_height_right/2.0
 
-                        #                 result_right = angle(real_grasp_center_x_right,real_grasp_center_y_right,blade_left_up_x_right,blade_right_down_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
-                        #                     (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+                                        # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(img_org,(int(grasp_center_x-width), int(grasp_center_y - height/2.0)), (int(grasp_center_x), int(grasp_center_y + height/2.0)),(0, 127, 255), 2)
+                                        result_left = angle(real_grasp_center_x_left,real_grasp_center_y_left,blade_left_up_x_left,blade_right_down_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),
+                                                (real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left + height/2.0)]
+                                        rota_left = rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+
+                                        result_right = angle(real_grasp_center_x_right,real_grasp_center_y_right,blade_left_up_x_right,blade_right_down_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                            (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
                                         
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
 
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
 
-                        #             point3D_left = point_cloud.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
-                        #             x_left = point3D_left[1][0]
-                        #             y_left = point3D_left[1][1]
-                        #             z_left = point3D_left[1][2]
-                        #             color_right = point3D_left[1][3]
+                                        real_rota_left = roct_result_left
+                                        real_rota_right = roct_result_right
 
-                        #             point3D_right = point_cloud1.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
-                        #             x_right = point3D_right[1][0]
-                        #             y_right = point3D_right[1][1]
-                        #             z_right = point3D_right[1][2]
-                        #             color_right = point3D_right[1][3]
+                                    point3D_left = point_cloud.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
+                                    x_left = point3D_left[1][0]
+                                    y_left = point3D_left[1][1]
+                                    z_left = point3D_left[1][2]
+                                    color_right = point3D_left[1][3]
 
-                        #             # viewer.updateData(point_cloud1)
-                        #             #depth
-                        #             z_value_left = depth_image_zed.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
-                        #             z_value_right = depth_image_zed.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
+                                    point3D_right = point_cloud1.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
+                                    x_right = point3D_right[1][0]
+                                    y_right = point3D_right[1][1]
+                                    z_right = point3D_right[1][2]
+                                    color_right = point3D_right[1][3]
 
-                        #             cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "center: " + "("+ str(round(real_grasp_center_x_left,3)) +","+ str(round(real_grasp_center_y_left,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "angle: " + str(round(result_left,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.imwrite(center_blade + "left_blade_grasp_"+str(d)+'.jpg',color_image) 
-                        #             cv2.imshow("finish_left",color_image)
+                                    # viewer.updateData(point_cloud1)
+                                    #depth
+                                    z_value_left = depth_image_zed.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
+                                    z_value_right = depth_image_zed.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
 
-                        #             cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "center: " + "("+ str(round(real_grasp_center_x_right,3)) +","+ str(round(real_grasp_center_y_right,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "angle: " + str(round(result_right,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.imwrite(center_blade + "right_blade_grasp_"+str(d)+'.jpg',color_image1) 
-                        #             cv2.imshow("finish_right",color_image1)
+                                    cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "center: " + "("+ str(round(real_grasp_center_x_left,3)) +","+ str(round(real_grasp_center_y_left,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "angle: " + str(round(real_rota_left,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.imwrite(center_blade + "left_blade_grasp_"+str(d)+'.jpg',color_image) 
+                                    cv2.imshow("finish_left",color_image)
 
-                        # #剪刀2
-                        # elif detections_left[0][0] == "round_grasp" and detections_left[1][0] == "blade":
-                        #     if detections_right[1][0] == "round_grasp" and detections_right[0][0] == "blade":
-                        #         round_grasp_center_x_left = round(detections_left[0][2][0])
-                        #         round_grasp_center_y_left = round(detections_left[0][2][1])
-                        #         round_grasp_width_left = round(detections_left[0][2][2])
-                        #         round_grasp_height_left = round(detections_left[0][2][3])
-                        #         blade_center_x_left = round(detections_left[1][2][0])
-                        #         blade_center_y_left = round(detections_left[1][2][1])
-                        #         blade_width_left = round(detections_left[1][2][2])
-                        #         blade_height_left = round(detections_left[1][2][3])
+                                    cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "center: " + "("+ str(round(real_grasp_center_x_right,3)) +","+ str(round(real_grasp_center_y_right,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "angle: " + str(round(real_rota_right,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.imwrite(center_blade + "right_blade_grasp_"+str(d)+'.jpg',color_image1) 
+                                    cv2.imshow("finish_right",color_image1)
+                                
+                            if detections_right[0][0] == "round_grasp" and detections_right[1][0] == "blade":
+                                round_grasp_center_x_left = round(detections_left[0][2][0])
+                                round_grasp_center_y_left = round(detections_left[0][2][1])
+                                round_grasp_width_left = round(detections_left[0][2][2])
+                                round_grasp_height_left = round(detections_left[0][2][3])
+                                blade_center_x_left = round(detections_left[1][2][0])
+                                blade_center_y_left = round(detections_left[1][2][1])
+                                blade_width_left = round(detections_left[1][2][2])
+                                blade_height_left = round(detections_left[1][2][3])
 
-                        #         round_grasp_center_x_right = round(detections_right[1][2][0])
-                        #         round_grasp_center_y_right = round(detections_right[1][2][1])
-                        #         round_grasp_width_right = round(detections_right[1][2][2])
-                        #         round_grasp_height_right = round(detections_right[1][2][3])
-                        #         blade_center_x_right = round(detections_right[0][2][0])
-                        #         blade_center_y_right = round(detections_right[0][2][1])
-                        #         blade_width_right = round(detections_right[0][2][2])
-                        #         blade_height_right = round(detections_right[0][2][3])
+                                round_grasp_center_x_right = round(detections_right[0][2][0])
+                                round_grasp_center_y_right = round(detections_right[0][2][1])
+                                round_grasp_width_right = round(detections_right[0][2][2])
+                                round_grasp_height_right = round(detections_right[0][2][3])
+                                blade_center_x_right = round(detections_right[1][2][0])
+                                blade_center_y_right = round(detections_right[1][2][1])
+                                blade_width_right = round(detections_right[1][2][2])
+                                blade_height_right = round(detections_right[1][2][3])
 
-                        #         left_up_x_left = round(round_grasp_center_x_left - (round_grasp_width_left/2.0))
-                        #         left_up_y_left = round(round_grasp_center_y_left - (round_grasp_height_left/2.0))
-                        #         right_down_x_left = round(round_grasp_center_x_left + (round_grasp_width_left/2.0))
-                        #         right_down_y_left = round(round_grasp_center_y_left + (round_grasp_height_left/2.0))
-                        #         blade_left_up_x_left = round(blade_center_x_left - (blade_width_left/2.0))
-                        #         blade_left_up_y_left = round(blade_center_y_left - (blade_height_left/2.0))
-                        #         blade_right_down_x_left = round(blade_center_x_left + blade_width_left/2.0)
-                        #         blade_right_down_y_left = round(blade_center_y_left + (blade_height_left/2.0))
+                                left_up_x_left = round(round_grasp_center_x_left - (round_grasp_width_left/2.0))
+                                left_up_y_left = round(round_grasp_center_y_left - (round_grasp_height_left/2.0))
+                                right_down_x_left = round(round_grasp_center_x_left + (round_grasp_width_left/2.0))
+                                right_down_y_left = round(round_grasp_center_y_left + (round_grasp_height_left/2.0))
+                                blade_left_up_x_left = round(blade_center_x_left - (blade_width_left/2.0))
+                                blade_left_up_y_left = round(blade_center_y_left - (blade_height_left/2.0))
+                                blade_right_down_x_left = round(blade_center_x_left + blade_width_left/2.0)
+                                blade_right_down_y_left = round(blade_center_y_left + (blade_height_left/2.0))
 
-                        #         left_up_x_right = round(round_grasp_center_x_right - (round_grasp_width_right/2.0))
-                        #         left_up_y_right = round(round_grasp_center_y_right - (round_grasp_height_right/2.0))
-                        #         right_down_x_right = round(round_grasp_center_x_right + (round_grasp_width_right/2.0))
-                        #         right_down_y_right = round(round_grasp_center_y_right + (round_grasp_height_right/2.0))
-                        #         blade_left_up_x_right = round(blade_center_x_right - (blade_width_right/2.0))
-                        #         blade_left_up_y_right = round(blade_center_y_right - (blade_height_right/2.0))
-                        #         blade_right_down_x_right = round(blade_center_x_right + blade_width_right/2.0)
-                        #         blade_right_down_y_right = round(blade_center_y_right + (blade_height_right/2.0))
+                                left_up_x_right = round(round_grasp_center_x_right - (round_grasp_width_right/2.0))
+                                left_up_y_right = round(round_grasp_center_y_right - (round_grasp_height_right/2.0))
+                                right_down_x_right = round(round_grasp_center_x_right + (round_grasp_width_right/2.0))
+                                right_down_y_right = round(round_grasp_center_y_right + (round_grasp_height_right/2.0))
+                                blade_left_up_x_right = round(blade_center_x_right - (blade_width_right/2.0))
+                                blade_left_up_y_right = round(blade_center_y_right - (blade_height_right/2.0))
+                                blade_right_down_x_right = round(blade_center_x_right + blade_width_right/2.0)
+                                blade_right_down_y_right = round(blade_center_y_right + (blade_height_right/2.0))
 
-                        #         roct_result_left = angle(round_grasp_center_x_left, round_grasp_center_y_left,blade_center_x_left, blade_center_y_left)
-                        #         print(roct_result_left)
-                        #         print("3333333333333333333333333")
-                        #         roct_result_right = angle(round_grasp_center_x_right, round_grasp_center_y_right,blade_center_x_right, blade_center_y_right)
-                        #         print(roct_result_right)
-                        #         print("333333333333333333333333333")
+                                roct_result_left = angle(round_grasp_center_x_left, round_grasp_center_y_left,blade_center_x_left, blade_center_y_left)
+                                print(roct_result_left)
+                                print("444444444444444444444444")
+                                roct_result_right = angle(round_grasp_center_x_right, round_grasp_center_y_right,blade_center_x_right, blade_center_y_right)
+                                print(roct_result_right)
+                                print("44444444444444444444444")
 
-                        #         #quadrant 1 , cut right up
-                        #         if(blade_center_x_left > round_grasp_center_x_left and blade_center_y_left < round_grasp_center_y_left) and (blade_center_x_right > round_grasp_center_x_right and blade_center_y_right < round_grasp_center_y_right): 
-                        #             # cv2.putText(color_image, "distance: " + str(round(blade_center_x - round_grasp_center_x,3)) , (10, 125), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             # cv2.putText(color_image, "cut right up" , (10, 155), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             if(roct_result_left >=15 and roct_result_left <=75) or (roct_result_right >=15 and roct_result_right <=75):
-                        #                 # if((blade_center_x_left - round_grasp_center_x_left) < 115 and (blade_center_x_left - round_grasp_center_x_left) >= 25) or ((blade_center_x_right - round_grasp_center_x_right) < 115 and (blade_center_x_right - round_grasp_center_x_right) >= 25): 
-                        #                 cv2.putText(color_image, "cut right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 20
-                        #                 height = 40
+                                #quadrant 1 , cut right up
+                                if(blade_center_x_left > round_grasp_center_x_left and blade_center_y_left < round_grasp_center_y_left) and (blade_center_x_right > round_grasp_center_x_right and blade_center_y_right < round_grasp_center_y_right): 
+                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "cut right up 1010" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "cut right up 1010 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    if(roct_result_left >=15 and roct_result_left <=70) or (roct_result_right >=15 and roct_result_right <=70):
+                                        # if((blade_center_x_left - round_grasp_center_x_left) < 115 and (blade_center_x_left - round_grasp_center_x_left) >= 25) or ((blade_center_x_right - round_grasp_center_x_right) < 115 and (blade_center_x_right - round_grasp_center_x_right) >= 25): 
+                                        cv2.putText(color_image, "cut right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20
+                                        height = 40
 
-                        #                 # cv2.line(img_org,(int(right_down_x),int(left_up_y)),(int(blade_left_up_x),int(blade_right_down_y)),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 real_grasp_center_x_left = (right_down_x_left + blade_left_up_x_left)/2.0 
-                        #                 real_grasp_center_y_left = (left_up_y_left + blade_right_down_y_left)/2.0
+                                        # cv2.line(img_org,(int(right_down_x),int(left_up_y)),(int(blade_left_up_x),int(blade_right_down_y)),(255, 0, 255),2,cv2.LINE_AA)
+                                        real_grasp_center_x_left = (right_down_x_left + blade_left_up_x_left)/2.0 
+                                        real_grasp_center_y_left = (left_up_y_left + blade_right_down_y_left)/2.0
 
-                        #                 real_grasp_center_x_right = (right_down_x_right + blade_left_up_x_right)/2.0 
-                        #                 real_grasp_center_y_right = (left_up_y_right + blade_right_down_y_right)/2.0
+                                        real_grasp_center_x_right = (right_down_x_right + blade_left_up_x_right)/2.0 
+                                        real_grasp_center_y_right = (left_up_y_right + blade_right_down_y_right)/2.0
                                             
-                        #                 # cv2.circle(color_image,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rectangle(img_org, (int(real_grasp_center_x-width/2.0), int(real_grasp_center_y-height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
-                        #                 result_left = angle(right_down_x_left ,left_up_y_left,left_up_x_left ,right_down_y_left)
-                        #                 box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
-                        #                             (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
-                        #                 rota_left = rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+                                        # cv2.circle(color_image,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(img_org, (int(real_grasp_center_x-width/2.0), int(real_grasp_center_y-height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
+                                        result_left = angle(right_down_x_left ,left_up_y_left,left_up_x_left ,right_down_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
+                                                    (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
+                                        rota_left = rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
 
-                        #                 result_right = angle(right_down_x_right ,left_up_y_right,left_up_x_right ,right_down_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
-                        #                     (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+                                        result_right = angle(right_down_x_right ,left_up_y_right,left_up_x_right ,right_down_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                            (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
 
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
 
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
                                         
-                        #                 real_rota_left = roct_result_left
-                        #                 real_rota_right = roct_result_right
+                                        real_rota_left = roct_result_left
+                                        real_rota_right = roct_result_right
                                     
-                        #             elif(roct_result_left < 15 ) or (roct_result_right <15):
-                        #                 # elif((blade_center_x_left - round_grasp_center_x_left) >= 115) or ((blade_center_x_right - round_grasp_center_x_right) >= 115):
-                        #                 cv2.putText(color_image, "cut right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 20
-                        #                 height = 40
+                                    elif(roct_result_left < 15 ) or (roct_result_right <15):
+                                        # elif((blade_center_x_left - round_grasp_center_x_left) >= 115) or ((blade_center_x_right - round_grasp_center_x_right) >= 115):
+                                        cv2.putText(color_image, "cut right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20
+                                        height = 40
 
-                        #                 # cv2.circle(color_image,(int(blade_center_x - blade_width/2.0),int(blade_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rectangle(color_image, (int(blade_center_x - blade_width/2.0 - width/2.0), int(blade_center_y - height/2.0)), (int(blade_center_x - blade_width/2.0 + width/2.0), int(blade_center_y + height/2.0)),(255, 0, 255), 2)
-                        #                 real_grasp_center_x_left = blade_center_x_left - blade_width_left/2.0
-                        #                 real_grasp_center_y_left = blade_center_y_left
+                                        # cv2.circle(color_image,(int(blade_center_x - blade_width/2.0),int(blade_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(color_image, (int(blade_center_x - blade_width/2.0 - width/2.0), int(blade_center_y - height/2.0)), (int(blade_center_x - blade_width/2.0 + width/2.0), int(blade_center_y + height/2.0)),(255, 0, 255), 2)
+                                        real_grasp_center_x_left = blade_center_x_left - blade_width_left/2.0
+                                        real_grasp_center_y_left = blade_center_y_left
                                         
-                        #                 real_grasp_center_x_right = blade_center_x_right - blade_width_right/2.0
-                        #                 real_grasp_center_y_right = blade_center_y_right
+                                        real_grasp_center_x_right = blade_center_x_right - blade_width_right/2.0
+                                        real_grasp_center_y_right = blade_center_y_right
 
-                        #                 result_left = angle(blade_left_up_x_left ,blade_left_up_y_left,blade_center_x_left ,blade_center_y_left)
-                        #                 box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
-                        #                     (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
-                        #                 rota_left = rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+                                        result_left = angle(blade_left_up_x_left ,blade_left_up_y_left,blade_center_x_left ,blade_center_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
+                                            (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
+                                        rota_left = rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
 
-                        #                 result_right = angle(blade_left_up_x_right ,blade_left_up_y_right,blade_center_x_right ,blade_center_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
-                        #                     (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+                                        result_right = angle(blade_left_up_x_right ,blade_left_up_y_right,blade_center_x_right ,blade_center_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                            (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
                                         
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(2, 202, 119),2)
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(2, 202, 119),2)
 
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(2, 202, 119),2)
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(2, 202, 119),2)
 
                                         
-                        #                 real_rota_left = 90 - roct_result_left
-                        #                 real_rota_right = 90 - roct_result_right
+                                        real_rota_left = roct_result_left
+                                        real_rota_right = roct_result_right
 
-                        #                 # if (real_rota_left <0):
-                        #                 #     real_rota_left = -90 - real_rota_left
-                        #                 # if (real_rota_right <0):
-                        #                 #     real_rota_right = -90 - real_rota_right
+                                        # if (real_rota_left <0):
+                                        #     real_rota_left = -90 - real_rota_left
+                                        # if (real_rota_right <0):
+                                        #     real_rota_right = -90 - real_rota_right
                                     
-                        #             elif (roct_result_left > 75 ) or (roct_result_right >75):
-                        #                 # elif((blade_center_x_left - round_grasp_center_x_left) < 25) or ((blade_center_x_right - round_grasp_center_x_right) < 25): 
-                        #                 cv2.putText(color_image, "cut right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 40
-                        #                 height = 20
+                                    elif (roct_result_left > 70) or (roct_result_right >70):
+                                        # elif((blade_center_x_left - round_grasp_center_x_left) < 25) or ((blade_center_x_right - round_grasp_center_x_right) < 25): 
+                                        cv2.putText(color_image1, "cut right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 40
+                                        height = 20
 
-                        #                 real_grasp_center_x_left = blade_center_x_left
-                        #                 real_grasp_center_y_left = blade_center_y_left + blade_height_left/2.0
+                                        real_grasp_center_x_left = blade_center_x_left
+                                        real_grasp_center_y_left = blade_center_y_left + blade_height_left/2.0
 
-                        #                 real_grasp_center_x_right = blade_center_x_right
-                        #                 real_grasp_center_y_right = blade_center_y_right + blade_height_right/2.0
+                                        real_grasp_center_x_right = blade_center_x_right
+                                        real_grasp_center_y_right = blade_center_y_right + blade_height_right/2.0
 
-                        #                 result_left = angle(real_grasp_center_x_left,real_grasp_center_y_left,blade_right_down_x_left,blade_right_down_y_left)
-                        #                 box_left = [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
-                        #                     (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left + height/2.0)]
-                        #                 rota_left = rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+                                        result_left = angle(real_grasp_center_x_left,real_grasp_center_y_left,blade_right_down_x_left,blade_right_down_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
+                                            (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left + height/2.0)]
+                                        rota_left = rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
 
-                        #                 result_right = angle(real_grasp_center_x_right,real_grasp_center_y_right,blade_right_down_x_right,blade_right_down_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
-                        #                     (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,result_left,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+                                        result_right = angle(real_grasp_center_x_right,real_grasp_center_y_right,blade_right_down_x_right,blade_right_down_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                            (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,result_left,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
                                         
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 real_grasp_center_x = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                        real_grasp_center_x = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
 
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(2, 202, 119),2)
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(2, 202, 119),2)
 
-                        #                 # real_rota_left = 90 - roct_result_left
-                        #                 # real_rota_right = 90 - roct_result_right
+                                        real_rota_left = 90 - roct_result_left
+                                        real_rota_right = 90 - roct_result_right
 
-                        #                 # if (real_rota_left <0):
-                        #                 #     real_rota_left = -90 - real_rota_left
-                        #                 # if (real_rota_right <0):
-                        #                 #     real_rota_right = -90 - real_rota_right
+                                        # if (real_rota_left <0):
+                                        #     real_rota_left = -90 - real_rota_left
+                                        # if (real_rota_right <0):
+                                        #     real_rota_right = -90 - real_rota_right
 
 
-                        #             point3D_left = point_cloud.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
-                        #             x_left = point3D_left[1][0]
-                        #             y_left = point3D_left[1][1]
-                        #             z_left = point3D_left[1][2]
-                        #             color_right = point3D_left[1][3]
+                                    point3D_left = point_cloud.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
+                                    x_left = point3D_left[1][0]
+                                    y_left = point3D_left[1][1]
+                                    z_left = point3D_left[1][2]
+                                    color_right = point3D_left[1][3]
 
-                        #             point3D_right = point_cloud1.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
-                        #             x_right = point3D_right[1][0]
-                        #             y_right = point3D_right[1][1]
-                        #             z_right = point3D_right[1][2]
-                        #             color_right = point3D_right[1][3]
+                                    point3D_right = point_cloud1.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
+                                    x_right = point3D_right[1][0]
+                                    y_right = point3D_right[1][1]
+                                    z_right = point3D_right[1][2]
+                                    color_right = point3D_right[1][3]
 
-                        #             # viewer.updateData(point_cloud1)
-                        #             #depth
-                        #             z_value_left = depth_image_zed.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
-                        #             z_value_right = depth_image_zed.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
+                                    # viewer.updateData(point_cloud1)
+                                    #depth
+                                    z_value_left = depth_image_zed.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
+                                    z_value_right = depth_image_zed.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
 
-                        #             cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "center: " + "("+ str(round(real_grasp_center_x_left,3)) +","+ str(round(real_grasp_center_y_left,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "angle: " + str(round(real_rota_left,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.imwrite(center_blade + "left_blade_grasp_"+str(d)+'.jpg',color_image) 
-                        #             cv2.imshow("finish_left",color_image)
+                                    cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "center: " + "("+ str(round(real_grasp_center_x_left,3)) +","+ str(round(real_grasp_center_y_left,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "angle: " + str(round(real_rota_left,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.imwrite(center_blade + "left_blade_grasp_"+str(d)+'.jpg',color_image) 
+                                    cv2.imshow("finish_left",color_image)
 
-                        #             cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "center: " + "("+ str(round(real_grasp_center_x_right,3)) +","+ str(round(real_grasp_center_y_right,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "angle: " + str(round(real_rota_right,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.imwrite(center_blade + "right_blade_grasp_"+str(d)+'.jpg',color_image1) 
-                        #             cv2.imshow("finish_right",color_image1)
+                                    cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "center: " + "("+ str(round(real_grasp_center_x_right,3)) +","+ str(round(real_grasp_center_y_right,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "angle: " + str(round(real_rota_right,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.imwrite(center_blade + "right_blade_grasp_"+str(d)+'.jpg',color_image1) 
+                                    cv2.imshow("finish_right",color_image1)
                                 
-                        #         #quadrant 2 , cut right down
-                        #         elif(blade_center_x_left > round_grasp_center_x_left and blade_center_y_left > round_grasp_center_y_left) or (blade_center_x_right > round_grasp_center_x_right and blade_center_y_right > round_grasp_center_y_right): #右下角
-                        #             # cv2.putText(color_image, "distance: " + str(round(blade_center_x - grasp_center_x,3)) , (10, 125), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             # cv2.putText(color_image, "cut right down" , (10, 155), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             if((blade_center_x_left - round_grasp_center_x_left) < 115 and (blade_center_x_left - round_grasp_center_x_left) >= 25) or ((blade_center_x_right - round_grasp_center_x_right) < 115 and (blade_center_x_right - round_grasp_center_x_right) >= 25):
-                        #                 cv2.putText(color_image, "cut right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 20 
-                        #                 height = 40
-
-                        #                 # cv2.line(img_org,(int(right_down_x),int(right_down_y)),(int(blade_left_up_x),int(blade_left_up_y)),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 real_grasp_center_x_left = (right_down_x_left + blade_left_up_x_left)/2.0 
-                        #                 real_grasp_center_y_left = (right_down_y_left + blade_left_up_y_left)/2.0
-
-                        #                 real_grasp_center_x_right = (right_down_x_right + blade_left_up_x_right)/2.0 
-                        #                 real_grasp_center_y_right = (right_down_y_right + blade_left_up_y_right)/2.0
-
-                        #                 # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rec tangle(img_org, (int(real_grasp_center_x-width/2.0), int(real_grasp_center_y-height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
-                        #                 result_left = angle(left_up_x_left ,left_up_y_left,right_down_x_left ,right_down_y_left)
-                        #                 box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
-                        #                         (real_grasp_center_x_left - width/2,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
-                        #                 rota_left = rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
-
-                        #                 result_right = angle(left_up_x_right ,left_up_y_right,right_down_x_right ,right_down_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
-                        #                         (real_grasp_center_x_right - width/2,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
-
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
-
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
-                                        
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
-                                        
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+                                #quadrant 2 , cut right down
+                                elif(blade_center_x_left > round_grasp_center_x_left and blade_center_y_left > round_grasp_center_y_left) or (blade_center_x_right > round_grasp_center_x_right and blade_center_y_right > round_grasp_center_y_right): #右下角
+                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "cut right down 1010" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "cut right down 1010" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     
-                        #             elif((blade_center_x_left - round_grasp_center_x_left) >= 115) or ((blade_center_x_right - round_grasp_center_x_right) >= 115):
-                        #                 cv2.putText(color_image, "cut right down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut right down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 20
-                        #                 height = 40
+                                    if(roct_result_left <-15 and roct_result_left >=-70) or (roct_result_right <-15 and roct_result_right >=-70):
+                                        # if((blade_center_x_left - round_grasp_center_x_left) < 115 and (blade_center_x_left - round_grasp_center_x_left) >= 25) or ((blade_center_x_right - round_grasp_center_x_right) < 115 and (blade_center_x_right - round_grasp_center_x_right) >= 25):
+                                        cv2.putText(color_image, "cut right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                       
+                                        width = 20
+                                        height = 40
+
+                                        # cv2.line(img_org,(int(right_down_x),int(right_down_y)),(int(blade_left_up_x),int(blade_left_up_y)),(255, 0, 255),2,cv2.LINE_AA)
+                                        real_grasp_center_x_left = (right_down_x_left + blade_left_up_x_left)/2.0 
+                                        real_grasp_center_y_left = (right_down_y_left + blade_left_up_y_left)/2.0
+
+                                        real_grasp_center_x_right = (right_down_x_right + blade_left_up_x_right)/2.0 
+                                        real_grasp_center_y_right = (right_down_y_right + blade_left_up_y_right)/2.0
+
+                                        # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                        # cv2.rec tangle(img_org, (int(real_grasp_center_x-width/2.0), int(real_grasp_center_y-height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
+                                        result_left = angle(left_up_x_left ,left_up_y_left,right_down_x_left ,right_down_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
+                                                (real_grasp_center_x_left - width/2,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
+                                        rota_left = rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+
+                                        result_right = angle(left_up_x_right ,left_up_y_right,right_down_x_right ,right_down_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                                (real_grasp_center_x_right - width/2,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,roct_result_left,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+                                        
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+
+                                        real_rota_left = roct_result_left
+                                        real_rota_right = roct_result_right
+                                    
+                                    elif(roct_result_left >=-15) or (roct_result_right >=-15):
+                                        # elif((blade_center_x_left - round_grasp_center_x_left) >= 115) or ((blade_center_x_right - round_grasp_center_x_right) >= 115):
+                                        cv2.putText(color_image, "cut right down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut right down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20
+                                        height = 40
                                 
-                        #                 real_grasp_center_x_left = blade_center_x_left - blade_width_left/2.0
-                        #                 real_grasp_center_y_left = blade_center_y_left
+                                        real_grasp_center_x_left = blade_center_x_left - blade_width_left/2.0
+                                        real_grasp_center_y_left = blade_center_y_left
 
-                        #                 real_grasp_center_x_right = blade_center_x_right - blade_width_right/2.0
-                        #                 real_grasp_center_y_right = blade_center_y_right
+                                        real_grasp_center_x_right = blade_center_x_right - blade_width_right/2.0
+                                        real_grasp_center_y_right = blade_center_y_right
 
-                        #                 # cv2.circle(color_image,(int(real_grasp_center_x),int(blade_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rectangle(color_image, (int(real_grasp_center_x - width/2.0), int(real_grasp_center_y - height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
-                        #                 result_left = angle(real_grasp_center_x_left ,real_grasp_center_y_left,blade_center_x_left ,blade_center_y_left)
-                        #                 box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),
-                        #                         (real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
-                        #                 rota_left = rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+                                        # cv2.circle(color_image,(int(real_grasp_center_x),int(blade_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(color_image, (int(real_grasp_center_x - width/2.0), int(real_grasp_center_y - height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
+                                        result_left = angle(real_grasp_center_x_left ,real_grasp_center_y_left,blade_center_x_left ,blade_center_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,
+                                            real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
+                                        rota_left = rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
 
-                        #                 result_right = angle(real_grasp_center_x_right ,real_grasp_center_y_right ,blade_center_x_right ,blade_center_y_right)
-                        #                 box_right = [(real_grasp_center_x_right+ width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),
-                        #                         (real_grasp_center_x + width/2.0,real_grasp_center_y + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+                                        result_right = angle(real_grasp_center_x_right ,real_grasp_center_y_right ,blade_center_x_right ,blade_center_y_right)
+                                        box_right = [(real_grasp_center_x_right+ width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),
+                                                (real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
 
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
 
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
                                     
-                        #             elif((blade_center_x_left - round_grasp_center_x_left) < 25) or ((blade_center_x_right - round_grasp_center_x_right) < 25): 
-                        #                 cv2.putText(color_image, "cut right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 40
-                        #                 height = 20
+                                    elif(roct_result_left < -70) or (roct_result_right < -70):
+                                    # elif((blade_center_x_left - round_grasp_center_x_left) < 25) or ((blade_center_x_right - round_grasp_center_x_right) < 25): 
+                                        cv2.putText(color_image, "cut right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 40
+                                        height = 20
 
-                        #                 real_grasp_center_x_left = blade_center_x_left 
-                        #                 real_grasp_center_y_left = blade_center_y_left - blade_height_left/2.0
+                                        real_grasp_center_x_left = blade_center_x_left 
+                                        real_grasp_center_y_left = blade_center_y_left - blade_height_left/2.0
 
-                        #                 real_grasp_center_x_right = blade_center_x_right
-                        #                 real_grasp_center_y_right = blade_center_y_right - blade_height_right/2.0
+                                        real_grasp_center_x_right = blade_center_x_right
+                                        real_grasp_center_y_right = blade_center_y_right - blade_height_right/2.0
 
-                        #                 # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rectangle(img_org,(int(grasp_center_x-width), int(grasp_center_y - height/2.0)), (int(grasp_center_x), int(grasp_center_y + height/2.0)),(0, 127, 255), 2)
-                        #                 result_left = angle(blade_left_up_x_left, blade_left_up_y_left, real_grasp_center_x_left, real_grasp_center_y_left)
-                        #                 box_left = [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
-                        #                     (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x + width/2.0 ,real_grasp_center_y + height/2.0)]
-                        #                 rota_left = rota_rect(box,result,int(real_grasp_center_x),int(real_grasp_center_y))
+                                        # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(img_org,(int(grasp_center_x-width), int(grasp_center_y - height/2.0)), (int(grasp_center_x), int(grasp_center_y + height/2.0)),(0, 127, 255), 2)
+                                        result_left = angle(blade_left_up_x_left, blade_left_up_y_left, real_grasp_center_x_left, real_grasp_center_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
+                                            (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left + height/2.0)]
+                                        rota_left = rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
 
-                        #                 result_right = angle(blade_left_up_x_right,blade_left_up_y_right,real_grasp_center_x_right,real_grasp_center_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
-                        #                     (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+                                        result_right = angle(blade_left_up_x_right,blade_left_up_y_right,real_grasp_center_x_right,real_grasp_center_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                            (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
                                         
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
 
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+
+                                        real_rota_left =roct_result_left
+                                        real_rota_right = roct_result_right
                                     
-                        #             point3D_left = point_cloud.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
-                        #             x_left = point3D_left[1][0]
-                        #             y_left = point3D_left[1][1]
-                        #             z_left = point3D_left[1][2]
-                        #             color_right = point3D_left[1][3]
+                                    point3D_left = point_cloud.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
+                                    x_left = point3D_left[1][0]
+                                    y_left = point3D_left[1][1]
+                                    z_left = point3D_left[1][2]
+                                    color_right = point3D_left[1][3]
 
-                        #             point3D_right = point_cloud1.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
-                        #             x_right = point3D_right[1][0]
-                        #             y_right = point3D_right[1][1]
-                        #             z_right = point3D_right[1][2]
-                        #             color_right = point3D_right[1][3]
+                                    point3D_right = point_cloud1.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
+                                    x_right = point3D_right[1][0]
+                                    y_right = point3D_right[1][1]
+                                    z_right = point3D_right[1][2]
+                                    color_right = point3D_right[1][3]
 
-                        #             # viewer.updateData(point_cloud1)
-                        #             #depth
-                        #             z_value_left = depth_image_zed.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
-                        #             z_value_right = depth_image_zed.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
+                                    # viewer.updateData(point_cloud1)
+                                    #depth
+                                    z_value_left = depth_image_zed.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
+                                    z_value_right = depth_image_zed.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
 
-                        #             cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "center: " + "("+ str(round(real_grasp_center_x_left,3)) +","+ str(round(real_grasp_center_y_left,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "angle: " + str(round(result_left,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.imwrite(center_blade + "left_blade_grasp_"+str(d)+'.jpg',color_image) 
-                        #             cv2.imshow("finish_left",color_image)
+                                    cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "center: " + "("+ str(round(real_grasp_center_x_left,3)) +","+ str(round(real_grasp_center_y_left,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "angle: " + str(round(roct_result_left,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.imwrite(center_blade + "left_blade_grasp_"+str(d)+'.jpg',color_image) 
+                                    cv2.imshow("finish_left",color_image)
 
-                        #             cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "center: " + "("+ str(round(real_grasp_center_x_right,3)) +","+ str(round(real_grasp_center_y_right,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "angle: " + str(round(result_right,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.imwrite(center_blade + "right_blade_grasp_"+str(d)+'.jpg',color_image1) 
-                        #             cv2.imshow("finish_right",color_image1)
-                                    
-                        #         #quadrant 3 , cut left up
-                        #         elif(blade_center_x_left < round_grasp_center_x_left and blade_center_y_left < round_grasp_center_y_left) or (blade_center_x_right < round_grasp_center_x_right and blade_center_y_right < round_grasp_center_y_right): 
-                        #             # cv2.putText(color_image, "distance: " + str(round(blade_center_x - grasp_center_x,3)) , (10, 125), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             # cv2.putText(color_image, "cut left up " , (10, 155), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             if((round_grasp_center_x_left - blade_center_x_left) < 115 and(round_grasp_center_x_left - blade_center_x_left)>=25) or ((round_grasp_center_x_right - blade_center_x_right) < 115 and(round_grasp_center_x_right - blade_center_x_right)>=25):
-                        #                 cv2.putText(color_image, "cut left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 20
-                        #                 height = 50
+                                    cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "center: " + "("+ str(round(real_grasp_center_x_right,3)) +","+ str(round(real_grasp_center_y_right,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "angle: " + str(round(roct_result_right,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.imwrite(center_blade + "right_blade_grasp_"+str(d)+'.jpg',color_image1) 
+                                    cv2.imshow("finish_right",color_image1)
 
-                        #                 # cv2.line(img_org,(int(right_down_x),int(right_down_y)),(int(blade_left_up_x),int(blade_left_up_y)),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 real_grasp_center_x_left = (left_up_x_left + blade_right_down_x_left)/2.0 
-                        #                 real_grasp_center_y_left = (left_up_y_left + blade_right_down_y_left)/2.0
+                                #quadrant 3 , cut left up
+                                elif(blade_center_x_left < round_grasp_center_x_left and blade_center_y_left < round_grasp_center_y_left) or (blade_center_x_right < round_grasp_center_x_right and blade_center_y_right < round_grasp_center_y_right): 
+                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "cut left up 1010" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "cut left up 1010" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    if(roct_result_left <-15 and roct_result_left >=-70) or (roct_result_right <-15 and roct_result_right >=-70):
+                                    # if((round_grasp_center_x_left - blade_center_x_left) < 115 and(round_grasp_center_x_left - blade_center_x_left)>=25) or ((round_grasp_center_x_right - blade_center_x_right) < 115 and(round_grasp_center_x_right - blade_center_x_right)>=25):
+                                        cv2.putText(color_image, "cut left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20
+                                        height = 40
 
-                        #                 real_grasp_center_x_right = (left_up_x_right + blade_right_down_x_right)/2.0 
-                        #                 real_grasp_center_y_right = (left_up_y_right + blade_right_down_y_right)/2.0
+                                        # cv2.line(img_org,(int(right_down_x),int(right_down_y)),(int(blade_left_up_x),int(blade_left_up_y)),(255, 0, 255),2,cv2.LINE_AA)
+                                        real_grasp_center_x_left = (left_up_x_left + blade_right_down_x_left)/2.0 
+                                        real_grasp_center_y_left = (left_up_y_left + blade_right_down_y_left)/2.0
 
-                        #                 # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rectangle(img_org, (int(real_grasp_center_x-width/2.0), int(real_grasp_center_y-height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
-                        #                 result_left = angle(blade_left_up_x_left ,blade_left_up_y_left,blade_right_down_x_left ,blade_right_down_y_left)
-                        #                 box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
-                        #                         (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
-                        #                 rota_left = rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+                                        real_grasp_center_x_right = (left_up_x_right + blade_right_down_x_right)/2.0 
+                                        real_grasp_center_y_right = (left_up_y_right + blade_right_down_y_right)/2.0
 
-                        #                 result_right = angle(blade_left_up_x_right ,blade_left_up_y_right ,blade_right_down_x_right  ,blade_right_down_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
-                        #                         (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+                                        # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(img_org, (int(real_grasp_center_x-width/2.0), int(real_grasp_center_y-height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
+                                        result_left = angle(blade_left_up_x_left ,blade_left_up_y_left,blade_right_down_x_left ,blade_right_down_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
+                                                (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
+                                        rota_left = rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
 
-                        #                 cv2.line(color_image,(int(box_left[0][0]),int(box_left[0][1])),(int(box_left[1][0]),int(box_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(box_left[1][0]),int(box_left[1][1])),(int(box_left[2][0]),int(box_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(box_left[2][0]),int(box_left[2][1])),(int(box_left[3][0]),int(box_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(box_left[3][0]),int(box_left[3][1])),(int(box_left[0][0]),int(box_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        result_right = angle(blade_left_up_x_right ,blade_left_up_y_right ,blade_right_down_x_right  ,blade_right_down_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                                (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
 
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(box_left[0][0]),int(box_left[0][1])),(int(box_left[1][0]),int(box_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(box_left[1][0]),int(box_left[1][1])),(int(box_left[2][0]),int(box_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(box_left[2][0]),int(box_left[2][1])),(int(box_left[3][0]),int(box_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(box_left[3][0]),int(box_left[3][1])),(int(box_left[0][0]),int(box_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+
+                                        real_rota_left = roct_result_left
+                                        real_rota_right = roct_result_right
                                         
-                        #             elif((round_grasp_center_x_left - blade_center_x_left) >= 115) or ((round_grasp_center_x_right - blade_center_x_right) >= 115):
-                        #                 cv2.putText(color_image, "cut left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 20
-                        #                 height = 40
+                                    elif(roct_result_left >=-15 ) or (roct_result_right >=-15 ):
+                                    # elif((round_grasp_center_x_left - blade_center_x_left) >= 115) or ((round_grasp_center_x_right - blade_center_x_right) >= 115):
+                                        cv2.putText(color_image, "cut left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20
+                                        height = 40
 
-                        #                 real_grasp_center_x_left = blade_center_x_left  + blade_width_left /2.0
-                        #                 real_grasp_center_y_left  = blade_center_y_left 
+                                        real_grasp_center_x_left = blade_center_x_left  + blade_width_left /2.0
+                                        real_grasp_center_y_left  = blade_center_y_left 
 
-                        #                 real_grasp_center_x_right = blade_center_x_right + blade_width_right/2.0
-                        #                 real_grasp_center_y_right = blade_center_y_right
+                                        real_grasp_center_x_right = blade_center_x_right + blade_width_right/2.0
+                                        real_grasp_center_y_right = blade_center_y_right
 
-                        #                 # cv2.circle(color_image,(int(real_grasp_center_x),int(blade_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rectangle(img_org, (int(real_grasp_center_x - width/2.0), int(real_grasp_center_y - height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
-                        #                 result_left = angle(real_grasp_center_x_left ,real_grasp_center_y_left,blade_center_x_left ,blade_center_y_left)
-                        #                 box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
-                        #                     (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
-                        #                 rota_left= rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+                                        # cv2.circle(color_image,(int(real_grasp_center_x),int(blade_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(img_org, (int(real_grasp_center_x - width/2.0), int(real_grasp_center_y - height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
+                                        result_left = angle(real_grasp_center_x_left ,real_grasp_center_y_left,blade_center_x_left ,blade_center_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
+                                            (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
+                                        rota_left= rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
 
-                        #                 result_right = angle(real_grasp_center_x_right ,real_grasp_center_y,blade_center_x_right ,blade_center_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
-                        #                     (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+                                        result_right = angle(real_grasp_center_x_right ,real_grasp_center_y,blade_center_x_right ,blade_center_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                            (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
 
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
 
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
 
-                        #             elif((round_grasp_center_x_left - blade_center_x_left) < 25) or ((round_grasp_center_x_right - blade_center_x_right) < 25):
-                        #                 cv2.putText(color_image, "cut left up 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut left up 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 40
-                        #                 height = 20
+                                        real_rota_left = roct_result_left
+                                        real_rota_right = roct_result_right
 
-                        #                 real_grasp_center_x_left = blade_center_x_left 
-                        #                 real_grasp_center_y_left = blade_center_y_left + blade_height_left/2.0
+                                    elif(roct_result_left < -70) or (roct_result_right < -70):
+                                    # elif((round_grasp_center_x_left - blade_center_x_left) < 25) or ((round_grasp_center_x_right - blade_center_x_right) < 25):
+                                        cv2.putText(color_image, "cut left up 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut left up 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20
+                                        height = 40
 
-                        #                 real_grasp_center_x_right = blade_center_x_right 
-                        #                 real_grasp_center_y_right = blade_center_y_right + blade_height_right/2.0
+                                        real_grasp_center_x_left = blade_center_x_left 
+                                        real_grasp_center_y_left = blade_center_y_left + blade_height_left/2.0
 
-                        #                 # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rectangle(img_org,(int(grasp_center_x-width), int(grasp_center_y - height/2.0)), (int(grasp_center_x), int(grasp_center_y + height/2.0)),(0, 127, 255), 2)
-                        #                 result_left = angle(real_grasp_center_x_left,real_grasp_center_y_left,blade_right_down_x_left,blade_right_down_y_left)
-                        #                 box_left= [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
-                        #                     (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left + height/2.0)]
-                        #                 rota_left = rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+                                        real_grasp_center_x_right = blade_center_x_right 
+                                        real_grasp_center_y_right = blade_center_y_right + blade_height_right/2.0
 
-                        #                 result_right = angle(real_grasp_center_x_right,real_grasp_center_y_right,blade_right_down_x_right,blade_right_down_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),
-                        #                         (real_grasp_center_x + width/2.0 ,real_grasp_center_y + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+                                        # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(img_org,(int(grasp_center_x-width), int(grasp_center_y - height/2.0)), (int(grasp_center_x), int(grasp_center_y + height/2.0)),(0, 127, 255), 2)
+                                        result_left = angle(real_grasp_center_x_left,real_grasp_center_y_left,blade_right_down_x_left,blade_right_down_y_left)
+                                        box_left= [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
+                                            (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left + height/2.0)]
+                                        rota_left = rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+
+                                        result_right = angle(real_grasp_center_x_right,real_grasp_center_y_right,blade_right_down_x_right,blade_right_down_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,
+                                            real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x + width/2.0 ,real_grasp_center_y + height/2.0)]
+                                        rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
                                         
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
 
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+
+                                        real_rota_left = roct_result_left
+                                        real_rota_right = roct_result_right
                                     
-                        #             point3D_left = point_cloud.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
-                        #             x_left = point3D_left[1][0]
-                        #             y_left = point3D_left[1][1]
-                        #             z_left = point3D_left[1][2]
-                        #             color_right = point3D_left[1][3]
+                                    point3D_left = point_cloud.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
+                                    x_left = point3D_left[1][0]
+                                    y_left = point3D_left[1][1]
+                                    z_left = point3D_left[1][2]
+                                    color_right = point3D_left[1][3]
 
-                        #             point3D_right = point_cloud1.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
-                        #             x_right = point3D_right[1][0]
-                        #             y_right = point3D_right[1][1]
-                        #             z_right = point3D_right[1][2]
-                        #             color_right = point3D_right[1][3]
+                                    point3D_right = point_cloud1.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
+                                    x_right = point3D_right[1][0]
+                                    y_right = point3D_right[1][1]
+                                    z_right = point3D_right[1][2]
+                                    color_right = point3D_right[1][3]
 
-                        #             # viewer.updateData(point_cloud1)
-                        #             #depth
-                        #             z_value_left = depth_image_zed.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
-                        #             z_value_right = depth_image_zed.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
+                                    # viewer.updateData(point_cloud1)
+                                    #depth
+                                    z_value_left = depth_image_zed.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
+                                    z_value_right = depth_image_zed.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
 
-                        #             cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "center: " + "("+ str(round(real_grasp_center_x_left,3)) +","+ str(round(real_grasp_center_y_left,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "angle: " + str(round(result_left,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.imwrite(center_blade + "left_blade_grasp_"+str(d)+'.jpg',color_image) 
-                        #             cv2.imshow("finish_left",color_image)
+                                    cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "center: " + "("+ str(round(real_grasp_center_x_left,3)) +","+ str(round(real_grasp_center_y_left,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "angle: " + str(round(roct_result_left,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.imwrite(center_blade + "left_blade_grasp_"+str(d)+'.jpg',color_image) 
+                                    cv2.imshow("finish_left",color_image)
 
-                        #             cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "center: " + "("+ str(round(real_grasp_center_x_right,3)) +","+ str(round(real_grasp_center_y_right,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "angle: " + str(round(result_right,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.imwrite(center_blade + "right_blade_grasp_"+str(d)+'.jpg',color_image1) 
-                        #             cv2.imshow("finish_right",color_image1)
-                                    
-                        #         #quadrant 4 , cut left down
-                        #         elif(round_grasp_center_x_left > blade_center_x_left and blade_center_y_left > round_grasp_center_y_left) or (round_grasp_center_x_right > blade_center_x_right and blade_center_y_right > round_grasp_center_y_right): 
-                        #             # cv2.putText(color_image, "distance: " + str(round(blade_center_x - grasp_center_x,3)) , (10, 125), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             # cv2.putText(color_image, "cut left down" , (10, 155), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             if((round_grasp_center_x_left - blade_center_x_left) < 115 and(round_grasp_center_x_left - blade_center_x_left)>=25) or ((round_grasp_center_x_right - blade_center_x_right) < 115 and(round_grasp_center_x_right - blade_center_x_right)>=25):
-                        #                 cv2.putText(color_image, "cut left down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut left down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 20
-                        #                 height = 50
+                                    cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "center: " + "("+ str(round(real_grasp_center_x_right,3)) +","+ str(round(real_grasp_center_y_right,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "angle: " + str(round(roct_result_right,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.imwrite(center_blade + "right_blade_grasp_"+str(d)+'.jpg',color_image1) 
+                                    cv2.imshow("finish_right",color_image1)
+                                
+                                #quadrant 4 , cut left down
+                                elif(round_grasp_center_x_left > blade_center_x_left and blade_center_y_left > round_grasp_center_y_left) or (round_grasp_center_x_right > blade_center_x_right and blade_center_y_right > round_grasp_center_y_right): 
+                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "cut left down 1010" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "cut left down 1010" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    if(roct_result_left >=15 and roct_result_left <=70) or (roct_result_right >=15 and roct_result_right <=70):
+                                    # if((round_grasp_center_x_left - blade_center_x_left) < 115 and(round_grasp_center_x_left - blade_center_x_left)>=25) or ((round_grasp_center_x_right - blade_center_x_right) < 115 and(round_grasp_center_x_right - blade_center_x_right)>=25):
+                                        cv2.putText(color_image, "cut left down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut left down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20
+                                        height = 40
 
-                        #                 real_grasp_center_x_left = (blade_right_down_x_left + left_up_x_left)/2.0 
-                        #                 real_grasp_center_y_left = (blade_left_up_y_left + right_down_y_left)/2.0
+                                        real_grasp_center_x_left = (blade_right_down_x_left + left_up_x_left)/2.0 
+                                        real_grasp_center_y_left = (blade_left_up_y_left + right_down_y_left)/2.0
 
-                        #                 real_grasp_center_x_right = (blade_right_down_x_right + left_up_x_right)/2.0 
-                        #                 real_grasp_center_y_right = (blade_left_up_y_right + right_down_y_right)/2.0
+                                        real_grasp_center_x_right = (blade_right_down_x_right + left_up_x_right)/2.0 
+                                        real_grasp_center_y_right = (blade_left_up_y_right + right_down_y_right)/2.0
 
-                        #                 # cv2.circle(color_image,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rectangle(img_org,(int(grasp_center_x-width/2.0), int(grasp_center_y)), (int(grasp_center_x + width/2.0), int(grasp_center_y + height)),(0, 127, 255), 2)
-                        #                 result_left = angle(blade_left_up_x_left,blade_right_down_y_left,blade_right_down_x_left,blade_left_up_y_left)
-                        #                 box_left = [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
-                        #                     (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left + height/2.0)]
-                        #                 rota_left = rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+                                        # cv2.circle(color_image,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(img_org,(int(grasp_center_x-width/2.0), int(grasp_center_y)), (int(grasp_center_x + width/2.0), int(grasp_center_y + height)),(0, 127, 255), 2)
+                                        result_left = angle(blade_left_up_x_left,blade_right_down_y_left,blade_right_down_x_left,blade_left_up_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
+                                            (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left + height/2.0)]
+                                        rota_left = rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
 
-                        #                 result_right = angle(blade_left_up_x,blade_right_down_y,blade_right_down_x,blade_left_up_y)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
-                        #                     (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+                                        result_right = angle(blade_left_up_x_right,blade_right_down_y_right,blade_right_down_x_right,blade_left_up_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                            (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
 
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
 
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+
+                                        real_rota_left = roct_result_left
+                                        real_rota_right = roct_result_right
         
-                        #             elif((round_grasp_center_x_left - blade_center_x_left) >= 115) or ((round_grasp_center_x_right - blade_center_x_right) >= 115):
-                        #                 cv2.putText(color_image, "cut left down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut left down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 20
-                        #                 height = 40
+                                    elif(roct_result_left < 15) or (roct_result_right <15):
+                                    # elif((round_grasp_center_x_left - blade_center_x_left) >= 115) or ((round_grasp_center_x_right - blade_center_x_right) >= 115):
+                                        cv2.putText(color_image, "cut left down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut left down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20
+                                        height = 40
                                         
-                        #                 real_grasp_center_x_left = blade_center_x_left + blade_width_left/2.0
-                        #                 real_grasp_center_y_left = blade_center_y_left
+                                        real_grasp_center_x_left = blade_center_x_left + blade_width_left/2.0
+                                        real_grasp_center_y_left = blade_center_y_left
 
-                        #                 real_grasp_center_x_right = blade_center_x_right + blade_width_right/2.0
-                        #                 real_grasp_center_y_right = blade_center_y_right
+                                        real_grasp_center_x_right = blade_center_x_right + blade_width_right/2.0
+                                        real_grasp_center_y_right = blade_center_y_right
 
-                        #                 # cv2.circle(color_image,(int(real_grasp_center_x),int(blade_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rectangle(img_org, (int(real_grasp_center_x - width/2.0), int(real_grasp_center_y - height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
-                        #                 result_left = angle(real_grasp_center_x_left  ,real_grasp_center_y_left ,blade_center_x_left  ,blade_center_y_left )
-                        #                 box_left  = [(real_grasp_center_x_left  + width/2.0,real_grasp_center_y_left  - height/2.0),(real_grasp_center_x_left  - width/2.0,real_grasp_center_y_left  - height/2.0),
-                        #                     (real_grasp_center_x_left  - width/2.0,real_grasp_center_y_left  + height/2.0),(real_grasp_center_x_left  + width/2.0,real_grasp_center_y_left  + height/2.0)]
-                        #                 rota_left  = rota_rect(box_left ,result_left ,int(real_grasp_center_x),int(real_grasp_center_y))
+                                        # cv2.circle(color_image,(int(real_grasp_center_x),int(blade_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(img_org, (int(real_grasp_center_x - width/2.0), int(real_grasp_center_y - height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
+                                        result_left = angle(real_grasp_center_x_left  ,real_grasp_center_y_left ,blade_center_x_left  ,blade_center_y_left )
+                                        box_left  = [(real_grasp_center_x_left  + width/2.0,real_grasp_center_y_left  - height/2.0),(real_grasp_center_x_left  - width/2.0,real_grasp_center_y_left  - height/2.0),
+                                            (real_grasp_center_x_left  - width/2.0,real_grasp_center_y_left  + height/2.0),(real_grasp_center_x_left  + width/2.0,real_grasp_center_y_left  + height/2.0)]
+                                        rota_left  = rota_rect(box_left ,roct_result_left ,int(real_grasp_center_x),int(real_grasp_center_y))
 
-                        #                 result_right = angle(real_grasp_center_x_right ,real_grasp_center_y_right,blade_center_x_right ,blade_center_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
-                        #                     (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+                                        result_right = angle(real_grasp_center_x_right ,real_grasp_center_y_right,blade_center_x_right ,blade_center_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                            (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
 
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
 
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
 
-                        #             elif((round_grasp_center_x_left - blade_center_x_left) < 25) or ((round_grasp_center_x_right - blade_center_x_right) < 25):
-                        #                 cv2.putText(color_image, "cut left down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut left down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 20
-                        #                 height = 40
+                                        real_rota_left = roct_result_left
+                                        real_rota_right = roct_result_right
 
-                        #                 real_grasp_center_x_left = blade_center_x_left 
-                        #                 real_grasp_center_y_left = blade_center_y_left - blade_height_left/2.0
+                                    elif(roct_result_left < 15) or (roct_result_right <15):
+                                    # elif((round_grasp_center_x_left - blade_center_x_left) < 25) or ((round_grasp_center_x_right - blade_center_x_right) < 25):
+                                        cv2.putText(color_image, "cut left down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        cv2.putText(color_image1, "cut left down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        width = 20
+                                        height = 40
 
-                        #                 real_grasp_center_x_right = blade_center_x_right
-                        #                 real_grasp_center_y_right = blade_center_y_right - blade_height_right/2.0
+                                        real_grasp_center_x_left = blade_center_x_left 
+                                        real_grasp_center_y_left = blade_center_y_left - blade_height_left/2.0
 
-                        #                 # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rectangle(img_org,(int(grasp_center_x-width), int(grasp_center_y - height/2.0)), (int(grasp_center_x), int(grasp_center_y + height/2.0)),(0, 127, 255), 2)
-                        #                 result_left = angle(real_grasp_center_x_left,real_grasp_center_y_left,blade_left_up_x_left,blade_right_down_y_left)
-                        #                 box_left = [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),
-                        #                         (real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left + height/2.0)]
-                        #                 rota_left = rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+                                        real_grasp_center_x_right = blade_center_x_right
+                                        real_grasp_center_y_right = blade_center_y_right - blade_height_right/2.0
 
-                        #                 result_right = angle(real_grasp_center_x_right,real_grasp_center_y_right,blade_left_up_x_right,blade_right_down_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
-                        #                     (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
+                                        # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
+                                        # cv2.rectangle(img_org,(int(grasp_center_x-width), int(grasp_center_y - height/2.0)), (int(grasp_center_x), int(grasp_center_y + height/2.0)),(0, 127, 255), 2)
+                                        result_left = angle(real_grasp_center_x_left,real_grasp_center_y_left,blade_left_up_x_left,blade_right_down_y_left)
+                                        box_left = [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),
+                                                (real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left + height/2.0)]
+                                        rota_left = rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
+
+                                        result_right = angle(real_grasp_center_x_right,real_grasp_center_y_right,blade_left_up_x_right,blade_right_down_y_right)
+                                        box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
+                                            (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right + height/2.0)]
+                                        rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
                                         
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
-
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
-
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
-
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
-
-                        #             point3D_left = point_cloud.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
-                        #             x_left = point3D_left[1][0]
-                        #             y_left = point3D_left[1][1]
-                        #             z_left = point3D_left[1][2]
-                        #             color_right = point3D_left[1][3]
-
-                        #             point3D_right = point_cloud1.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
-                        #             x_right = point3D_right[1][0]
-                        #             y_right = point3D_right[1][1]
-                        #             z_right = point3D_right[1][2]
-                        #             color_right = point3D_right[1][3]
-
-                        #             # viewer.updateData(point_cloud1)
-                        #             #depth
-                        #             z_value_left = depth_image_zed.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
-                        #             z_value_right = depth_image_zed.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
-
-                        #             cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "center: " + "("+ str(round(real_grasp_center_x_left,3)) +","+ str(round(real_grasp_center_y_left,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "angle: " + str(round(result_left,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.imwrite(center_blade + "left_blade_grasp_"+str(d)+'.jpg',color_image) 
-                        #             cv2.imshow("finish_left",color_image)
-
-                        #             cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "center: " + "("+ str(round(real_grasp_center_x_right,3)) +","+ str(round(real_grasp_center_y_right,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "angle: " + str(round(result_right,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.imwrite(center_blade + "right_blade_grasp_"+str(d)+'.jpg',color_image1) 
-                        #             cv2.imshow("finish_right",color_image1)
-                                
-                        #     elif detections_right[0][0] == "round_grasp" and detections_right[1][0] == "blade":
-                        #         round_grasp_center_x_left = round(detections_left[0][2][0])
-                        #         round_grasp_center_y_left = round(detections_left[0][2][1])
-                        #         round_grasp_width_left = round(detections_left[0][2][2])
-                        #         round_grasp_height_left = round(detections_left[0][2][3])
-                        #         blade_center_x_left = round(detections_left[1][2][0])
-                        #         blade_center_y_left = round(detections_left[1][2][1])
-                        #         blade_width_left = round(detections_left[1][2][2])
-                        #         blade_height_left = round(detections_left[1][2][3])
-
-                        #         round_grasp_center_x_right = round(detections_right[0][2][0])
-                        #         round_grasp_center_y_right = round(detections_right[0][2][1])
-                        #         round_grasp_width_right = round(detections_right[0][2][2])
-                        #         round_grasp_height_right = round(detections_right[0][2][3])
-                        #         blade_center_x_right = round(detections_right[1][2][0])
-                        #         blade_center_y_right = round(detections_right[1][2][1])
-                        #         blade_width_right = round(detections_right[1][2][2])
-                        #         blade_height_right = round(detections_right[1][2][3])
-
-                        #         left_up_x_left = round(round_grasp_center_x_left - (round_grasp_width_left/2.0))
-                        #         left_up_y_left = round(round_grasp_center_y_left - (round_grasp_height_left/2.0))
-                        #         right_down_x_left = round(round_grasp_center_x_left + (round_grasp_width_left/2.0))
-                        #         right_down_y_left = round(round_grasp_center_y_left + (round_grasp_height_left/2.0))
-                        #         blade_left_up_x_left = round(blade_center_x_left - (blade_width_left/2.0))
-                        #         blade_left_up_y_left = round(blade_center_y_left - (blade_height_left/2.0))
-                        #         blade_right_down_x_left = round(blade_center_x_left + blade_width_left/2.0)
-                        #         blade_right_down_y_left = round(blade_center_y_left + (blade_height_left/2.0))
-
-                        #         left_up_x_right = round(round_grasp_center_x_right - (round_grasp_width_right/2.0))
-                        #         left_up_y_right = round(round_grasp_center_y_right - (round_grasp_height_right/2.0))
-                        #         right_down_x_right = round(round_grasp_center_x_right + (round_grasp_width_right/2.0))
-                        #         right_down_y_right = round(round_grasp_center_y_right + (round_grasp_height_right/2.0))
-                        #         blade_left_up_x_right = round(blade_center_x_right - (blade_width_right/2.0))
-                        #         blade_left_up_y_right = round(blade_center_y_right - (blade_height_right/2.0))
-                        #         blade_right_down_x_right = round(blade_center_x_right + blade_width_right/2.0)
-                        #         blade_right_down_y_right = round(blade_center_y_right + (blade_height_right/2.0))
-
-                        #         roct_result_left = angle(round_grasp_center_x_left, round_grasp_center_y_left,blade_center_x_left, blade_center_y_left)
-                        #         print(roct_result_left)
-                        #         print("444444444444444444444444")
-                        #         roct_result_right = angle(round_grasp_center_x_right, round_grasp_center_y_right,blade_center_x_right, blade_center_y_right)
-                        #         print(roct_result_right)
-                        #         print("44444444444444444444444")
-
-                        #         #quadrant 1 , cut right up
-                        #         if(blade_center_x_left > round_grasp_center_x_left and blade_center_y_left < round_grasp_center_y_left) and (blade_center_x_right > round_grasp_center_x_right and blade_center_y_right < round_grasp_center_y_right): 
-                        #              cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 125), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 125), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "cut right up 1010" , (10, 155), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "cut right up 1010 " , (10, 155), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             if(roct_result_left >=15 and roct_result_left <=75) or (roct_result_right >=15 and roct_result_right <=75):
-                        #                 # if((blade_center_x_left - round_grasp_center_x_left) < 115 and (blade_center_x_left - round_grasp_center_x_left) >= 25) or ((blade_center_x_right - round_grasp_center_x_right) < 115 and (blade_center_x_right - round_grasp_center_x_right) >= 25): 
-                        #                 cv2.putText(color_image, "cut right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 20
-                        #                 height = 40
-
-                        #                 # cv2.line(img_org,(int(right_down_x),int(left_up_y)),(int(blade_left_up_x),int(blade_right_down_y)),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 real_grasp_center_x_left = (right_down_x_left + blade_left_up_x_left)/2.0 
-                        #                 real_grasp_center_y_left = (left_up_y_left + blade_right_down_y_left)/2.0
-
-                        #                 real_grasp_center_x_right = (right_down_x_right + blade_left_up_x_right)/2.0 
-                        #                 real_grasp_center_y_right = (left_up_y_right + blade_right_down_y_right)/2.0
-                                            
-                        #                 # cv2.circle(color_image,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rectangle(img_org, (int(real_grasp_center_x-width/2.0), int(real_grasp_center_y-height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
-                        #                 result_left = angle(right_down_x_left ,left_up_y_left,left_up_x_left ,right_down_y_left)
-                        #                 box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
-                        #                             (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
-                        #                 rota_left = rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
-
-                        #                 result_right = angle(right_down_x_right ,left_up_y_right,left_up_x_right ,right_down_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
-                        #                     (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
-
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
-
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
-
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
-
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
-                                        
-                        #                 real_rota_left = roct_result_left
-                        #                 real_rota_right = roct_result_right
-                                    
-                        #             elif(roct_result_left < 15 ) or (roct_result_right <15):
-                        #                 # elif((blade_center_x_left - round_grasp_center_x_left) >= 115) or ((blade_center_x_right - round_grasp_center_x_right) >= 115):
-                        #                 cv2.putText(color_image, "cut right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 20
-                        #                 height = 40
-
-                        #                 # cv2.circle(color_image,(int(blade_center_x - blade_width/2.0),int(blade_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rectangle(color_image, (int(blade_center_x - blade_width/2.0 - width/2.0), int(blade_center_y - height/2.0)), (int(blade_center_x - blade_width/2.0 + width/2.0), int(blade_center_y + height/2.0)),(255, 0, 255), 2)
-                        #                 real_grasp_center_x_left = blade_center_x_left - blade_width_left/2.0
-                        #                 real_grasp_center_y_left = blade_center_y_left
-                                        
-                        #                 real_grasp_center_x_right = blade_center_x_right - blade_width_right/2.0
-                        #                 real_grasp_center_y_right = blade_center_y_right
-
-                        #                 result_left = angle(blade_left_up_x_left ,blade_left_up_y_left,blade_center_x_left ,blade_center_y_left)
-                        #                 box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
-                        #                     (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
-                        #                 rota_left = rota_rect(box_left,roct_result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
-
-                        #                 result_right = angle(blade_left_up_x_right ,blade_left_up_y_right,blade_center_x_right ,blade_center_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
-                        #                     (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,roct_result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
-                                        
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
-
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
-
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(2, 202, 119),2)
-
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(2, 202, 119),2)
-
-                                        
-                        #                 real_rota_left = 90 - roct_result_left
-                        #                 real_rota_right = 90 - roct_result_right
-
-                        #                 # if (real_rota_left <0):
-                        #                 #     real_rota_left = -90 - real_rota_left
-                        #                 # if (real_rota_right <0):
-                        #                 #     real_rota_right = -90 - real_rota_right
-                                    
-                        #             elif (roct_result_left > 75 and roct_result_left<90 ) or (roct_result_right >75 and roct_result_right<90):
-                        #                 # elif((blade_center_x_left - round_grasp_center_x_left) < 25) or ((blade_center_x_right - round_grasp_center_x_right) < 25): 
-                        #                 cv2.putText(color_image1, "cut right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 40
-                        #                 height = 20
-
-                        #                 real_grasp_center_x_left = blade_center_x_left
-                        #                 real_grasp_center_y_left = blade_center_y_left + blade_height_left/2.0
-
-                        #                 real_grasp_center_x_right = blade_center_x_right
-                        #                 real_grasp_center_y_right = blade_center_y_right + blade_height_right/2.0
-
-                        #                 result_left = angle(real_grasp_center_x_left,real_grasp_center_y_left,blade_right_down_x_left,blade_right_down_y_left)
-                        #                 box_left = [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
-                        #                     (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left + height/2.0)]
-                        #                 rota_left = rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
-
-                        #                 result_right = angle(real_grasp_center_x_right,real_grasp_center_y_right,blade_right_down_x_right,blade_right_down_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
-                        #                     (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,result_left,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
-                                        
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
-
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
-
-                        #                 real_grasp_center_x = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
-
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(2, 202, 119),2)
-
-                        #                 # real_rota_left = 90 - roct_result_left
-                        #                 # real_rota_right = 90 - roct_result_right
-
-                        #                 # if (real_rota_left <0):
-                        #                 #     real_rota_left = -90 - real_rota_left
-                        #                 # if (real_rota_right <0):
-                        #                 #     real_rota_right = -90 - real_rota_right
-
-
-                        #             point3D_left = point_cloud.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
-                        #             x_left = point3D_left[1][0]
-                        #             y_left = point3D_left[1][1]
-                        #             z_left = point3D_left[1][2]
-                        #             color_right = point3D_left[1][3]
-
-                        #             point3D_right = point_cloud1.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
-                        #             x_right = point3D_right[1][0]
-                        #             y_right = point3D_right[1][1]
-                        #             z_right = point3D_right[1][2]
-                        #             color_right = point3D_right[1][3]
-
-                        #             # viewer.updateData(point_cloud1)
-                        #             #depth
-                        #             z_value_left = depth_image_zed.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
-                        #             z_value_right = depth_image_zed.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
-
-                        #             cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "center: " + "("+ str(round(real_grasp_center_x_left,3)) +","+ str(round(real_grasp_center_y_left,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "angle: " + str(round(real_rota_left,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.imwrite(center_blade + "left_blade_grasp_"+str(d)+'.jpg',color_image) 
-                        #             cv2.imshow("finish_left",color_image)
-
-                        #             cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "center: " + "("+ str(round(real_grasp_center_x_right,3)) +","+ str(round(real_grasp_center_y_right,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "angle: " + str(round(real_rota_right,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.imwrite(center_blade + "right_blade_grasp_"+str(d)+'.jpg',color_image1) 
-                        #             cv2.imshow("finish_right",color_image1)
-                                
-                        #         #quadrant 2 , cut right down
-                        #         elif(blade_center_x_left > round_grasp_center_x_left and blade_center_y_left > round_grasp_center_y_left) or (blade_center_x_right > round_grasp_center_x_right and blade_center_y_right > round_grasp_center_y_right): #右下角
-                        #             # cv2.putText(color_image, "distance: " + str(round(blade_center_x - grasp_center_x,3)) , (10, 125), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             # cv2.putText(color_image, "cut right down" , (10, 155), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             if((blade_center_x_left - round_grasp_center_x_left) < 115 and (blade_center_x_left - round_grasp_center_x_left) >= 25) or ((blade_center_x_right - round_grasp_center_x_right) < 115 and (blade_center_x_right - round_grasp_center_x_right) >= 25):
-                        #                 cv2.putText(color_image, "cut right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 20 
-                        #                 height = 40
-
-                        #                 # cv2.line(img_org,(int(right_down_x),int(right_down_y)),(int(blade_left_up_x),int(blade_left_up_y)),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 real_grasp_center_x_left = (right_down_x_left + blade_left_up_x_left)/2.0 
-                        #                 real_grasp_center_y_left = (right_down_y_left + blade_left_up_y_left)/2.0
-
-                        #                 real_grasp_center_x_right = (right_down_x_right + blade_left_up_x_right)/2.0 
-                        #                 real_grasp_center_y_right = (right_down_y_right + blade_left_up_y_right)/2.0
-
-                        #                 # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rec tangle(img_org, (int(real_grasp_center_x-width/2.0), int(real_grasp_center_y-height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
-                        #                 result_left = angle(left_up_x_left ,left_up_y_left,right_down_x_left ,right_down_y_left)
-                        #                 box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
-                        #                         (real_grasp_center_x_left - width/2,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
-                        #                 rota_left = rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
-
-                        #                 result_right = angle(left_up_x_right ,left_up_y_right,right_down_x_right ,right_down_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
-                        #                         (real_grasp_center_x_right - width/2,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
-
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
-
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
-                                        
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
-                                        
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
-                                    
-                        #             elif((blade_center_x_left - round_grasp_center_x_left) >= 115) or ((blade_center_x_right - round_grasp_center_x_right) >= 115):
-                        #                 cv2.putText(color_image, "cut right down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut right down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 20
-                        #                 height = 40
-                                
-                        #                 real_grasp_center_x_left = blade_center_x_left - blade_width_left/2.0
-                        #                 real_grasp_center_y_left = blade_center_y_left
-
-                        #                 real_grasp_center_x_right = blade_center_x_right - blade_width_right/2.0
-                        #                 real_grasp_center_y_right = blade_center_y_right
-
-                        #                 # cv2.circle(color_image,(int(real_grasp_center_x),int(blade_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rectangle(color_image, (int(real_grasp_center_x - width/2.0), int(real_grasp_center_y - height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
-                        #                 result_left = angle(real_grasp_center_x_left ,real_grasp_center_y_left,blade_center_x_left ,blade_center_y_left)
-                        #                 box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),
-                        #                         (real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
-                        #                 rota_left = rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
-
-                        #                 result_right = angle(real_grasp_center_x_right ,real_grasp_center_y_right ,blade_center_x_right ,blade_center_y_right)
-                        #                 box_right = [(real_grasp_center_x_right+ width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),
-                        #                         (real_grasp_center_x + width/2.0,real_grasp_center_y + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
-
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
-
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
-
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
-
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
-                                    
-                        #             elif((blade_center_x_left - round_grasp_center_x_left) < 25) or ((blade_center_x_right - round_grasp_center_x_right) < 25): 
-                        #                 cv2.putText(color_image, "cut right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 40
-                        #                 height = 20
-
-                        #                 real_grasp_center_x_left = blade_center_x_left 
-                        #                 real_grasp_center_y_left = blade_center_y_left - blade_height_left/2.0
-
-                        #                 real_grasp_center_x_right = blade_center_x_right
-                        #                 real_grasp_center_y_right = blade_center_y_right - blade_height_right/2.0
-
-                        #                 # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rectangle(img_org,(int(grasp_center_x-width), int(grasp_center_y - height/2.0)), (int(grasp_center_x), int(grasp_center_y + height/2.0)),(0, 127, 255), 2)
-                        #                 result_left = angle(blade_left_up_x_left, blade_left_up_y_left, real_grasp_center_x_left, real_grasp_center_y_left)
-                        #                 box_left = [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
-                        #                     (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x + width/2.0 ,real_grasp_center_y + height/2.0)]
-                        #                 rota_left = rota_rect(box,result,int(real_grasp_center_x),int(real_grasp_center_y))
-
-                        #                 result_right = angle(blade_left_up_x_right,blade_left_up_y_right,real_grasp_center_x_right,real_grasp_center_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
-                        #                     (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
-                                        
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
-
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
-
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
-
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
-                                    
-                        #             point3D_left = point_cloud.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
-                        #             x_left = point3D_left[1][0]
-                        #             y_left = point3D_left[1][1]
-                        #             z_left = point3D_left[1][2]
-                        #             color_right = point3D_left[1][3]
-
-                        #             point3D_right = point_cloud1.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
-                        #             x_right = point3D_right[1][0]
-                        #             y_right = point3D_right[1][1]
-                        #             z_right = point3D_right[1][2]
-                        #             color_right = point3D_right[1][3]
-
-                        #             # viewer.updateData(point_cloud1)
-                        #             #depth
-                        #             z_value_left = depth_image_zed.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
-                        #             z_value_right = depth_image_zed.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
-
-                        #             cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "center: " + "("+ str(round(real_grasp_center_x_left,3)) +","+ str(round(real_grasp_center_y_left,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "angle: " + str(round(result_left,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.imwrite(center_blade + "left_blade_grasp_"+str(d)+'.jpg',color_image) 
-                        #             cv2.imshow("finish_left",color_image)
-
-                        #             cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "center: " + "("+ str(round(real_grasp_center_x_right,3)) +","+ str(round(real_grasp_center_y_right,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "angle: " + str(round(result_right,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.imwrite(center_blade + "right_blade_grasp_"+str(d)+'.jpg',color_image1) 
-                        #             cv2.imshow("finish_right",color_image1)
-
-                        #         #quadrant 3 , cut left up
-                        #         elif(blade_center_x_left < round_grasp_center_x_left and blade_center_y_left < round_grasp_center_y_left) or (blade_center_x_right < round_grasp_center_x_right and blade_center_y_right < round_grasp_center_y_right): 
-                        #             # cv2.putText(color_image, "distance: " + str(round(blade_center_x - grasp_center_x,3)) , (10, 125), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             # cv2.putText(color_image, "cut left up " , (10, 155), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             if((round_grasp_center_x_left - blade_center_x_left) < 115 and(round_grasp_center_x_left - blade_center_x_left)>=25) or ((round_grasp_center_x_right - blade_center_x_right) < 115 and(round_grasp_center_x_right - blade_center_x_right)>=25):
-                        #                 cv2.putText(color_image, "cut left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 20
-                        #                 height = 50
-
-                        #                 # cv2.line(img_org,(int(right_down_x),int(right_down_y)),(int(blade_left_up_x),int(blade_left_up_y)),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 real_grasp_center_x_left = (left_up_x_left + blade_right_down_x_left)/2.0 
-                        #                 real_grasp_center_y_left = (left_up_y_left + blade_right_down_y_left)/2.0
-
-                        #                 real_grasp_center_x_right = (left_up_x_right + blade_right_down_x_right)/2.0 
-                        #                 real_grasp_center_y_right = (left_up_y_right + blade_right_down_y_right)/2.0
-
-                        #                 # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rectangle(img_org, (int(real_grasp_center_x-width/2.0), int(real_grasp_center_y-height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
-                        #                 result_left = angle(blade_left_up_x_left ,blade_left_up_y_left,blade_right_down_x_left ,blade_right_down_y_left)
-                        #                 box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
-                        #                         (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
-                        #                 rota_left = rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
-
-                        #                 result_right = angle(blade_left_up_x_right ,blade_left_up_y_right ,blade_right_down_x_right  ,blade_right_down_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
-                        #                         (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
-
-                        #                 cv2.line(color_image,(int(box_left[0][0]),int(box_left[0][1])),(int(box_left[1][0]),int(box_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(box_left[1][0]),int(box_left[1][1])),(int(box_left[2][0]),int(box_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(box_left[2][0]),int(box_left[2][1])),(int(box_left[3][0]),int(box_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(box_left[3][0]),int(box_left[3][1])),(int(box_left[0][0]),int(box_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
-
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
-
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
-
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
-                                        
-                        #             elif((round_grasp_center_x_left - blade_center_x_left) >= 115) or ((round_grasp_center_x_right - blade_center_x_right) >= 115):
-                        #                 cv2.putText(color_image, "cut left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 20
-                        #                 height = 40
-
-                        #                 real_grasp_center_x_left = blade_center_x_left  + blade_width_left /2.0
-                        #                 real_grasp_center_y_left  = blade_center_y_left 
-
-                        #                 real_grasp_center_x_right = blade_center_x_right + blade_width_right/2.0
-                        #                 real_grasp_center_y_right = blade_center_y_right
-
-                        #                 # cv2.circle(color_image,(int(real_grasp_center_x),int(blade_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rectangle(img_org, (int(real_grasp_center_x - width/2.0), int(real_grasp_center_y - height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
-                        #                 result_left = angle(real_grasp_center_x_left ,real_grasp_center_y_left,blade_center_x_left ,blade_center_y_left)
-                        #                 box_left = [(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
-                        #                     (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0,real_grasp_center_y_left + height/2.0)]
-                        #                 rota_left= rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
-
-                        #                 result_right = angle(real_grasp_center_x_right ,real_grasp_center_y,blade_center_x_right ,blade_center_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
-                        #                     (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
-
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
-
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
-
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
-
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
-
-                        #             elif((round_grasp_center_x_left - blade_center_x_left) < 25) or ((round_grasp_center_x_right - blade_center_x_right) < 25):
-                        #                 cv2.putText(color_image, "cut left up 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut left up 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 40
-                        #                 height = 20
-
-                        #                 real_grasp_center_x_left = blade_center_x_left 
-                        #                 real_grasp_center_y_left = blade_center_y_left + blade_height_left/2.0
-
-                        #                 real_grasp_center_x_right = blade_center_x_right 
-                        #                 real_grasp_center_y_right = blade_center_y_right + blade_height_right/2.0
-
-                        #                 # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rectangle(img_org,(int(grasp_center_x-width), int(grasp_center_y - height/2.0)), (int(grasp_center_x), int(grasp_center_y + height/2.0)),(0, 127, 255), 2)
-                        #                 result_left = angle(real_grasp_center_x_left,real_grasp_center_y_left,blade_right_down_x_left,blade_right_down_y_left)
-                        #                 box_left= [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
-                        #                     (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left + height/2.0)]
-                        #                 rota_left = rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
-
-                        #                 result_right = angle(real_grasp_center_x_right,real_grasp_center_y_right,blade_right_down_x_right,blade_right_down_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),
-                        #                         (real_grasp_center_x + width/2.0 ,real_grasp_center_y + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
-                                        
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
-
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
-
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
-
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
-                                    
-                        #             point3D_left = point_cloud.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
-                        #             x_left = point3D_left[1][0]
-                        #             y_left = point3D_left[1][1]
-                        #             z_left = point3D_left[1][2]
-                        #             color_right = point3D_left[1][3]
-
-                        #             point3D_right = point_cloud1.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
-                        #             x_right = point3D_right[1][0]
-                        #             y_right = point3D_right[1][1]
-                        #             z_right = point3D_right[1][2]
-                        #             color_right = point3D_right[1][3]
-
-                        #             # viewer.updateData(point_cloud1)
-                        #             #depth
-                        #             z_value_left = depth_image_zed.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
-                        #             z_value_right = depth_image_zed.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
-
-                        #             cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "center: " + "("+ str(round(real_grasp_center_x_left,3)) +","+ str(round(real_grasp_center_y_left,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "angle: " + str(round(result_left,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.imwrite(center_blade + "left_blade_grasp_"+str(d)+'.jpg',color_image) 
-                        #             cv2.imshow("finish_left",color_image)
-
-                        #             cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "center: " + "("+ str(round(real_grasp_center_x_right,3)) +","+ str(round(real_grasp_center_y_right,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "angle: " + str(round(result_right,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.imwrite(center_blade + "right_blade_grasp_"+str(d)+'.jpg',color_image1) 
-                        #             cv2.imshow("finish_right",color_image1)
-                                
-                        #         #quadrant 4 , cut left down
-                        #         elif(round_grasp_center_x_left > blade_center_x_left and blade_center_y_left > round_grasp_center_y_left) or (round_grasp_center_x_right > blade_center_x_right and blade_center_y_right > round_grasp_center_y_right): 
-                        #             # cv2.putText(color_image, "distance: " + str(round(blade_center_x - grasp_center_x,3)) , (10, 125), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             # cv2.putText(color_image, "cut left down" , (10, 155), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             if((round_grasp_center_x_left - blade_center_x_left) < 115 and(round_grasp_center_x_left - blade_center_x_left)>=25) or ((round_grasp_center_x_right - blade_center_x_right) < 115 and(round_grasp_center_x_right - blade_center_x_right)>=25):
-                        #                 cv2.putText(color_image, "cut left down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut left down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 20
-                        #                 height = 50
-
-                        #                 real_grasp_center_x_left = (blade_right_down_x_left + left_up_x_left)/2.0 
-                        #                 real_grasp_center_y_left = (blade_left_up_y_left + right_down_y_left)/2.0
-
-                        #                 real_grasp_center_x_right = (blade_right_down_x_right + left_up_x_right)/2.0 
-                        #                 real_grasp_center_y_right = (blade_left_up_y_right + right_down_y_right)/2.0
-
-                        #                 # cv2.circle(color_image,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rectangle(img_org,(int(grasp_center_x-width/2.0), int(grasp_center_y)), (int(grasp_center_x + width/2.0), int(grasp_center_y + height)),(0, 127, 255), 2)
-                        #                 result_left = angle(blade_left_up_x_left,blade_right_down_y_left,blade_right_down_x_left,blade_left_up_y_left)
-                        #                 box_left = [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),
-                        #                     (real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left + height/2.0)]
-                        #                 rota_left = rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
-
-                        #                 result_right = angle(blade_left_up_x_right,blade_right_down_y_right,blade_right_down_x_right,blade_left_up_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
-                        #                     (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
-
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
-
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
-
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
-
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
-        
-                        #             elif((round_grasp_center_x_left - blade_center_x_left) >= 115) or ((round_grasp_center_x_right - blade_center_x_right) >= 115):
-                        #                 cv2.putText(color_image, "cut left down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut left down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 20
-                        #                 height = 40
-                                        
-                        #                 real_grasp_center_x_left = blade_center_x_left + blade_width_left/2.0
-                        #                 real_grasp_center_y_left = blade_center_y_left
-
-                        #                 real_grasp_center_x_right = blade_center_x_right + blade_width_right/2.0
-                        #                 real_grasp_center_y_right = blade_center_y_right
-
-                        #                 # cv2.circle(color_image,(int(real_grasp_center_x),int(blade_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rectangle(img_org, (int(real_grasp_center_x - width/2.0), int(real_grasp_center_y - height/2.0)), (int(real_grasp_center_x + width/2.0), int(real_grasp_center_y + height/2.0)),(255, 0, 255), 2)
-                        #                 result_left = angle(real_grasp_center_x_left  ,real_grasp_center_y_left ,blade_center_x_left  ,blade_center_y_left )
-                        #                 box_left  = [(real_grasp_center_x_left  + width/2.0,real_grasp_center_y_left  - height/2.0),(real_grasp_center_x_left  - width/2.0,real_grasp_center_y_left  - height/2.0),
-                        #                     (real_grasp_center_x_left  - width/2.0,real_grasp_center_y_left  + height/2.0),(real_grasp_center_x_left  + width/2.0,real_grasp_center_y_left  + height/2.0)]
-                        #                 rota_left  = rota_rect(box_left ,result_left ,int(real_grasp_center_x),int(real_grasp_center_y))
-
-                        #                 result_right = angle(real_grasp_center_x_right ,real_grasp_center_y_right,blade_center_x_right ,blade_center_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
-                        #                     (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0,real_grasp_center_y_right + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
-
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
-
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
-
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
-
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
-
-                        #             elif((round_grasp_center_x_left - blade_center_x_left) < 25) or ((round_grasp_center_x_right - blade_center_x_right) < 25):
-                        #                 cv2.putText(color_image, "cut left down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 cv2.putText(color_image1, "cut left down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #                 width = 20
-                        #                 height = 40
-
-                        #                 real_grasp_center_x_left = blade_center_x_left 
-                        #                 real_grasp_center_y_left = blade_center_y_left - blade_height_left/2.0
-
-                        #                 real_grasp_center_x_right = blade_center_x_right
-                        #                 real_grasp_center_y_right = blade_center_y_right - blade_height_right/2.0
-
-                        #                 # cv2.circle(img_org,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
-                        #                 # cv2.rectangle(img_org,(int(grasp_center_x-width), int(grasp_center_y - height/2.0)), (int(grasp_center_x), int(grasp_center_y + height/2.0)),(0, 127, 255), 2)
-                        #                 result_left = angle(real_grasp_center_x_left,real_grasp_center_y_left,blade_left_up_x_left,blade_right_down_y_left)
-                        #                 box_left = [(real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left - height/2.0),(real_grasp_center_x_left - width/2.0,real_grasp_center_y_left + height/2.0),
-                        #                         (real_grasp_center_x_left + width/2.0 ,real_grasp_center_y_left + height/2.0)]
-                        #                 rota_left = rota_rect(box_left,result_left,int(real_grasp_center_x_left),int(real_grasp_center_y_left))
-
-                        #                 result_right = angle(real_grasp_center_x_right,real_grasp_center_y_right,blade_left_up_x_right,blade_right_down_y_right)
-                        #                 box_right = [(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right - height/2.0),(real_grasp_center_x_right - width/2.0,real_grasp_center_y_right - height/2.0),
-                        #                     (real_grasp_center_x_right - width/2.0,real_grasp_center_y_right + height/2.0),(real_grasp_center_x_right + width/2.0 ,real_grasp_center_y_right + height/2.0)]
-                        #                 rota_right = rota_rect(box_right,result_right,int(real_grasp_center_x_right),int(real_grasp_center_y_right))
-                                        
-                        #                 cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
-
-                        #                 cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
-                        #                 cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
-
-                        #                 real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
-                        #                 real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
-                        #                 cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
-
-                        #                 real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
-                        #                 real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
-                        #                 cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
-
-                        #             point3D_left = point_cloud.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
-                        #             x_left = point3D_left[1][0]
-                        #             y_left = point3D_left[1][1]
-                        #             z_left = point3D_left[1][2]
-                        #             color_right = point3D_left[1][3]
-
-                        #             point3D_right = point_cloud1.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
-                        #             x_right = point3D_right[1][0]
-                        #             y_right = point3D_right[1][1]
-                        #             z_right = point3D_right[1][2]
-                        #             color_right = point3D_right[1][3]
-
-                        #             # viewer.updateData(point_cloud1)
-                        #             #depth
-                        #             z_value_left = depth_image_zed.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
-                        #             z_value_right = depth_image_zed.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
-
-                        #             cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "center: " + "("+ str(round(real_grasp_center_x_left,3)) +","+ str(round(real_grasp_center_y_left,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "angle: " + str(round(result_left,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.imwrite(center_blade + "left_blade_grasp_"+str(d)+'.jpg',color_image) 
-                        #             cv2.imshow("finish_left",color_image)
-
-                        #             cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "center: " + "("+ str(round(real_grasp_center_x_right,3)) +","+ str(round(real_grasp_center_y_right,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "angle: " + str(round(result_right,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                        #             cv2.imwrite(center_blade + "right_blade_grasp_"+str(d)+'.jpg',color_image1) 
-                        #             cv2.imshow("finish_right",color_image1)
+                                        cv2.line(color_image,(int(rota_left[0][0]),int(rota_left[0][1])),(int(rota_left[1][0]),int(rota_left[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[1][0]),int(rota_left[1][1])),(int(rota_left[2][0]),int(rota_left[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[2][0]),int(rota_left[2][1])),(int(rota_left[3][0]),int(rota_left[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image,(int(rota_left[3][0]),int(rota_left[3][1])),(int(rota_left[0][0]),int(rota_left[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        cv2.line(color_image1,(int(rota_right[0][0]),int(rota_right[0][1])),(int(rota_right[1][0]),int(rota_right[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[1][0]),int(rota_right[1][1])),(int(rota_right[2][0]),int(rota_right[2][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[2][0]),int(rota_right[2][1])),(int(rota_right[3][0]),int(rota_right[3][1])),(255, 0, 255),2,cv2.LINE_AA)
+                                        cv2.line(color_image1,(int(rota_right[3][0]),int(rota_right[3][1])),(int(rota_right[0][0]),int(rota_right[0][1])),(255, 0, 255),2,cv2.LINE_AA)
+
+                                        real_grasp_center_x_left = (rota_left[0][0] + rota_left[2][0])/2.0 
+                                        real_grasp_center_y_left = (rota_left[0][1] + rota_left[2][1])/2.0
+                                        cv2.circle(color_image,(int(real_grasp_center_x_left),int(real_grasp_center_y_left)),2,(255,0,0),2)
+
+                                        real_grasp_center_x_right = (rota_right[0][0] + rota_right[2][0])/2.0 
+                                        real_grasp_center_y_right = (rota_right[0][1] + rota_right[2][1])/2.0
+                                        cv2.circle(color_image1,(int(real_grasp_center_x_right),int(real_grasp_center_y_right)),2,(255,0,0),2)
+
+                                        real_rota_left = roct_result_left
+                                        real_rota_right = roct_result_right
+
+                                    point3D_left = point_cloud.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
+                                    x_left = point3D_left[1][0]
+                                    y_left = point3D_left[1][1]
+                                    z_left = point3D_left[1][2]
+                                    color_right = point3D_left[1][3]
+
+                                    point3D_right = point_cloud1.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
+                                    x_right = point3D_right[1][0]
+                                    y_right = point3D_right[1][1]
+                                    z_right = point3D_right[1][2]
+                                    color_right = point3D_right[1][3]
+
+                                    # viewer.updateData(point_cloud1)
+                                    #depth
+                                    z_value_left = depth_image_zed.get_value(real_grasp_center_x_left,real_grasp_center_y_left)
+                                    z_value_right = depth_image_zed.get_value(real_grasp_center_x_right,real_grasp_center_y_right)
+
+                                    cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "center: " + "("+ str(round(real_grasp_center_x_left,3)) +","+ str(round(real_grasp_center_y_left,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "angle: " + str(round(real_rota_left,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image, "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.imwrite(center_blade + "left_blade_grasp_"+str(d)+'.jpg',color_image) 
+                                    cv2.imshow("finish_left",color_image)
+
+                                    cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "center: " + "("+ str(round(real_grasp_center_x_right,3)) +","+ str(round(real_grasp_center_y_right,3)) + ")", (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "angle: " + str(round(real_rota_right,3)), (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.putText(color_image1, "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.imwrite(center_blade + "right_blade_grasp_"+str(d)+'.jpg',color_image1) 
+                                    cv2.imshow("finish_right",color_image1)
 
 
 
