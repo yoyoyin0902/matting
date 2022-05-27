@@ -10355,7 +10355,7 @@ if __name__ == '__main__':
 #                                         cv2.line(color_image,(int(rota[2][0]),int(rota[2][1])),(int(rota[3][0]),int(rota[3][1])),(255, 0, 255),2,cv2.LINE_AA)
 #                                         cv2.line(color_image,(int(rota[3][0]),int(rota[3][1])),(int(rota[0][0]),int(rota[0][1])),(255, 0, 255),2,cv2.LINE_AA)
 
-#                                         real_grasp_center_x = (rota[0][0] + rota[2][0])/2.0 
+#                                         real_grasp_center_x =https://www.thingiverse.com/thing:5168306 (rota[0][0] + rota[2][0])/2.0 
 #                                         real_grasp_center_y = (rota[0][1] + rota[2][1])/2.0
 #                                         cv2.circle(color_image,(int(real_grasp_center_x),int(real_grasp_center_y)),2,(255,0,0),2)
 
