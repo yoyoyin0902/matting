@@ -1569,7 +1569,7 @@ if __name__ == '__main__':
     # init.depth_maximum_distance = 5000 
     init.depth_minimum_distance = 0.3
     init.depth_maximum_distance = 5 
-    init.coordinate_system=sl.COORDINATE_SYSTEM.LEFT_HANDED_Y_UP
+    # init.coordinate_system=sl.COORDINATE_SYSTEM.LEFT_HANDED_Y_UP
 
     #camera parameter
     calibration_params = zed.get_camera_information().camera_configuration.calibration_parameters
@@ -1682,17 +1682,17 @@ if __name__ == '__main__':
         cv2.imshow("image_right", image_right)
         fps = int(1/(time.time()-t_prev))
 
-        # point3D_A = point_cloud.get_value(319,477)
-        # A_x = point3D_A[1][0]
-        # A_y = point3D_A[1][1]
-        # A_z = point3D_A[1][2]
-        # color = point3D_A[1][3]
+        point3D_A = point_cloud.get_value(473,291)
+        A_x = point3D_A[1][0]
+        A_y = point3D_A[1][1]
+        A_z = point3D_A[1][2]
+        color = point3D_A[1][3]
 
-        # point3D_B = point_cloud1.get_value(176,473)
-        # B_x = point3D_B[1][0]
-        # B_y = point3D_B[1][1]
-        # B_z = point3D_B[1][2]
-        # color = point3D_B[1][3]
+        point3D_B = point_cloud1.get_value(473,263)
+        B_x = point3D_B[1][0]
+        B_y = point3D_B[1][1]
+        B_z = point3D_B[1][2]
+        color = point3D_B[1][3]
 
         # point3D_C = point_cloud.get_value(412,477)
         # C_x = point3D_C[1][0]
@@ -1712,8 +1712,8 @@ if __name__ == '__main__':
         # check_z = point3D_check[1][2]
         # color = point3D_check[1][3]
 
-        # print("point3D_A: "+ str(A_x)+ " ," + str(A_y) + " ," + str(A_z))
-        # print("point3D_B: "+ str(B_x)+ " ," + str(B_y) + " ," + str(B_z))
+        print("point3D_A: "+ str(A_x)+ " ," + str(A_y) + " ," + str(A_z))
+        print("point3D_B: "+ str(B_x)+ " ," + str(B_y) + " ," + str(B_z))
         # print("point3D_C: "+ str(C_x)+ " ," + str(C_y) + " ," + str(C_z))
         # print("point3D_D: "+ str(D_x)+ " ," + str(D_y) + " ," + str(D_z))
         # print("point3D_check: "+ str(check_x)+ " ," + str(check_y) + " ," + str(check_z))

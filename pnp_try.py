@@ -131,10 +131,12 @@ if __name__ == '__main__':
         print(focal_right_x,focal_right_x)
         print(center_point_x_left,center_point_y_left)
         print(center_point_x_right,center_point_y_right)
-        print("--------------------")
+        print("1111111111111111111111111111111111")
 
         # cv2.imshow("left",color_image_left)
         # cv2.imshow("right",color_image_right)
+
+        
 
         #camera matrix
         camera_matrix_left = np.array([
@@ -149,31 +151,31 @@ if __name__ == '__main__':
 
         #pixel coordinate
         points_2D_left = np.array([
-                        (497.0, 275.0),  #point_A
-                        (476.0, 237.0),  #point_B
-                        (543.0, 277.0),  #point_C
-                        (566.0, 239.0),  #point_D
-                        (500.0, 200.0),  #point_E
-                        (541.0, 199.0)  #point_F
+                        (727.0, 295.0),  #point_A
+                        (702.0, 256.0),  #point_B
+                        (775.0, 293.0),  #point_C
+                        (795.0, 252.0),  #point_D
+                        (724.0, 216.0),  #point_E
+                        (770.0, 199.0)  #point_F
                       ], dtype="double")
 
         points_2D_right = np.array([
-                        (303.0, 275.0),  #point_A
-                        (282.0, 237.0),  #point_B
-                        (348.0, 277.0),  #point_C
-                        (371.0, 239.0),  #point_D
-                        (306.0, 200.0),  #point_E
-                        (350.0, 200.0)  #point_F
+                        (526.0, 295.0),  #point_A
+                        (501.0, 256.0),  #point_B
+                        (573.0, 293.0),  #point_C
+                        (594.0, 252.0),  #point_D
+                        (523.0, 216.0),  #point_E
+                        (569.0, 214.0)  #point_F
                       ], dtype="double")
         
         #world coordinate
         points_3D = np.array([
-                      (0.0, 0.2, 0.2),  #point_A
-                      (0.0, 0.4, 0.4),  #point_B
-                      (0.2, 0.0, 0.2),  #point_C
-                      (0.4, 0.0, 0.4),  #point_D
-                      (0.2, 0.4, 0.6),  #point_E
-                      (0.4, 0.2, 0.6)  #point_F
+                      (0.0, 0.02, 0.02),  #point_A
+                      (0.0, 0.04, 0.04),  #point_B
+                      (0.02, 0.0, 0.02),  #point_C
+                      (0.04, 0.0, 0.04),  #point_D
+                      (0.02, 0.04, 0.06),  #point_E
+                      (0.04, 0.02, 0.06)  #point_F
                      ])
 
         dist_coeffs = np.zeros((5,1))
@@ -197,14 +199,33 @@ if __name__ == '__main__':
         
 
         # #3d to 2d
-        # world = np.array([0,0.2,0.4,1]).T.reshape(-1, 1)
-        # # print(camera_matrix.shape, RTmatrix.shape, world.shape)
-        # aa = camera_matrix_left.dot(RTmatrix_left)# * world
-        # aa = aa.dot(world)
-        # aa /= aa[-1]
-        # print("pixel cooridinate:")
-        # print(aa)
-        # cv2.circle(color_image_left, (int(aa[0]), int(aa[1])), 2, (0,0,255), -1)
+        world = np.array([0,0.04,0.04,1]).T.reshape(-1, 1)
+        # print(camera_matrix.shape, RTmatrix.shape, world.shape)
+        aa = camera_matrix_left.dot(RTmatrix_left)# * world
+        aa = aa.dot(world)
+        aa /= aa[-1]
+        print("pixel cooridinate:")
+        print(aa)
+        cv2.circle(color_image_left, (int(aa[0]), int(aa[1])), 2, (0,0,255), -1)
+
+        point3D_down = point_cloud.get_value(537,305)
+        A_x = point3D_down[1][0]
+        A_y = point3D_down[1][1]
+        A_z = point3D_down[1][2]
+
+        point3D_point = point_cloud.get_value(538,250)
+        point_x = point3D_point[1][0]
+        point_y = point3D_point[1][1]
+        point_z = point3D_point[1][2]
+
+        print("point3D_down: "+ str(A_x)+ " ," + str(A_y) + " ," + str(A_z))
+        print("point3D_point: "+ str(point_x)+ " ," + str(point_y) + " ," + str(point_z))
+
+        dis  = abs(point_y - A_y)
+        print("dis: " + str(dis))
+        print("--------------------")
+
+
 
         #2d to 3d
         # RTmatrix1_inv = np.linalg.inv(rotation_matrix_left)
@@ -212,12 +233,12 @@ if __name__ == '__main__':
         # # print(inverse_newcam_mtx)
 
         # # uv_1=np.array([[531,290,1]], dtype=np.float32)
-        # uv_1=np.array([[518.0,189.0,1]])
+        # uv_1=np.array([[282.0,264.0,1]])
         # uv_1=uv_1.T
 
         # invR_x_invM_x_uv1 = np.dot(np.dot(RTmatrix1_inv,inverse_newcam_mtx), uv_1)
         # invR_x_tvec = np.dot(RTmatrix1_inv, translation_vector_left)
-        # Z = 0.6
+        # Z = 0.022347
         # output = (Z+invR_x_tvec[2, 0])/invR_x_invM_x_uv1[2, 0]*invR_x_invM_x_uv1-invR_x_tvec
         # print(output)
 
@@ -232,7 +253,7 @@ if __name__ == '__main__':
 
         invR_x_invM_x_uv1 = np.dot(np.dot(RTmatrix1_inv_right,inverse_newcam_mtx_right), uv_1)
         invR_x_tvec = np.dot(RTmatrix1_inv_right, translation_vector_right)
-        Z = 0.59
+        Z = 0.0602
         output = (Z+invR_x_tvec[2, 0])/invR_x_invM_x_uv1[2, 0]*invR_x_invM_x_uv1-invR_x_tvec
         print(output)
 
