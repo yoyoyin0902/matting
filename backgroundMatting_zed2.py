@@ -948,7 +948,9 @@ def handle(image_path, bgr_path):
         'Only mattingrefine support ref output'
 
         # --------------- Main ---------------  
+#region
     # set imgfile
+#ednregion
     dataset = ZipDataset([NewImagesDataset(image_path),NewImagesDataset(bgr_path),], assert_equal_length=True, transforms=PairCompose([
         HomographicAlignment() if args.preprocess_alignment else PairApply(nn.Identity()),PairApply(T.ToTensor())]))
         
@@ -1571,6 +1573,11 @@ if __name__ == '__main__':
     init.depth_maximum_distance = 5 
     # init.coordinate_system=sl.COORDINATE_SYSTEM.LEFT_HANDED_Y_UP
 
+    zed.set_camera_settings(sl.VIDEO_SETTINGS.SHARPNESS, 8)
+    zed.set_camera_settings(sl.VIDEO_SETTINGS.SATURATION, 8)
+    zed.set_camera_settings(sl.VIDEO_SETTINGS.BRIGHTNESS, 4)
+    zed.set_camera_settings(sl.VIDEO_SETTINGS.GAIN, 9)
+
     #camera parameter
     calibration_params = zed.get_camera_information().camera_configuration.calibration_parameters
     focal_left_x = calibration_params.left_cam.fx
@@ -1596,6 +1603,8 @@ if __name__ == '__main__':
 
     #set image size
     image_size = zed.get_camera_information().camera_resolution
+    print(image_size.width, image_size.height)
+    # exit(-1)
     image_size.width = 960
     image_size.height = 540
 
