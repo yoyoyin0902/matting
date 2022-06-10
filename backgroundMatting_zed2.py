@@ -1271,10 +1271,14 @@ def line_Segment_cup(mat,orig):
     cv2.line(orig_img,(int(aa[0][0]),int(aa[0][1])),(int(aa[1][0]),int(aa[1][1])),(255, 0, 255),2,cv2.LINE_AA)
     cv2.line(orig_img,(int(aa[2][0]),int(aa[2][1])),(int(aa[3][0]),int(aa[3][1])),(255, 0, 255),2,cv2.LINE_AA)
 
+   
+    circle_centerX = (aa[0][0] + aa[2][0])/2.0
+    circle_centerY = (aa[0][1] + aa[2][1])/2.0
     cv2.circle(orig_img,(int(circle_X),int(circle_Y)),2,(255, 128, 0),2)
 
-    return orig_img ,circle_x,circle_y,roct_result
+    return orig_img ,circle_centerX,circle_centerY,roct_result
 
+# global circle_centerX, circle_centerY
 #circle detection
 def circle_transform(mat,orig,detections_number):
     mat_img = cv2.imread(mat)
@@ -1301,7 +1305,7 @@ def circle_transform(mat,orig,detections_number):
     cv2.circle(object_Image,(int(center_x),int(center_y)),2,(255, 128, 0),2)
     # cv2.imshow("11111",object_Image)
 
-    if w < 90: #小於一定大小直接抓全部
+    if w < 100: #小於一定大小直接抓全部
         width = 20
         height = w+30
         grasp_left_x = int(center_x - (width/2.0))
@@ -1464,6 +1468,8 @@ def get_object_depth(depth, bounds):
         pass
 
     return x_median, y_median, z_median
+
+
 
 # ------------------------------------------------------- Matting Arguments -------------------------------------------------
 parser = argparse.ArgumentParser(description='Inference images')
@@ -1763,9 +1769,18 @@ if __name__ == '__main__':
 
                     #matting
                     matimg_left = handle(orig_long_left,bgrlong_path_left +str(a) +'.jpg') #com,fgr,pha
+                    com_long_left = tensor_to_np(matimg_left[0])
+                    fgr_long_left = tensor_to_np(matimg_left[1])
                     mat_long_left = tensor_to_np(matimg_left[2])
+                    # err_long_left = tensor_to_np(matimg_left[3])
                     matimg_mat_left = save_mat_long_left+"long_"+str(a)+'.jpg'
+                    matimg_fgr_left = save_mat_long_left+"long_fgr_"+str(a)+'.jpg'
+                    matimg_com_left = save_mat_long_left+"long_com_"+str(a)+'.jpg'
+                    # matimg_err_left = save_mat_long_left+"long_err_"+str(a)+'.jpg'
                     cv2.imwrite(matimg_mat_left,mat_long_left)
+                    cv2.imwrite(matimg_fgr_left,fgr_long_left)
+                    cv2.imwrite(matimg_com_left,com_long_left)
+                    # cv2.imwrite(matimg_err_left,err_long_left)
 
                     matimg_right = handle(orig_long_right,bgrlong_path_right +str(a) +'.jpg') #com,fgr,pha
                     mat_long_right = tensor_to_np(matimg_right[2])
@@ -1814,7 +1829,7 @@ if __name__ == '__main__':
                     cv2.putText(center_right[0], "Angle: " + str(round(center_right[3],3)) , (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                     cv2.putText(center_right[0], "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                     cv2.imwrite(center_long+"long_right_"+str(a)+'.jpg',center_right[0])
-                    cv2.imshow("finish_right",center_right[0])
+                    # cv2.imshow("finish_right",center_right[0])
 
                 elif detections_left[0][0] == "circle" or detections_left[0][0] == "hollow":
                     if  key == 114:
@@ -1894,11 +1909,23 @@ if __name__ == '__main__':
 
                         shutil.copy(local_img_name_left, bgrcolumnar_path_left + str(c) +'.jpg')
                         shutil.copy(local_img_name_right, bgrcolumnar_path_right + str(c) +'.jpg')
-
+                        
                         matimg_left = handle(orig_columnar_left,bgrcolumnar_path_left + str(c) +'.jpg') 
                         mat_columnar_left = tensor_to_np(matimg_left[2])
-                        matimg_mat_left = save_mat_columnar_left + "columnar_" + str(c) + '.jpg'
+                        # fgr_columnar_left = tensor_to_np(matimg_left[1])
+                        # com_columnar_left = tensor_to_np(matimg_left[0])
+                        # err_columnar_left = tensor_to_np(matimg_left[3])
+
+                        matimg_mat_left = save_mat_columnar_left + "columnar_mat_" + str(c) + '.jpg'
+                        # matimg_fgr_left = save_mat_columnar_left + "columnar_fgr_" + str(c) + '.jpg'
+                        # matimg_com_left = save_mat_columnar_left + "columnar_com_" + str(c) + '.jpg'
+                        # matimg_err_left = save_mat_columnar_left + "columnar_err_" + str(c) + '.jpg'
                         cv2.imwrite(matimg_mat_left,mat_columnar_left)
+                        # cv2.imwrite(matimg_fgr_left,fgr_columnar_left)
+                        # cv2.imwrite(matimg_com_left,com_columnar_left)
+                        # cv2.imwrite(matimg_err_left,err_columnar_left)
+
+
 
                         matimg_right= handle(orig_columnar_right,bgrcolumnar_path_right + str(c) +'.jpg') 
                         mat_columnar_right = tensor_to_np(matimg_right[2])
@@ -2072,7 +2099,7 @@ if __name__ == '__main__':
                                         z_value_left = depth_image_zed.get_value(center_left[0],center_left[1])
                                         z_value_right = depth_image_zed.get_value(center_right[0],center_right[1])
 
-                                        cv2.putText(color_image, "test: " + str(number_left) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "test: " + str(number_left) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image, "Center: " + str(round(center_left[0],3)) +","+ str(round(center_left[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
@@ -2081,7 +2108,7 @@ if __name__ == '__main__':
                                         cv2.imwrite(center_columnar+"left_columnar_grip_"+str(c)+'.jpg',color_image)  
                                         cv2.imshow("finish_left",color_image) 
 
-                                        cv2.putText(color_image1, "test: " + str(number_right) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "test: " + str(number_right) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image1, "Center: " + str(round(center_right[0],3)) +","+ str(round(center_right[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
@@ -2186,7 +2213,7 @@ if __name__ == '__main__':
                                         z_value_left = depth_image_zed.get_value(center_left[0],center_left[1])
                                         z_value_right = depth_image_zed.get_value(center_right[0],center_right[1])
 
-                                        cv2.putText(color_image, "test: " + str(number_left) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "test: " + str(number_left) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image, "Center: " + str(round(center_left[0],3)) +","+ str(round(center_left[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
@@ -2195,7 +2222,7 @@ if __name__ == '__main__':
                                         cv2.imwrite(center_columnar+"left_columnar_grip_"+str(c)+'.jpg',color_image)  
                                         cv2.imshow("finish_left",color_image) 
 
-                                        cv2.putText(color_image1, "test: " + str(number_right) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "test: " + str(number_right) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image1, "Center: " + str(round(center_right[0],3)) +","+ str(round(center_right[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
@@ -2323,7 +2350,7 @@ if __name__ == '__main__':
                                         z_value_left = depth_image_zed.get_value(center_left[0],center_left[1])
                                         z_value_right = depth_image_zed.get_value(center_right[0],center_right[1])
 
-                                        cv2.putText(color_image, "test: " + str(number_left) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "test: " + str(number_left) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image, "Center: " + str(round(center_left[0],3)) +","+ str(round(center_left[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
@@ -2332,7 +2359,7 @@ if __name__ == '__main__':
                                         cv2.imwrite(center_columnar+"left_columnar_grip_"+str(c)+'.jpg',color_image)  
                                         cv2.imshow("finish_left",color_image) 
 
-                                        cv2.putText(color_image1, "test: " + str(number_right) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "test: " + str(number_right) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image1, "Center: " + str(round(center_right[0],3)) +","+ str(round(center_right[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
@@ -2437,7 +2464,7 @@ if __name__ == '__main__':
                                         z_value_left = depth_image_zed.get_value(center_left[0],center_left[1])
                                         z_value_right = depth_image_zed.get_value(center_right[0],center_right[1])
 
-                                        cv2.putText(color_image, "test: " + str(number_left) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "test: " + str(number_left) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image, "Center: " + str(round(center_left[0],3)) +","+ str(round(center_left[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
@@ -2446,7 +2473,7 @@ if __name__ == '__main__':
                                         cv2.imwrite(center_columnar+"columnar_grip_left_"+str(c)+'.jpg',color_image)  
                                         cv2.imshow("finish_left",color_image) 
 
-                                        cv2.putText(color_image1, "test: " + str(number_right) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "test: " + str(number_right) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image1, "Center: " + str(round(center_right[0],3)) +","+ str(round(center_right[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
@@ -2575,7 +2602,7 @@ if __name__ == '__main__':
                                         z_value_left = depth_image_zed.get_value(center_left[0],center_left[1])
                                         z_value_right = depth_image_zed.get_value(center_right[0],center_right[1])
 
-                                        cv2.putText(color_image, "test: " + str(number_left) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "test: " + str(number_left) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image, "Center: " + str(round(center_left[0],3)) +","+ str(round(center_left[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
@@ -2584,7 +2611,7 @@ if __name__ == '__main__':
                                         cv2.imwrite(center_columnar+"columnar_grip_left_"+str(c)+'.jpg',color_image)  
                                         cv2.imshow("finish_left",color_image) 
 
-                                        cv2.putText(color_image1, "test: " + str(number_right) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "test: " + str(number_right) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image1, "Center: " + str(round(center_right[0],3)) +","+ str(round(center_right[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
@@ -2689,7 +2716,7 @@ if __name__ == '__main__':
                                             z_value_left = depth_image_zed.get_value(center_left[0],center_left[1])
                                             z_value_right = depth_image_zed.get_value(center_right[0],center_right[1])
 
-                                            cv2.putText(color_image, "test: " + str(number_left) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            # cv2.putText(color_image, "test: " + str(number_left) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(color_image, "Center: " + str(round(center_left[0],3)) +","+ str(round(center_left[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
@@ -2698,7 +2725,7 @@ if __name__ == '__main__':
                                             cv2.imwrite(center_columnar+"columnar_grip_left_"+str(c)+'.jpg',color_image)  
                                             cv2.imshow("finish_left",color_image) 
 
-                                            cv2.putText(color_image1, "test: " + str(number_right) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            # cv2.putText(color_image1, "test: " + str(number_right) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(color_image1, "Center: " + str(round(center_right[0],3)) +","+ str(round(center_right[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
@@ -2826,7 +2853,7 @@ if __name__ == '__main__':
                                         z_value_left = depth_image_zed.get_value(center_left[0],center_left[1])
                                         z_value_right = depth_image_zed.get_value(center_right[0],center_right[1])
 
-                                        cv2.putText(color_image, "test: " + str(number_left) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "test: " + str(number_left) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image, "Center: " + str(round(center_left[0],3)) +","+ str(round(center_left[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
@@ -2835,7 +2862,7 @@ if __name__ == '__main__':
                                         cv2.imwrite(center_columnar+"left_columnar_grip_"+str(c)+'.jpg',color_image)  
                                         cv2.imshow("finish_left",color_image) 
 
-                                        cv2.putText(color_image1, "test: " + str(number_right) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "test: " + str(number_right) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         cv2.putText(color_image1, "Center: " + str(round(center_right[0],3)) +","+ str(round(center_right[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
@@ -2940,7 +2967,7 @@ if __name__ == '__main__':
                                             z_value_left = depth_image_zed.get_value(center_left[0],center_left[1])
                                             z_value_right = depth_image_zed.get_value(center_right[0],center_right[1])
 
-                                            cv2.putText(color_image, "test: " + str(number_left) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            # cv2.putText(color_image, "test: " + str(number_left) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(color_image, "Object: " + str(detections_left[0][0]) +"," +str(detections_left[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(color_image, "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(color_image, "Center: " + str(round(center_left[0],3)) +","+ str(round(center_left[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
@@ -2949,7 +2976,7 @@ if __name__ == '__main__':
                                             cv2.imwrite(center_columnar+"columnar_grip_left_"+str(c)+'.jpg',color_image)  
                                             cv2.imshow("finish_left",color_image) 
 
-                                            cv2.putText(color_image1, "test: " + str(number_right) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                            # cv2.putText(color_image1, "test: " + str(number_right) , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(color_image1, "Object: " + str(detections_right[0][0]) +"," +str(detections_right[1][0]), (10, 40), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(color_image1, "Depth: " + str(round(z_value_right[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                             cv2.putText(color_image1, "Center: " + str(round(center_right[0],3)) +","+ str(round(center_right[1],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
@@ -2972,6 +2999,13 @@ if __name__ == '__main__':
 
                         matimg_left = handle(orig_blade_left,bgrblade_path_left + str(d) +'.jpg')
                         matimg_right = handle(orig_blade_right,bgrblade_path_right + str(d) +'.jpg')
+                        
+                        mat_blade_left = tensor_to_np(matimg_left[2])
+                        mat_blade_right = tensor_to_np(matimg_right[2])
+                        matimg_mat_left = save_mat_blader_left+"blader_"+str(d)+'.jpg'
+                        matimg_mat_right = save_mat_blade_right+"blader_"+str(d)+'.jpg'
+                        cv2.imwrite(matimg_mat_left,mat_blade_left)
+                        cv2.imwrite(matimg_mat_left,mat_blade_right)
                         
                         process_left = post_processing(matimg_left[2])
                         process_blade_left = save_process_blade + "left_blade_" + str(d) + ".jpg"
@@ -3029,15 +3063,15 @@ if __name__ == '__main__':
 
                                 #quadrant 1 , cut right up
                                 if(blade_center_x_left > round_grasp_center_x_left and blade_center_y_left < round_grasp_center_y_left) and (blade_center_x_right > round_grasp_center_x_right and blade_center_y_right < round_grasp_center_y_right): 
-                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "cut right up 0101" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "cut right up 0101 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "cut right up " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "cut right up " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
 
                                     if(roct_result_left >=15 and roct_result_left <=70) or (roct_result_right >=15 and roct_result_right <=70):
                                     # if((blade_center_x_left - round_grasp_center_x_left) < 100 and (blade_center_x_left - round_grasp_center_x_left) >= 20) or ((blade_center_x_right - round_grasp_center_x_right) < 100 and (blade_center_x_right - round_grasp_center_x_right) >= 20): 
-                                        cv2.putText(color_image, "cut right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut right up " , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut right up " , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
 
@@ -3083,8 +3117,8 @@ if __name__ == '__main__':
                                     
                                     elif(roct_result_left < 15 ) or (roct_result_right <15 ):
                                     # elif((blade_center_x_left - round_grasp_center_x_left) >= 100) or ((blade_center_x_right - round_grasp_center_x_right) >= 100):
-                                        cv2.putText(color_image, "cut right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
 
@@ -3135,8 +3169,8 @@ if __name__ == '__main__':
                                     
                                     elif (roct_result_left > 70) or (roct_result_right >70):
                                     # elif((blade_center_x_left - round_grasp_center_x_left) < 20) or ((blade_center_x_right - round_grasp_center_x_right) < 20): 
-                                        cv2.putText(color_image, "cut right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
 
@@ -3218,15 +3252,15 @@ if __name__ == '__main__':
                                     
                                 #quadrant 2 , cut right down 
                                 elif(blade_center_x_left > round_grasp_center_x_left and blade_center_y_left > round_grasp_center_y_left) or (blade_center_x_right > round_grasp_center_x_right and blade_center_y_right > round_grasp_center_y_right): #右下角
-                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "cut right down 0101" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "cut right down 0101 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "cut right down 0101" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "cut right down 0101 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     
                                     if(roct_result_left <=-15  and roct_result_left >=-70) or (roct_result_right <=-15 and roct_result_right >= -70 ):
                                     # if((blade_center_x_left - round_grasp_center_x_left) < 100 and (blade_center_x_left - round_grasp_center_x_left) >= 20) or ((blade_center_x_right - round_grasp_center_x_right) < 100 and (blade_center_x_right - round_grasp_center_x_right) >= 20):
-                                        cv2.putText(color_image, "cut right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20 
                                         height = 40
 
@@ -3273,8 +3307,8 @@ if __name__ == '__main__':
 
                                     elif(roct_result_left >-15 and roct_result_left <=-0 ) or (roct_result_right >-15 and roct_result_right <=-0):
                                     # elif((blade_center_x_left - round_grasp_center_x_left) >= 100) or ((blade_center_x_right - round_grasp_center_x_right) >= 100):
-                                        cv2.putText(color_image, "cut right down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut right down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut right down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut right down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
                                 
@@ -3319,8 +3353,8 @@ if __name__ == '__main__':
                                     
                                     elif(roct_result_left < -70 and roct_result_left >=-90) or (roct_result_right < -70 and roct_result_right >= -90):
                                         # elif((blade_center_x_left - round_grasp_center_x_left) < 20) or ((blade_center_x_right - round_grasp_center_x_right) < 20): 
-                                        cv2.putText(color_image, "cut right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
 
@@ -3398,14 +3432,14 @@ if __name__ == '__main__':
 
                                 #quadrant 3 , cut left up
                                 elif(blade_center_x_left < round_grasp_center_x_left and blade_center_y_left < round_grasp_center_y_left) or (blade_center_x_right < round_grasp_center_x_right and blade_center_y_right < round_grasp_center_y_right): 
-                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "cut left up 0101" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "cut left up 0101 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "cut left up 0101" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "cut left up 0101 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     if(roct_result_left <=-15  and roct_result_left >=-70) or (roct_result_right <=-15 and roct_result_right >= -70 ):
                                     # if((round_grasp_center_x_left - blade_center_x_left) < 115 and(round_grasp_center_x_left - blade_center_x_left)>=25) or ((round_grasp_center_x_right - blade_center_x_right) < 115 and(round_grasp_center_x_right - blade_center_x_right)>=25):
-                                        cv2.putText(color_image, "cut left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
 
@@ -3451,8 +3485,8 @@ if __name__ == '__main__':
                                         
                                     elif(roct_result_left >-15 and roct_result_left <=-0 ) or (roct_result_right >-15 and roct_result_right <=-0):
                                     # elif((round_grasp_center_x_left - blade_center_x_left) >= 115) or ((round_grasp_center_x_right - blade_center_x_right) >= 115):
-                                        cv2.putText(color_image, "cut left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
 
@@ -3497,8 +3531,8 @@ if __name__ == '__main__':
                                     
                                     elif(roct_result_left < -70 and roct_result_left >=-90) or (roct_result_right < -70 and roct_result_right >= -90):
                                     # elif((round_grasp_center_x_left - blade_center_x_left) < 25) or ((round_grasp_center_x_right - blade_center_x_right) < 25):
-                                        cv2.putText(color_image, "cut left up 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut left up 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut left up 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut left up 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
 
@@ -3576,14 +3610,14 @@ if __name__ == '__main__':
                                 
                                 #quadrant 4 , cut left down
                                 elif(round_grasp_center_x_left > blade_center_x_left and blade_center_y_left > round_grasp_center_y_left) or (round_grasp_center_x_right > blade_center_x_right and blade_center_y_right > round_grasp_center_y_right): 
-                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "cut left down 0101" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "cut left down 0101 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "cut left down 0101" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "cut left down 0101 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     if(roct_result_left >=15 and roct_result_left <=70) or (roct_result_right >=15 and roct_result_right <=70):
                                     # if((round_grasp_center_x_left - blade_center_x_left) < 115 and(round_grasp_center_x_left - blade_center_x_left)>=25) or ((round_grasp_center_x_right - blade_center_x_right) < 115 and(round_grasp_center_x_right - blade_center_x_right)>=25):
-                                        cv2.putText(color_image, "cut left down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut left down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut left down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut left down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
 
@@ -3628,8 +3662,8 @@ if __name__ == '__main__':
 
                                     elif(roct_result_left < 15) or (roct_result_right <15):
                                     # elif((round_grasp_center_x_left - blade_center_x_left) >= 115) or ((round_grasp_center_x_right - blade_center_x_right) >= 115):
-                                        cv2.putText(color_image, "cut left down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut left down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut left down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut left down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
                                         
@@ -3673,8 +3707,8 @@ if __name__ == '__main__':
 
                                     elif (roct_result_left > 70) or (roct_result_right >70):
                                     # elif((round_grasp_center_x_left - blade_center_x_left) < 25) or ((round_grasp_center_x_right - blade_center_x_right) < 25):
-                                        cv2.putText(color_image, "cut left down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut left down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut left down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut left down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
 
@@ -3796,15 +3830,15 @@ if __name__ == '__main__':
 
                                 #quadrant 1 , cut right up
                                 if(blade_center_x_left > round_grasp_center_x_left and blade_center_y_left < round_grasp_center_y_left) and (blade_center_x_right > round_grasp_center_x_right and blade_center_y_right < round_grasp_center_y_right): 
-                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "cut right up 0110" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "cut right up 0110 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "cut right up 0110" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "cut right up 0110 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     
                                     if(roct_result_left >=15 and roct_result_left <=70) or (roct_result_right >=15 and roct_result_right <=70):
                                         # if((blade_center_x_left - round_grasp_center_x_left) < 115 and (blade_center_x_left - round_grasp_center_x_left) >= 25) or ((blade_center_x_right - round_grasp_center_x_right) < 115 and (blade_center_x_right - round_grasp_center_x_right) >= 25): 
-                                        cv2.putText(color_image, "cut right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
 
@@ -3850,8 +3884,8 @@ if __name__ == '__main__':
                                     
                                     elif(roct_result_left < 15 ) or (roct_result_right <15):
                                         # elif((blade_center_x_left - round_grasp_center_x_left) >= 115) or ((blade_center_x_right - round_grasp_center_x_right) >= 115):
-                                        cv2.putText(color_image, "cut right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
 
@@ -3902,8 +3936,8 @@ if __name__ == '__main__':
                                     
                                     elif (roct_result_left > 70) or (roct_result_right >70):
                                         # elif((blade_center_x_left - round_grasp_center_x_left) < 25) or ((blade_center_x_right - round_grasp_center_x_right) < 25): 
-                                        cv2.putText(color_image, "cut right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
 
@@ -3985,14 +4019,14 @@ if __name__ == '__main__':
                                 
                                 #quadrant 2 , cut right down
                                 elif(blade_center_x_left > round_grasp_center_x_left and blade_center_y_left > round_grasp_center_y_left) or (blade_center_x_right > round_grasp_center_x_right and blade_center_y_right > round_grasp_center_y_right): #右下角
-                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "cut right down 0110" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "cut right down 0110 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "cut right down 0110" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "cut right down 0110 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     if(roct_result_left <=-15  and roct_result_left >=-70) or (roct_result_right <=-15 and roct_result_right >= -70 ):
                                     # if((blade_center_x_left - round_grasp_center_x_left) < 115 and (blade_center_x_left - round_grasp_center_x_left) >= 25) or ((blade_center_x_right - round_grasp_center_x_right) < 115 and (blade_center_x_right - round_grasp_center_x_right) >= 25):
-                                        cv2.putText(color_image, "cut right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20 
                                         height = 40
 
@@ -4038,8 +4072,8 @@ if __name__ == '__main__':
                                     
                                     elif(roct_result_left >-15 and roct_result_left <=-0 ) or (roct_result_right >-15 and roct_result_right <=-0):
                                         # elif((blade_center_x_left - round_grasp_center_x_left) >= 115) or ((blade_center_x_right - round_grasp_center_x_right) >= 115):
-                                        cv2.putText(color_image, "cut right down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut right down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut right down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut right down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
                                 
@@ -4084,8 +4118,8 @@ if __name__ == '__main__':
                                     
                                     elif(roct_result_left < -70 and roct_result_left >=-90) or (roct_result_right < -70 and roct_result_right >= -90):
                                         # elif((blade_center_x_left - round_grasp_center_x_left) < 25) or ((blade_center_x_right - round_grasp_center_x_right) < 25): 
-                                        cv2.putText(color_image, "cut right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 40
                                         height = 20
 
@@ -4163,14 +4197,14 @@ if __name__ == '__main__':
 
                                 #quadrant 3 , cut left up
                                 elif(blade_center_x_left < round_grasp_center_x_left and blade_center_y_left < round_grasp_center_y_left) or (blade_center_x_right < round_grasp_center_x_right and blade_center_y_right < round_grasp_center_y_right): 
-                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "cut left up 0110" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "cut left up 0110 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "cut left up 0110" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "cut left up 0110 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     if(roct_result_left <=-15  and roct_result_left >=-70) or (roct_result_right <=-15 and roct_result_right >= -70 ):
                                     # if((round_grasp_center_x_left - blade_center_x_left) < 115 and(round_grasp_center_x_left - blade_center_x_left)>=25) or ((round_grasp_center_x_right - blade_center_x_right) < 115 and(round_grasp_center_x_right - blade_center_x_right)>=25):
-                                        cv2.putText(color_image, "cut left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
 
@@ -4215,8 +4249,8 @@ if __name__ == '__main__':
                                         
                                     elif(roct_result_left >-15 and roct_result_left <=-0 ) or (roct_result_right >-15 and roct_result_right <=-0):
                                     # elif((round_grasp_center_x_left - blade_center_x_left) >= 115) or ((round_grasp_center_x_right - blade_center_x_right) >= 115):
-                                        cv2.putText(color_image, "cut left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
 
@@ -4261,8 +4295,8 @@ if __name__ == '__main__':
 
                                     elif(roct_result_left < -70 and roct_result_left >=-90) or (roct_result_right < -70 and roct_result_right >= -90):
                                     # elif((round_grasp_center_x_left - blade_center_x_left) < 25) or ((round_grasp_center_x_right - blade_center_x_right) < 25):
-                                        cv2.putText(color_image, "cut left up 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut left up 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut left up 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut left up 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
 
@@ -4337,14 +4371,14 @@ if __name__ == '__main__':
                                 
                                 #quadrant 4 , cut left down
                                 elif(round_grasp_center_x_left > blade_center_x_left and blade_center_y_left > round_grasp_center_y_left) or (round_grasp_center_x_right > blade_center_x_right and blade_center_y_right > round_grasp_center_y_right): 
-                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "cut left down 0110" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "cut left down 0110 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "cut left down 0110" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "cut left down 0110 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     if(roct_result_left >=15 and roct_result_left <=70) or (roct_result_right >=15 and roct_result_right <=70):
                                     # if((round_grasp_center_x_left - blade_center_x_left) < 115 and(round_grasp_center_x_left - blade_center_x_left)>=25) or ((round_grasp_center_x_right - blade_center_x_right) < 115 and(round_grasp_center_x_right - blade_center_x_right)>=25):
-                                        cv2.putText(color_image, "cut left down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut left down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut left down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut left down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
 
@@ -4389,8 +4423,8 @@ if __name__ == '__main__':
         
                                     elif(roct_result_left < 15) or (roct_result_right <15):
                                     # elif((round_grasp_center_x_left - blade_center_x_left) >= 115) or ((round_grasp_center_x_right - blade_center_x_right) >= 115):
-                                        cv2.putText(color_image, "cut left down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut left down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut left down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut left down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
                                         
@@ -4435,8 +4469,8 @@ if __name__ == '__main__':
 
                                     elif (roct_result_left > 70) or (roct_result_right >70):
                                     # elif((round_grasp_center_x_left - blade_center_x_left) < 25) or ((round_grasp_center_x_right - blade_center_x_right) < 25):
-                                        cv2.putText(color_image, "cut left down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut left down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut left down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut left down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
 
@@ -4560,14 +4594,14 @@ if __name__ == '__main__':
 
                                 #quadrant 1 , cut right up
                                 if(blade_center_x_left > round_grasp_center_x_left and blade_center_y_left < round_grasp_center_y_left) and (blade_center_x_right > round_grasp_center_x_right and blade_center_y_right < round_grasp_center_y_right): 
-                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "cut right up 1001" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "cut right up 1001 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "cut right up 1001" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "cut right up 1001 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     if(roct_result_left >=15 and roct_result_left <=70) or (roct_result_right >=15 and roct_result_right <=70):
                                         # if((blade_center_x_left - round_grasp_center_x_left) < 115 and (blade_center_x_left - round_grasp_center_x_left) >= 25) or ((blade_center_x_right - round_grasp_center_x_right) < 115 and (blade_center_x_right - round_grasp_center_x_right) >= 25): 
-                                        cv2.putText(color_image, "cut right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
 
@@ -4613,8 +4647,8 @@ if __name__ == '__main__':
                                     
                                     elif(roct_result_left < 15 ) or (roct_result_right <15):
                                         # elif((blade_center_x_left - round_grasp_center_x_left) >= 115) or ((blade_center_x_right - round_grasp_center_x_right) >= 115):
-                                        cv2.putText(color_image, "cut right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
 
@@ -4665,8 +4699,8 @@ if __name__ == '__main__':
                                     
                                     elif (roct_result_left > 75) or (roct_result_right >75):
                                         # elif((blade_center_x_left - round_grasp_center_x_left) < 25) or ((blade_center_x_right - round_grasp_center_x_right) < 25): 
-                                        cv2.putText(color_image, "cut right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 40
                                         height = 20
 
@@ -4748,14 +4782,14 @@ if __name__ == '__main__':
                                 
                                 #quadrant 2 , cut right down
                                 elif(blade_center_x_left > round_grasp_center_x_left and blade_center_y_left > round_grasp_center_y_left) or (blade_center_x_right > round_grasp_center_x_right and blade_center_y_right > round_grasp_center_y_right): #右下角
-                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "cut right down 1001" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "cut right down 1001 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "cut right down 1001" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "cut right down 1001 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     if(roct_result_left <=-15  and roct_result_left >=-70) or (roct_result_right <=-15 and roct_result_right >= -70 ):
                                         # if((blade_center_x_left - round_grasp_center_x_left) < 115 and (blade_center_x_left - round_grasp_center_x_left) >= 25) or ((blade_center_x_right - round_grasp_center_x_right) < 115 and (blade_center_x_right - round_grasp_center_x_right) >= 25):
-                                        cv2.putText(color_image, "cut right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20 
                                         height = 40
 
@@ -4801,8 +4835,8 @@ if __name__ == '__main__':
                                     
                                     elif(roct_result_left >-15 and roct_result_left <=-0 ) or (roct_result_right >-15 and roct_result_right <=-0):
                                         # elif((blade_center_x_left - round_grasp_center_x_left) >= 115) or ((blade_center_x_right - round_grasp_center_x_right) >= 115):
-                                        cv2.putText(color_image, "cut right down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut right down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut right down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut right down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
                                 
@@ -4847,8 +4881,8 @@ if __name__ == '__main__':
                                     
                                     elif(roct_result_left < -70 and roct_result_left >=-90) or (roct_result_right < -70 and roct_result_right >= -90):
                                         # elif((blade_center_x_left - round_grasp_center_x_left) < 25) or ((blade_center_x_right - round_grasp_center_x_right) < 25): 
-                                        cv2.putText(color_image, "cut right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 40
                                         height = 20
 
@@ -4926,14 +4960,14 @@ if __name__ == '__main__':
                                     
                                 #quadrant 3 , cut left up
                                 elif(blade_center_x_left < round_grasp_center_x_left and blade_center_y_left < round_grasp_center_y_left) or (blade_center_x_right < round_grasp_center_x_right and blade_center_y_right < round_grasp_center_y_right): 
-                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "cut left up 1001" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "cut left up 1001 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "cut left up 1001" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "cut left up 1001 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     if(roct_result_left <=-15  and roct_result_left >=-70) or (roct_result_right <=-15 and roct_result_right >= -70 ):
                                     # if((round_grasp_center_x_left - blade_center_x_left) < 115 and(round_grasp_center_x_left - blade_center_x_left)>=25) or ((round_grasp_center_x_right - blade_center_x_right) < 115 and(round_grasp_center_x_right - blade_center_x_right)>=25):
-                                        cv2.putText(color_image, "cut left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
 
@@ -4979,8 +5013,8 @@ if __name__ == '__main__':
                                         
                                     elif(roct_result_left >-15 and roct_result_left <=-0 ) or (roct_result_right >-15 and roct_result_right <=-0):
                                     # elif((round_grasp_center_x_left - blade_center_x_left) >= 115) or ((round_grasp_center_x_right - blade_center_x_right) >= 115):
-                                        cv2.putText(color_image, "cut left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
 
@@ -5025,8 +5059,8 @@ if __name__ == '__main__':
                                         
                                     elif(roct_result_left < -70 and roct_result_left >=-90) or (roct_result_right < -70 and roct_result_right >= -90):
                                     # elif((round_grasp_center_x_left - blade_center_x_left) < 25) or ((round_grasp_center_x_right - blade_center_x_right) < 25):
-                                        cv2.putText(color_image, "cut left up 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut left up 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut left up 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut left up 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
 
@@ -5104,14 +5138,14 @@ if __name__ == '__main__':
                                     
                                 #quadrant 4 , cut left down
                                 elif(round_grasp_center_x_left > blade_center_x_left and blade_center_y_left > round_grasp_center_y_left) or (round_grasp_center_x_right > blade_center_x_right and blade_center_y_right > round_grasp_center_y_right): 
-                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "cut left down 1001" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "cut left down 1001 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "cut left down 1001" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "cut left down 1001 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     if(roct_result_left >=15 and roct_result_left <=70) or (roct_result_right >=15 and roct_result_right <=70):
                                     # if((round_grasp_center_x_left - blade_center_x_left) < 115 and(round_grasp_center_x_left - blade_center_x_left)>=25) or ((round_grasp_center_x_right - blade_center_x_right) < 115 and(round_grasp_center_x_right - blade_center_x_right)>=25):
-                                        cv2.putText(color_image, "cut left down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut left down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut left down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut left down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
 
@@ -5156,8 +5190,8 @@ if __name__ == '__main__':
         
                                     elif(roct_result_left < 15) or (roct_result_right <15):
                                     # elif((round_grasp_center_x_left - blade_center_x_left) >= 115) or ((round_grasp_center_x_right - blade_center_x_right) >= 115):
-                                        cv2.putText(color_image, "cut left down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut left down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut left down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut left down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
                                         
@@ -5202,8 +5236,8 @@ if __name__ == '__main__':
 
                                     elif (roct_result_left > 70) or (roct_result_right >70):
                                     # elif((round_grasp_center_x_left - blade_center_x_left) < 25) or ((round_grasp_center_x_right - blade_center_x_right) < 25):
-                                        cv2.putText(color_image, "cut left down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut left down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut left down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut left down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
 
@@ -5325,14 +5359,14 @@ if __name__ == '__main__':
 
                                 #quadrant 1 , cut right up
                                 if(blade_center_x_left > round_grasp_center_x_left and blade_center_y_left < round_grasp_center_y_left) and (blade_center_x_right > round_grasp_center_x_right and blade_center_y_right < round_grasp_center_y_right): 
-                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "cut right up 1010" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "cut right up 1010 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "cut right up 1010" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "cut right up 1010 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     if(roct_result_left >=15 and roct_result_left <=70) or (roct_result_right >=15 and roct_result_right <=70):
                                         # if((blade_center_x_left - round_grasp_center_x_left) < 115 and (blade_center_x_left - round_grasp_center_x_left) >= 25) or ((blade_center_x_right - round_grasp_center_x_right) < 115 and (blade_center_x_right - round_grasp_center_x_right) >= 25): 
-                                        cv2.putText(color_image, "cut right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
 
@@ -5378,8 +5412,8 @@ if __name__ == '__main__':
                                     
                                     elif(roct_result_left < 15 ) or (roct_result_right <15):
                                         # elif((blade_center_x_left - round_grasp_center_x_left) >= 115) or ((blade_center_x_right - round_grasp_center_x_right) >= 115):
-                                        cv2.putText(color_image, "cut right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
 
@@ -5430,7 +5464,7 @@ if __name__ == '__main__':
                                     
                                     elif (roct_result_left > 70) or (roct_result_right >70):
                                         # elif((blade_center_x_left - round_grasp_center_x_left) < 25) or ((blade_center_x_right - round_grasp_center_x_right) < 25): 
-                                        cv2.putText(color_image1, "cut right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 40
                                         height = 20
 
@@ -5512,15 +5546,15 @@ if __name__ == '__main__':
                                 
                                 #quadrant 2 , cut right down
                                 elif(blade_center_x_left > round_grasp_center_x_left and blade_center_y_left > round_grasp_center_y_left) or (blade_center_x_right > round_grasp_center_x_right and blade_center_y_right > round_grasp_center_y_right): #右下角
-                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "cut right down 1010" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "cut right down 1010" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "cut right down 1010" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "cut right down 1010" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     
                                     if(roct_result_left <=-15  and roct_result_left >=-70) or (roct_result_right <=-15 and roct_result_right >= -70 ):
                                         # if((blade_center_x_left - round_grasp_center_x_left) < 115 and (blade_center_x_left - round_grasp_center_x_left) >= 25) or ((blade_center_x_right - round_grasp_center_x_right) < 115 and (blade_center_x_right - round_grasp_center_x_right) >= 25):
-                                        cv2.putText(color_image, "cut right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                        
                                         width = 20
                                         height = 40
@@ -5567,8 +5601,8 @@ if __name__ == '__main__':
                                     
                                     elif(roct_result_left >-15 and roct_result_left <=-0 ) or (roct_result_right >-15 and roct_result_right <=-0):
                                         # elif((blade_center_x_left - round_grasp_center_x_left) >= 115) or ((blade_center_x_right - round_grasp_center_x_right) >= 115):
-                                        cv2.putText(color_image, "cut right down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut right down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut right down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut right down 2222 1" , (10, 185), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
                                 
@@ -5610,8 +5644,8 @@ if __name__ == '__main__':
                                     
                                     elif(roct_result_left < -70 and roct_result_left >=-90) or (roct_result_right < -70 and roct_result_right >= -90):
                                     # elif((blade_center_x_left - round_grasp_center_x_left) < 25) or ((blade_center_x_right - round_grasp_center_x_right) < 25): 
-                                        cv2.putText(color_image, "cut right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 40
                                         height = 20
 
@@ -5689,14 +5723,14 @@ if __name__ == '__main__':
 
                                 #quadrant 3 , cut left up
                                 elif(blade_center_x_left < round_grasp_center_x_left and blade_center_y_left < round_grasp_center_y_left) or (blade_center_x_right < round_grasp_center_x_right and blade_center_y_right < round_grasp_center_y_right): 
-                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "cut left up 1010" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "cut left up 1010" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "cut left up 1010" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "cut left up 1010" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     if(roct_result_left <=-15  and roct_result_left >=-70) or (roct_result_right <=-15 and roct_result_right >= -70 ):
                                     # if((round_grasp_center_x_left - blade_center_x_left) < 115 and(round_grasp_center_x_left - blade_center_x_left)>=25) or ((round_grasp_center_x_right - blade_center_x_right) < 115 and(round_grasp_center_x_right - blade_center_x_right)>=25):
-                                        cv2.putText(color_image, "cut left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
 
@@ -5742,8 +5776,8 @@ if __name__ == '__main__':
                                         
                                     elif(roct_result_left >-15 and roct_result_left <=-0 ) or (roct_result_right >-15 and roct_result_right <=-0):
                                     # elif((round_grasp_center_x_left - blade_center_x_left) >= 115) or ((round_grasp_center_x_right - blade_center_x_right) >= 115):
-                                        cv2.putText(color_image, "cut left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
 
@@ -5788,8 +5822,8 @@ if __name__ == '__main__':
 
                                     elif(roct_result_left < -70 and roct_result_left >=-90) or (roct_result_right < -70 and roct_result_right >= -90):
                                     # elif((round_grasp_center_x_left - blade_center_x_left) < 25) or ((round_grasp_center_x_right - blade_center_x_right) < 25):
-                                        cv2.putText(color_image, "cut left up 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut left up 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut left up 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut left up 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
 
@@ -5867,14 +5901,14 @@ if __name__ == '__main__':
                                 
                                 #quadrant 4 , cut left down
                                 elif(round_grasp_center_x_left > blade_center_x_left and blade_center_y_left > round_grasp_center_y_left) or (round_grasp_center_x_right > blade_center_x_right and blade_center_y_right > round_grasp_center_y_right): 
-                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "cut left down 1010" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "cut left down 1010" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "cut left down 1010" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "cut left down 1010" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     if(roct_result_left >=15 and roct_result_left <=70) or (roct_result_right >=15 and roct_result_right <=70):
                                     # if((round_grasp_center_x_left - blade_center_x_left) < 115 and(round_grasp_center_x_left - blade_center_x_left)>=25) or ((round_grasp_center_x_right - blade_center_x_right) < 115 and(round_grasp_center_x_right - blade_center_x_right)>=25):
-                                        cv2.putText(color_image, "cut left down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut left down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut left down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut left down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
 
@@ -5919,8 +5953,8 @@ if __name__ == '__main__':
         
                                     elif(roct_result_left < 15) or (roct_result_right <15):
                                     # elif((round_grasp_center_x_left - blade_center_x_left) >= 115) or ((round_grasp_center_x_right - blade_center_x_right) >= 115):
-                                        cv2.putText(color_image, "cut left down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut left down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut left down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut left down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
                                         
@@ -5965,8 +5999,8 @@ if __name__ == '__main__':
 
                                     elif(roct_result_left < 15) or (roct_result_right <15):
                                     # elif((round_grasp_center_x_left - blade_center_x_left) < 25) or ((round_grasp_center_x_right - blade_center_x_right) < 25):
-                                        cv2.putText(color_image, "cut left down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "cut left down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "cut left down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "cut left down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 40
 
@@ -6094,14 +6128,14 @@ if __name__ == '__main__':
 
                                 #quadrant 1,right up 
                                 if( blade_center_x_left > grasp_center_x_left and blade_center_y_left < grasp_center_y_left): 
-                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "right up 0101" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "right up 0101 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "right up 0101" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "right up 0101 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     if(roct_result_left >=15 and roct_result_left <=70) or (roct_result_right >=15 and roct_result_right <=70):
                                     # if((blade_center_x - grasp_center_x) < 120 and(blade_center_x - grasp_center_x) > 25): 
-                                        cv2.putText(color_image, "right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 50
 
@@ -6137,8 +6171,8 @@ if __name__ == '__main__':
 
                                     elif(roct_result_left < 15 ) or (roct_result_right <15 ):
                                     # elif((blade_center_x - grasp_center_x) >= 120):
-                                        cv2.putText(color_image, "right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 50
                                         
@@ -6171,8 +6205,8 @@ if __name__ == '__main__':
 
                                     elif (roct_result_left > 70) or (roct_result_right >70):
                                     # elif((blade_center_x - grasp_center_x) < 25): 
-                                        cv2.putText(color_image, "right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 50
                                         height = 20
 
@@ -6241,14 +6275,14 @@ if __name__ == '__main__':
 
                                 # quadrant 2 , right down
                                 elif(blade_center_x_left > grasp_center_x_left and blade_center_y_left > grasp_center_y_left): #右下角
-                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "right down 0101" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "right down 0101 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "right down 0101" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "right down 0101 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     if(roct_result_left <=-15  and roct_result_left >=-70) or (roct_result_right <=-15 and roct_result_right >= -70 ):
                                     # if((blade_center_x - grasp_center_x) <= 120 and(blade_center_x - grasp_center_x)>25):
-                                        cv2.putText(color_image, "right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 50
                                         height = 20
 
@@ -6282,8 +6316,8 @@ if __name__ == '__main__':
 
                                     elif(roct_result_left >-15 and roct_result_left <=-0 ) or (roct_result_right >-15 and roct_result_right <=-0):
                                     # elif((blade_center_x - grasp_center_x) >= 120): 
-                                        cv2.putText(color_image, "right down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "right down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "right down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "right down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 50
                                         
@@ -6318,8 +6352,8 @@ if __name__ == '__main__':
 
                                     elif(roct_result_left < -70 and roct_result_left >=-90) or (roct_result_right < -70 and roct_result_right >= -90):
                                     # elif((blade_center_x - grasp_center_x) < 25):
-                                        cv2.putText(color_image, "right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 60
                                         height = 20
 
@@ -6393,14 +6427,14 @@ if __name__ == '__main__':
 
                                 # quadrant 3 , left up 
                                 elif(blade_center_x_left < grasp_center_x_left and blade_center_y_left < grasp_center_y_left): 
-                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "left up 0101" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "left up 0101 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "left up 0101" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "left up 0101 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     if(roct_result_left <=-15  and roct_result_left >=-70) or (roct_result_right <=-15 and roct_result_right >= -70 ):
                                     # if((grasp_center_x - blade_center_x) < 120 and(grasp_center_x - blade_center_x)>25):
-                                        cv2.putText(color_image, "left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 70
 
@@ -6435,8 +6469,8 @@ if __name__ == '__main__':
 
                                     elif(roct_result_left >-15 and roct_result_left <=-0 ) or (roct_result_right >-15 and roct_result_right <=-0):
                                     # elif((grasp_center_x - blade_center_x) >= 120): 
-                                        cv2.putText(color_image, "left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 70
                                         
@@ -6470,8 +6504,8 @@ if __name__ == '__main__':
 
                                     elif(roct_result_left < -70 and roct_result_left >=-90) or (roct_result_right < -70 and roct_result_right >= -90):
                                     # elif((grasp_center_x - blade_center_x) < 25): 
-                                        cv2.putText(color_image, "left up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "left up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "left up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "left up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 70
                                         height = 20
 
@@ -6545,14 +6579,14 @@ if __name__ == '__main__':
                                 
                                 # quadrant 4 , left down
                                 elif(grasp_center_x_left > blade_center_x_left and blade_center_y_left > grasp_center_y_left): #左下角
-                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "left down 0101" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "left down 0101 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)                        
+                                    # cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "left down 0101" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "left down 0101 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)                        
                                     if(roct_result_left >=15 and roct_result_left <=70) or (roct_result_right >=15 and roct_result_right <=70):
                                     # if((grasp_center_x - blade_center_x) < 120 and(grasp_center_x - blade_center_x) >= 25):
-                                        cv2.putText(color_image, "left down 1111 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "left down 1111 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "left down 1111 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "left down 1111 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 50
 
@@ -6588,8 +6622,8 @@ if __name__ == '__main__':
                                         
                                     elif(roct_result_left < 15 ) or (roct_result_right <15 ):
                                     # elif((grasp_center_x - blade_center_x) >= 120):
-                                        cv2.putText(color_image, "left down 2222 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "left down 2222 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "left down 2222 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "left down 2222 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 50
                                         
@@ -6623,8 +6657,8 @@ if __name__ == '__main__':
 
                                     elif (roct_result_left > 70) or (roct_result_right >70):
                                     # elif((grasp_center_x - blade_center_x) < 25):
-                                        cv2.putText(color_image, "left down 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "left down 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "left down 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "left down 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 60
                                         height = 20
 
@@ -6741,14 +6775,14 @@ if __name__ == '__main__':
 
                                 #quadrant 1,right up 
                                 if( blade_center_x_left > grasp_center_x_left and blade_center_y_left < grasp_center_y_left): 
-                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "right up 0110" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "right up 0110 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "right up 0110" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "right up 0110 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     if(roct_result_left >=15 and roct_result_left <=70) or (roct_result_right >=15 and roct_result_right <=70):
                                     # if((blade_center_x - grasp_center_x) < 120 and(blade_center_x - grasp_center_x) > 25): 
-                                        cv2.putText(color_image, "right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 50
 
@@ -6784,8 +6818,8 @@ if __name__ == '__main__':
 
                                     elif(roct_result_left < 15 ) or (roct_result_right <15 ):
                                     # elif((blade_center_x - grasp_center_x) >= 120):
-                                        cv2.putText(color_image, "right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 50
                                         
@@ -6818,8 +6852,8 @@ if __name__ == '__main__':
 
                                     elif (roct_result_left > 70) or (roct_result_right >70):
                                     # elif((blade_center_x - grasp_center_x) < 25): 
-                                        cv2.putText(color_image, "right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 50
                                         height = 20
 
@@ -6888,14 +6922,14 @@ if __name__ == '__main__':
                                 
                                 # quadrant 2 , right down
                                 elif(blade_center_x_left > grasp_center_x_left and blade_center_y_left > grasp_center_y_left): #右下角
-                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "right down 0110" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "right down 0110 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "right down 0110" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "right down 0110 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     if(roct_result_left <=-15  and roct_result_left >=-70) or (roct_result_right <=-15 and roct_result_right >= -70 ):
                                     # if((blade_center_x - grasp_center_x) <= 120 and(blade_center_x - grasp_center_x)>25):
-                                        cv2.putText(color_image, "right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 50
                                         height = 20
 
@@ -6929,8 +6963,8 @@ if __name__ == '__main__':
 
                                     elif(roct_result_left >-15 and roct_result_left <=-0 ) or (roct_result_right >-15 and roct_result_right <=-0):
                                     # elif((blade_center_x - grasp_center_x) >= 120): 
-                                        cv2.putText(color_image, "right down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "right down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "right down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "right down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 50
                                         
@@ -6965,8 +6999,8 @@ if __name__ == '__main__':
 
                                     elif(roct_result_left < -70 and roct_result_left >=-90) or (roct_result_right < -70 and roct_result_right >= -90):
                                     # elif((blade_center_x - grasp_center_x) < 25):
-                                        cv2.putText(color_image, "right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 60
                                         height = 20
 
@@ -7040,14 +7074,14 @@ if __name__ == '__main__':
                                 
                                 # quadrant 3 , left up 
                                 elif(blade_center_x_left < grasp_center_x_left and blade_center_y_left < grasp_center_y_left): 
-                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "left up 0110" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "left up 0110 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "left up 0110" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "left up 0110 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     if(roct_result_left <=-15  and roct_result_left >=-70) or (roct_result_right <=-15 and roct_result_right >= -70 ):
                                     # if((grasp_center_x - blade_center_x) < 120 and(grasp_center_x - blade_center_x)>25):
-                                        cv2.putText(color_image, "left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 60
 
@@ -7117,8 +7151,8 @@ if __name__ == '__main__':
 
                                     elif(roct_result_left < -70 and roct_result_left >=-90) or (roct_result_right < -70 and roct_result_right >= -90):
                                     # elif((grasp_center_x - blade_center_x) < 25): 
-                                        cv2.putText(color_image, "left up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "left up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "left up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "left up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 70
                                         height = 20
 
@@ -7192,14 +7226,14 @@ if __name__ == '__main__':
 
                                 # quadrant 4 , left down
                                 elif(grasp_center_x_left > blade_center_x_left and blade_center_y_left > grasp_center_y_left): #左下角
-                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "left down 0110" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "left down 0110 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)                        
+                                    # cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "left down 0110" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "left down 0110 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)                        
                                     if(roct_result_left >=15 and roct_result_left <=70) or (roct_result_right >=15 and roct_result_right <=70):
                                     # if((grasp_center_x - blade_center_x) < 120 and(grasp_center_x - blade_center_x) >= 25):
-                                        cv2.putText(color_image, "left down 1111 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "left down 1111 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "left down 1111 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "left down 1111 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 50
 
@@ -7235,8 +7269,8 @@ if __name__ == '__main__':
                                         
                                     elif(roct_result_left < 15 ) or (roct_result_right <15 ):
                                     # elif((grasp_center_x - blade_center_x) >= 120):
-                                        cv2.putText(color_image, "left down 2222 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "left down 2222 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "left down 2222 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "left down 2222 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 50
                                         
@@ -7270,8 +7304,8 @@ if __name__ == '__main__':
 
                                     elif (roct_result_left > 70) or (roct_result_right >70):
                                     # elif((grasp_center_x - blade_center_x) < 25):
-                                        cv2.putText(color_image, "left down 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "left down 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "left down 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "left down 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 60
                                         height = 20
 
@@ -7390,14 +7424,14 @@ if __name__ == '__main__':
 
                                 #quadrant 1,right up 
                                 if( blade_center_x_left > grasp_center_x_left and blade_center_y_left < grasp_center_y_left): 
-                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "right up 1010" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "right up 1010 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "right up 1010" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "right up 1010 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     if(roct_result_left >=15 and roct_result_left <=70) or (roct_result_right >=15 and roct_result_right <=70):
                                     # if((blade_center_x - grasp_center_x) < 120 and(blade_center_x - grasp_center_x) > 25): 
-                                        cv2.putText(color_image, "right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 50
 
@@ -7433,8 +7467,8 @@ if __name__ == '__main__':
 
                                     elif(roct_result_left < 15 ) or (roct_result_right <15 ):
                                     # elif((blade_center_x - grasp_center_x) >= 120):
-                                        cv2.putText(color_image, "right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 50
                                         
@@ -7467,8 +7501,8 @@ if __name__ == '__main__':
 
                                     elif (roct_result_left > 70) or (roct_result_right >70):
                                     # elif((blade_center_x - grasp_center_x) < 25): 
-                                        cv2.putText(color_image, "right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 50
                                         height = 20
 
@@ -7537,14 +7571,14 @@ if __name__ == '__main__':
 
                                 # quadrant 2 , right down
                                 elif(blade_center_x_left > grasp_center_x_left and blade_center_y_left > grasp_center_y_left): #右下角
-                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "right down 1010" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "right down 1010 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "right down 1010" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "right down 1010 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     if(roct_result_left <=-15  and roct_result_left >=-70) or (roct_result_right <=-15 and roct_result_right >= -70 ):
                                     # if((blade_center_x - grasp_center_x) <= 120 and(blade_center_x - grasp_center_x)>25):
-                                        cv2.putText(color_image, "right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 50
                                         height = 20
 
@@ -7578,8 +7612,8 @@ if __name__ == '__main__':
 
                                     elif(roct_result_left >-15 and roct_result_left <=-0 ) or (roct_result_right >-15 and roct_result_right <=-0):
                                     # elif((blade_center_x - grasp_center_x) >= 120): 
-                                        cv2.putText(color_image, "right down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "right down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "right down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "right down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 50
                                         
@@ -7614,8 +7648,8 @@ if __name__ == '__main__':
 
                                     elif(roct_result_left < -70 and roct_result_left >=-90) or (roct_result_right < -70 and roct_result_right >= -90):
                                     # elif((blade_center_x - grasp_center_x) < 25):
-                                        cv2.putText(color_image, "right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 60
                                         height = 20
 
@@ -7689,14 +7723,14 @@ if __name__ == '__main__':
                                 
                                 # quadrant 3 , left up 
                                 elif(blade_center_x_left < grasp_center_x_left and blade_center_y_left < grasp_center_y_left): 
-                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "left up 1010" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "left up  1010 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "left up 1010" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "left up  1010 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     if(roct_result_left <=-15  and roct_result_left >=-70) or (roct_result_right <=-15 and roct_result_right >= -70 ):
                                     # if((grasp_center_x - blade_center_x) < 120 and(grasp_center_x - blade_center_x)>25):
-                                        cv2.putText(color_image, "left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 60
 
@@ -7731,8 +7765,8 @@ if __name__ == '__main__':
 
                                     elif(roct_result_left >-15 and roct_result_left <=-0 ) or (roct_result_right >-15 and roct_result_right <=-0):
                                     # elif((grasp_center_x - blade_center_x) >= 120): 
-                                        cv2.putText(color_image, "left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 60
                                         
@@ -7766,8 +7800,8 @@ if __name__ == '__main__':
 
                                     elif(roct_result_left < -70 and roct_result_left >=-90) or (roct_result_right < -70 and roct_result_right >= -90):
                                     # elif((grasp_center_x - blade_center_x) < 25): 
-                                        cv2.putText(color_image, "left up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "left up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "left up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "left up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 70
                                         height = 20
 
@@ -7842,14 +7876,14 @@ if __name__ == '__main__':
                                 
                                 # quadrant 4 , left down
                                 elif(grasp_center_x_left > blade_center_x_left and blade_center_y_left > grasp_center_y_left): #左下角
-                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "left down 1010" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "left down 1010 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)                        
+                                    # cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "left down 1010" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "left down 1010 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)                        
                                     if(roct_result_left >=15 and roct_result_left <=70) or (roct_result_right >=15 and roct_result_right <=70):
                                     # if((grasp_center_x - blade_center_x) < 120 and(grasp_center_x - blade_center_x) >= 25):
-                                        cv2.putText(color_image, "left down 1111 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "left down 1111 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "left down 1111 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "left down 1111 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 50
 
@@ -7885,8 +7919,8 @@ if __name__ == '__main__':
                                         
                                     elif(roct_result_left < 15 ) or (roct_result_right <15 ):
                                     # elif((grasp_center_x - blade_center_x) >= 120):
-                                        cv2.putText(color_image, "left down 2222 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "left down 2222 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "left down 2222 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "left down 2222 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 50
                                         
@@ -7920,8 +7954,8 @@ if __name__ == '__main__':
 
                                     elif (roct_result_left > 70) or (roct_result_right >70):
                                     # elif((grasp_center_x - blade_center_x) < 25):
-                                        cv2.putText(color_image, "left down 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "left down 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "left down 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "left down 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 60
                                         height = 20
 
@@ -8038,14 +8072,14 @@ if __name__ == '__main__':
 
                                 #quadrant 1,right up 
                                 if( blade_center_x_left > grasp_center_x_left and blade_center_y_left < grasp_center_y_left): 
-                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "right up 1001" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "right up 1001 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "right up 1001" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "right up 1001 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     if(roct_result_left >=15 and roct_result_left <=70) or (roct_result_right >=15 and roct_result_right <=70):
                                     # if((blade_center_x - grasp_center_x) < 120 and(blade_center_x - grasp_center_x) > 25): 
-                                        cv2.putText(color_image, "right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "right up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 50
 
@@ -8081,8 +8115,8 @@ if __name__ == '__main__':
 
                                     elif(roct_result_left < 15 ) or (roct_result_right <15 ):
                                     # elif((blade_center_x - grasp_center_x) >= 120):
-                                        cv2.putText(color_image, "right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "right up 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 50
                                         
@@ -8115,8 +8149,8 @@ if __name__ == '__main__':
 
                                     elif (roct_result_left > 70) or (roct_result_right >70):
                                     # elif((blade_center_x - grasp_center_x) < 25): 
-                                        cv2.putText(color_image, "right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "right up 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 50
                                         height = 20
 
@@ -8185,14 +8219,14 @@ if __name__ == '__main__':
                                 
                                 # quadrant 2 , right down
                                 elif(blade_center_x_left > grasp_center_x_left and blade_center_y_left > grasp_center_y_left): #右下角
-                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "right down 1001" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "right down 1001 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "right down 1001" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "right down 1001 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     if(roct_result_left <=-15  and roct_result_left >=-70) or (roct_result_right <=-15 and roct_result_right >= -70 ):
                                     # if((blade_center_x - grasp_center_x) <= 120 and(blade_center_x - grasp_center_x)>25):
-                                        cv2.putText(color_image, "right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "right down 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 50
                                         height = 20
 
@@ -8226,8 +8260,8 @@ if __name__ == '__main__':
 
                                     elif(roct_result_left >-15 and roct_result_left <=-0 ) or (roct_result_right >-15 and roct_result_right <=-0):
                                     # elif((blade_center_x - grasp_center_x) >= 120): 
-                                        cv2.putText(color_image, "right down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "right down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "right down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "right down 2222 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 50
                                         
@@ -8262,8 +8296,8 @@ if __name__ == '__main__':
 
                                     elif(roct_result_left < -70 and roct_result_left >=-90) or (roct_result_right < -70 and roct_result_right >= -90):
                                     # elif((blade_center_x - grasp_center_x) < 25):
-                                        cv2.putText(color_image, "right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "right down 3333 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 60
 
@@ -8337,14 +8371,14 @@ if __name__ == '__main__':
                                 
                                 # quadrant 3 , left up 
                                 elif(blade_center_x_left < grasp_center_x_left and blade_center_y_left < grasp_center_y_left): 
-                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "left up 1001" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "left up 1001 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "left up 1001" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "left up 1001 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                     if(roct_result_left <=-15  and roct_result_left >=-70) or (roct_result_right <=-15 and roct_result_right >= -70 ):
                                     # if((grasp_center_x - blade_center_x) < 120 and(grasp_center_x - blade_center_x)>25):
-                                        cv2.putText(color_image, "left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "left up 1111 1" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 60
 
@@ -8379,8 +8413,8 @@ if __name__ == '__main__':
 
                                     elif(roct_result_left >-15 and roct_result_left <=-0 ) or (roct_result_right >-15 and roct_result_right <=-0):
                                     # elif((grasp_center_x - blade_center_x) >= 120): 
-                                        cv2.putText(color_image, "left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "left up 2222 1" , (10,190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 60
                                         
@@ -8414,8 +8448,8 @@ if __name__ == '__main__':
 
                                     elif(roct_result_left < -70 and roct_result_left >=-90) or (roct_result_right < -70 and roct_result_right >= -90):
                                     # elif((grasp_center_x - blade_center_x) < 25): 
-                                        cv2.putText(color_image, "left up 3333 1" , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "left up 3333 1" , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "left up 3333 1" , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "left up 3333 1" , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 70
                                         height = 20
 
@@ -8490,14 +8524,14 @@ if __name__ == '__main__':
 
                                 # quadrant 4 , left down
                                 elif(grasp_center_x_left > blade_center_x_left and blade_center_y_left > grasp_center_y_left): #左下角
-                                    cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image, "left down 1001" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                    cv2.putText(color_image1, "left down 1001 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)                        
+                                    # cv2.putText(color_image, "check: " + str(round(roct_result_left,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "check: " + str(round(roct_result_right,3)) , (10, 220), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image, "left down 1001" , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                    # cv2.putText(color_image1, "left down 1001 " , (10, 250), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)                        
                                     if(roct_result_left >=15 and roct_result_left <=70) or (roct_result_right >=15 and roct_result_right <=70):
                                     # if((grasp_center_x - blade_center_x) < 120 and(grasp_center_x - blade_center_x) >= 25):
-                                        cv2.putText(color_image, "left down 1111 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "left down 1111 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "left down 1111 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "left down 1111 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 50
 
@@ -8533,8 +8567,8 @@ if __name__ == '__main__':
                                         
                                     elif(roct_result_left < 15 ) or (roct_result_right <15 ):
                                     # elif((grasp_center_x - blade_center_x) >= 120):
-                                        cv2.putText(color_image, "left down 2222 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "left down 2222 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "left down 2222 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "left down 2222 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 20
                                         height = 50
                                         
@@ -8568,8 +8602,8 @@ if __name__ == '__main__':
 
                                     elif (roct_result_left > 70) or (roct_result_right >70):
                                     # elif((grasp_center_x - blade_center_x) < 25):
-                                        cv2.putText(color_image, "left down 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-                                        cv2.putText(color_image1, "left down 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image, "left down 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                                        # cv2.putText(color_image1, "left down 3333 2" , (10, 190), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                                         width = 60
                                         height = 20
 
