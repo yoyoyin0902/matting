@@ -147,12 +147,12 @@ if __name__ == '__main__':
 
         #pixel coordinate
         points_2D_left = np.array([
-                        (364.0, 932.0),  #point_A
-                        (324.0, 762.0),  #point_B
-                        (590.0, 934.0),  #point_C
-                        (570.0, 650.0),  #point_D
-                        (602.0, 516.0),  #point_E
-                        (382.0, 516.0)  #point_F
+                        (476.0, 862.0),  #point_A
+                        (446.0, 674.0),  #point_B
+                        (696.0, 858.0),  #point_C
+                        (684.0, 564.0),  #point_D
+                        (706.0, 466.0),  #point_E
+                        (498.0, 468.0)  #point_F
                       ], dtype="double")
 
         points_2D_right = np.array([
@@ -211,7 +211,7 @@ if __name__ == '__main__':
 
 
         #3d to 2d 驗證旋轉平移矩陣
-        world = np.array([0.02, 0.08, 0.1,1]).T.reshape(-1, 1)
+        world = np.array([0.08, 0.02, 0.1,1]).T.reshape(-1, 1)
         print(world.shape)
         
         # print(camera_matrix.shape, RTmatrix.shape, world.shape)
@@ -257,11 +257,11 @@ if __name__ == '__main__':
 
 
         #world cooridinate
-        z_value= depth_image_zed.get_value(1081, 484)
+        z_value= depth_image_zed.get_value(780,578)
         # cv2.circle(color_image_left, (int(676*2), int(276*2)), 2, (0,0,255), -1)
 
-        testx = (1081 - center_point_x_left)* z_value[1] / focal_left_x
-        testy = (484 - center_point_y_left) * z_value[1] / focal_left_y
+        testx = (780 - center_point_x_left)* z_value[1] / focal_left_x
+        testy = (578 - center_point_y_left) * z_value[1] / focal_left_y
         testz = z_value[1]
         print("cam_point:" +str(testx) + "," + str(testy) + ","+ str(testz) )
         
@@ -280,21 +280,21 @@ if __name__ == '__main__':
         # print(inverse_newcam_mtx)
 
         # uv_1=np.array([[531,290,1]], dtype=np.float32)
-        uv_1=np.array([[845, 306,1]])
+        uv_1=np.array([[650,534,1]])
         uv_1=uv_1.T
 
         invR_x_invM_x_uv1 = np.dot(np.dot(RTmatrix1_inv,inverse_newcam_mtx), uv_1)
         invR_x_tvec = np.dot(RTmatrix1_inv, translation_vector_left)
-        Z_left = 0.07763934
+        Z_left = 0.018367
         #  Z_left = dis - invR_x_tvec[2]/invR_x_invM_x_uv1[2]
         output = (Z_left+invR_x_tvec[2, 0])/invR_x_invM_x_uv1[2, 0]*invR_x_invM_x_uv1-invR_x_tvec
         print(output)
 
         
         #robot cooridinate
-        robot_first_x = 278.06
-        robot_first_y = 287.97
-        robot_first_z = -100
+        robot_first_x = 179.15
+        robot_first_y = 354.54
+        robot_first_z = -45
 
         x_error = 40
         y_error = 3

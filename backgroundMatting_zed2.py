@@ -1301,18 +1301,19 @@ def circle_transform(mat,orig,detections_number):
     x, y, w, h = cv2.boundingRect(cnt)
     cv2.rectangle(object_Image, (x, y), (x + w, y + h), (0, 255, 0), 2)
     center_x = int(x + w/2)
-    center_y = int(y+h/2)
+    center_y = int(y + h/2 - 10)
     cv2.circle(object_Image,(int(center_x),int(center_y)),2,(255, 128, 0),2)
-    # cv2.imshow("11111",object_Image)
+    cv2.imshow("11111",object_Image)
 
     if w < 100: #小於一定大小直接抓全部
-        width = 20
-        height = w+30
+        width = w + 30
+        height = 20
         grasp_left_x = int(center_x - (width/2.0))
         grasp_left_y = int(center_y - (height/2.0))
         grasp_right_x = int(center_x + (width/2.0))
         grasp_right_y = int(center_y + (height/2.0))
         # cv2.rectangle(orig_img,(grasp_left_x,grasp_left_y),(grasp_right_x,grasp_right_y),(255,255,0),2)
+        # cv2.imshow("22222",orig_img)
 
         # 直线拟合
         rows, cols = object_Image.shape[:2]
@@ -1320,7 +1321,7 @@ def circle_transform(mat,orig,detections_number):
         lefty = int((-x * vy / vx) + y)
         righty = int(((cols - x) * vy / vx) + y)
         cv2.line(object_Image, (cols - 1, righty), (0, lefty), (0, 255, 255), 2)
-        # cv2.imshow("area",object_Image)
+        cv2.imshow("area",object_Image)
         roct_result = angle(cols - 1, righty,0, lefty)
        
         box = [(grasp_right_x,grasp_left_y),(grasp_left_x,grasp_left_y),
@@ -1351,16 +1352,16 @@ def circle_transform(mat,orig,detections_number):
             righty = int(((cols - x) * vy / vx) + y)
 
             cv2.line(object_Image, (cols - 1, righty), (0, lefty), (0, 255, 255), 2)
-            # cv2.imshow("area",object_Image)
+            cv2.imshow("area",object_Image)
             # img = cv2.line(object_Image, (cols - 1, righty), (0, lefty), (0, 255, 255), 2)
             
-            width =  30
-            height = h - h/3.0
+            width =  w - w/3+8
+            height = 30
             # cv2.rectangle(object_Image,(int(center_x - width/2.0),int(center_y)),(int(center_x + width/2.0),int(center_y + height)),(255,255,0),2)
             roct_result = angle(cols - 1, righty,0, lefty)
             print(roct_result)
-            box = [(center_x + width/2.0,center_y),(center_x - width/2.0,center_y),
-                    (center_x - width/2.0,center_y + height),(center_x + width/2.0,center_y + height)]
+            box = [(center_x- width,center_y - height/2.0),(center_x - width,center_y + height/2.0),
+                    (center_x ,center_y + height/2.0),(center_x ,center_y - height/2.0)]
             rota = rota_rect(box,roct_result,int(center_x),int(center_y))
             
             # if roct_result > 0:
@@ -1371,7 +1372,7 @@ def circle_transform(mat,orig,detections_number):
             # print(result)
             result = roct_result
 
-            cv2.line(orig_img,(int(rota[0][0]), int(rota[0][1])),(int(rota[1][0]),int(rota[1][1])),(255, 0, 255),2,cv2.LINE_AA)
+            cv2.line(orig_img,(int(rota[0][0]),int(rota[0][1])),(int(rota[1][0]),int(rota[1][1])),(255, 0, 255),2,cv2.LINE_AA)
             cv2.line(orig_img,(int(rota[1][0]),int(rota[1][1])),(int(rota[2][0]),int(rota[2][1])),(255, 0, 255),2,cv2.LINE_AA)
             cv2.line(orig_img,(int(rota[2][0]),int(rota[2][1])),(int(rota[3][0]),int(rota[3][1])),(255, 0, 255),2,cv2.LINE_AA)
             cv2.line(orig_img,(int(rota[3][0]),int(rota[3][1])),(int(rota[0][0]),int(rota[0][1])),(255, 0, 255),2,cv2.LINE_AA)
@@ -1382,14 +1383,14 @@ def circle_transform(mat,orig,detections_number):
 
         elif detections_num == 1:
             print("Solid") #實心圓
-            width = 20
-            height = w + 20
+            width = w +20
+            height = 20
             grasp_left_x = int(center_x - (width/2.0))
             grasp_left_y = int(center_y - (height/2.0))
             grasp_right_x = int(center_x + (width/2.0))
             grasp_right_y = int(center_y + (height/2.0))
 
-            # cv2.rectangle(orig_img,(grasp_left_x,grasp_left_y),(grasp_right_x,grasp_right_y),(255,255,0),2)
+            cv2.rectangle(orig_img,(grasp_left_x,grasp_left_y),(grasp_right_x,grasp_right_y),(255,255,0),2)
             result = 0
 
             # 直线拟合
@@ -1665,7 +1666,7 @@ if __name__ == '__main__':
         width_right = color_image1.shape[1]
         height_right= color_image1.shape[0]
 
-        t_prev = time.time()
+       
 
         frame_rgb_left = cv2.cvtColor(color_image, cv2.COLOR_BGR2RGB)
         frame_resized_left = cv2.resize(frame_rgb_left, (width_left, height_left))
@@ -1695,48 +1696,14 @@ if __name__ == '__main__':
 
         cv2.imshow("image_left", image_left)
         cv2.imshow("image_right", image_right)
-        fps = int(1/(time.time()-t_prev))
-
-        point3D_A = point_cloud.get_value(473,291)
-        A_x = point3D_A[1][0]
-        A_y = point3D_A[1][1]
-        A_z = point3D_A[1][2]
-        color = point3D_A[1][3]
-
-        point3D_B = point_cloud1.get_value(473,263)
-        B_x = point3D_B[1][0]
-        B_y = point3D_B[1][1]
-        B_z = point3D_B[1][2]
-        color = point3D_B[1][3]
-
-        # point3D_C = point_cloud.get_value(412,477)
-        # C_x = point3D_C[1][0]
-        # C_y = point3D_C[1][1]
-        # C_z = point3D_C[1][2]
-        # color = point3D_C[1][3]
-
-        # point3D_D = point_cloud1.get_value(268,476)
-        # D_x = point3D_D[1][0]
-        # D_y = point3D_D[1][1]
-        # D_z = point3D_D[1][2]
-        # color = point3D_D[1][3]
-
-        # point3D_check = point_cloud.get_value(570,383)
-        # check_x = point3D_check[1][0]
-        # check_y = point3D_check[1][1]
-        # check_z = point3D_check[1][2]
-        # color = point3D_check[1][3]
-
-        print("point3D_A: "+ str(A_x)+ " ," + str(A_y) + " ," + str(A_z))
-        print("point3D_B: "+ str(B_x)+ " ," + str(B_y) + " ," + str(B_z))
-        # print("point3D_C: "+ str(C_x)+ " ," + str(C_y) + " ," + str(C_z))
-        # print("point3D_D: "+ str(D_x)+ " ," + str(D_y) + " ," + str(D_z))
-        # print("point3D_check: "+ str(check_x)+ " ," + str(check_y) + " ," + str(check_z))
+        
+        
 
         #好想睡覺.....
         if  len(detections_left) != 0:
             if int(float(detections_left[0][1])) >= 85 :
                 if detections_left[0][0] == "long" and key == 114:
+                    t_prev = time.time()
                     a += 1
 
                     long_center_x_left = detections_left[0][2][0]
@@ -1814,12 +1781,14 @@ if __name__ == '__main__':
                     # 求取深度
                     z_value_left = depth_image_zed.get_value(center_left[1],center_left[2])
                     z_value_right = depth_image_zed.get_value(center_right[1],center_right[2])
+                    t_end = time.time()
 
                     cv2.putText(center_left[0], "Object: " + str(detections_left[0][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                     cv2.putText(center_left[0], "Depth: " + str(round(z_value_left[1],3)), (10, 70), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                     cv2.putText(center_left[0], "Center: " + str(round(center_left[1],3)) +","+ str(round(center_left[2],3)), (10, 100), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                     cv2.putText(center_left[0], "Angle: " + str(round(center_left[3],3)) , (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                     cv2.putText(center_left[0], "point3D_xyz: " + str(round(x_left,5))+", " + str(round(y_left,5))+", "  + str(round(z_left,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
+                    # cv2.putText(center_left[0], "time: " + str(detections_left[0][0]), (10, 30), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                     cv2.imwrite(center_long+"long_left_"+str(a)+'.jpg',center_left[0])
                     cv2.imshow("finish_left",center_left[0])
 
@@ -1829,6 +1798,7 @@ if __name__ == '__main__':
                     cv2.putText(center_right[0], "Angle: " + str(round(center_right[3],3)) , (10, 130), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                     cv2.putText(center_right[0], "point3D_xyz: " + str(round(x_right,5))+", " + str(round(y_right,5))+", "  + str(round(z_right,5)) , (10, 160), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
                     cv2.imwrite(center_long+"long_right_"+str(a)+'.jpg',center_right[0])
+                    t_end = time.time()
                     # cv2.imshow("finish_right",center_right[0])
 
                 elif detections_left[0][0] == "circle" or detections_left[0][0] == "hollow":
